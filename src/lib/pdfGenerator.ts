@@ -6,12 +6,13 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "pt",
-    format: "letter",
+    format: "letter", // 612pt x 792pt
   });
 
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 40;
-  const contentWidth = pageWidth - margin * 2;
+  const pageWidth = doc.internal.pageSize.getWidth(); // 612
+  const pageHeight = doc.internal.pageSize.getHeight(); // 792
+  const margin = 36;
+  const contentWidth = pageWidth - margin * 2; // 540pt
   const isFullyCleared = report.finalExposureUsd === 0;
 
   const clearedEntityIds = report.clearedEntityIds || [];
@@ -21,101 +22,111 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
 
   // 1. Top Executive Header Bar
   doc.setFillColor(15, 23, 42); // Deep Slate #0F172A
-  doc.rect(0, 0, pageWidth, 75, "F");
+  doc.rect(0, 0, pageWidth, 72, "F");
 
   // Title
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.text("FORM E&O-2026: MOTION PICTURE UNDERWRITING BINDER", margin, 32);
+  doc.setFontSize(14);
+  doc.text("FORM E&O-2026: MOTION PICTURE UNDERWRITING BINDER", margin, 30);
 
   // Subtitle
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setTextColor(148, 163, 184); // Slate 400
-  doc.text("DEEPCLEAR STUDIO • AUTONOMOUS ENTERTAINMENT CHAIN OF TITLE CLEARANCE", margin, 48);
+  doc.text("DEEPCLEAR STUDIO • AUTONOMOUS ENTERTAINMENT CHAIN OF TITLE CLEARANCE", margin, 46);
 
   // Timestamp & ID
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(203, 213, 225);
   doc.text(
-    `Binder ID: ${report.id}  |  Generated: ${new Date(report.generatedAt).toLocaleString()}`,
+    `Binder ID: ${report.id}  |  Issued: ${new Date(report.generatedAt).toLocaleString()}`,
     margin,
-    62
+    60
   );
 
-  // 2. Executive Summary Box
-  const summaryY = 90;
+  // 2. Executive Summary Box (2 Balanced Columns)
+  const summaryY = 86;
+  const summaryHeight = 92;
   doc.setFillColor(248, 250, 252); // Slate 50
   doc.setDrawColor(226, 232, 240); // Slate 200
-  doc.roundedRect(margin, summaryY, contentWidth, 85, 4, 4, "FD");
+  doc.roundedRect(margin, summaryY, contentWidth, summaryHeight, 4, 4, "FD");
 
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10.5);
-  doc.text("EXECUTIVE RISK & UNDERWRITING SUMMARY", margin + 14, summaryY + 20);
+  doc.setFontSize(10);
+  doc.text("EXECUTIVE RISK & UNDERWRITING SUMMARY", margin + 12, summaryY + 18);
 
-  // 2-Column Summary Grid
+  const col1X = margin + 12;
+  const col2X = margin + 280;
+
+  // Row 1
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(51, 65, 85); // Slate 700
-
-  // Left Column
-  doc.text(`Production Title:`, margin + 14, summaryY + 38);
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105);
+  doc.text("Production Title:", col1X, summaryY + 36);
   doc.setFont("helvetica", "bold");
-  doc.text(`${report.productionTitle}`, margin + 105, summaryY + 38);
+  doc.setTextColor(15, 23, 42);
+  doc.text(`${report.productionTitle}`, col1X + 115, summaryY + 36, { maxWidth: 140 });
 
   doc.setFont("helvetica", "normal");
-  doc.text(`Initial Statutory Exposure:`, margin + 14, summaryY + 54);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(225, 29, 72); // Rose 600
-  doc.text(`$${report.initialExposureUsd.toLocaleString()}`, margin + 135, summaryY + 54);
-
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(51, 65, 85);
-  doc.text(`Post-Clearance Liability:`, margin + 14, summaryY + 70);
+  doc.setTextColor(71, 85, 105);
+  doc.text("Policy Decision:", col2X, summaryY + 36);
   doc.setFont("helvetica", "bold");
   if (isFullyCleared) {
-    doc.setTextColor(16, 185, 129); // Emerald 600
-    doc.text(`$0 (100% Mitigated - 0% Risk)`, margin + 135, summaryY + 70);
+    doc.setTextColor(16, 185, 129); // Emerald
+    doc.text("APPROVED (Clean Policy)", col2X + 90, summaryY + 36);
   } else {
-    doc.setTextColor(225, 29, 72); // Rose 600
-    doc.text(
-      `$${report.finalExposureUsd.toLocaleString()} (Active Exposure)`,
-      margin + 135,
-      summaryY + 70
-    );
+    doc.setTextColor(225, 29, 72); // Rose
+    doc.text("ACTION REQUIRED (Uncleared)", col2X + 90, summaryY + 36);
   }
 
-  // Right Column
+  // Row 2
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(51, 65, 85);
-  doc.text(`Policy Decision:`, margin + 280, summaryY + 38);
+  doc.setTextColor(71, 85, 105);
+  doc.text("Initial Statutory Exposure:", col1X, summaryY + 54);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(225, 29, 72);
+  doc.text(`$${report.initialExposureUsd.toLocaleString()}`, col1X + 115, summaryY + 54);
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(71, 85, 105);
+  doc.text("Hazards Cleared:", col2X, summaryY + 54);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(isFullyCleared ? 16 : 71, isFullyCleared ? 185 : 85, isFullyCleared ? 129 : 105);
+  doc.text(`${clearedCount} of ${report.entities.length} Items Cleared`, col2X + 90, summaryY + 54);
+
+  // Row 3
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(71, 85, 105);
+  doc.text("Post-Clearance Liability:", col1X, summaryY + 72);
   doc.setFont("helvetica", "bold");
   if (isFullyCleared) {
     doc.setTextColor(16, 185, 129);
-    doc.text(`APPROVED (Clean Policy)`, margin + 365, summaryY + 38);
+    doc.text("$0 (100% Mitigated)", col1X + 115, summaryY + 72);
   } else {
     doc.setTextColor(225, 29, 72);
-    doc.text(`ACTION REQUIRED (Uncleared)`, margin + 365, summaryY + 38);
+    doc.text(`$${report.finalExposureUsd.toLocaleString()} (Active)`, col1X + 115, summaryY + 72);
   }
 
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(51, 65, 85);
-  doc.text(`Hazards Adjudicated:`, margin + 280, summaryY + 54);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(isFullyCleared ? 16 : 51, isFullyCleared ? 185 : 65, isFullyCleared ? 129 : 85);
-  doc.text(`${clearedCount} of ${report.entities.length} Cleared`, margin + 395, summaryY + 54);
-
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(51, 65, 85);
-  doc.text(`State Tax Incentives:`, margin + 280, summaryY + 70);
+  doc.setTextColor(71, 85, 105);
+  doc.text("Tax Incentive Rebate:", col2X, summaryY + 72);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(16, 185, 129);
   doc.text(
-    `+$${report.potentialTaxRebateUsd.toLocaleString()} (${report.taxJurisdiction || "Qualified Film Credit"})`,
-    margin + 380,
-    summaryY + 70
+    `+$${report.potentialTaxRebateUsd.toLocaleString()}`,
+    col2X + 90,
+    summaryY + 72
+  );
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  doc.text(
+    `(${report.taxJurisdiction || "State Film Tax Credit"})`,
+    col2X + 90 + doc.getTextWidth(`+$${report.potentialTaxRebateUsd.toLocaleString()} `),
+    summaryY + 72,
+    { maxWidth: 130 }
   );
 
   // 3. Itemized Hazard Clearance Table
@@ -125,7 +136,7 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
 
     return [
       `#${idx + 1}`,
-      `Scene ${ent.sceneNumber}`,
+      `Sc. ${ent.sceneNumber}`,
       ent.category.toUpperCase(),
       ent.rawText,
       isEntityCleared
@@ -133,7 +144,7 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
         : "Pending Crew Negotiation",
       isEntityCleared
         ? `$${ent.originalExposure.toLocaleString()} -> $0`
-        : `$${ent.originalExposure.toLocaleString()} (ACTIVE)`,
+        : `$${ent.originalExposure.toLocaleString()}`,
       isEntityCleared ? "CLEARED" : "HAZARD",
     ];
   });
@@ -148,7 +159,7 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
         "Category",
         "Identified Asset / Hazard",
         "Adjudicated Legal Substitution",
-        "Exposure Delta",
+        "Exposure",
         "Status",
       ],
     ],
@@ -158,7 +169,7 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
         : [
             [
               "1",
-              "Scene 1",
+              "Sc. 1",
               "GENERAL",
               "No statutory liabilities identified",
               "Standard Production Script",
@@ -171,24 +182,26 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
       fillColor: [15, 23, 42],
       textColor: [255, 255, 255],
       fontStyle: "bold",
-      fontSize: 8,
+      fontSize: 7.5,
       cellPadding: 5,
+      halign: "left",
     },
     bodyStyles: {
-      fontSize: 7.5,
+      fontSize: 7,
       textColor: [30, 41, 59],
-      cellPadding: 5,
+      cellPadding: 4.5,
+      overflow: "linebreak",
     },
     alternateRowStyles: {
       fillColor: [248, 250, 252],
     },
     columnStyles: {
-      0: { cellWidth: 22, halign: "center" },
-      1: { cellWidth: 44 },
-      2: { cellWidth: 60 },
-      3: { cellWidth: 120 },
-      4: { cellWidth: 140 },
-      5: { cellWidth: 85, halign: "right" },
+      0: { cellWidth: 24, halign: "center" },
+      1: { cellWidth: 36, halign: "center" },
+      2: { cellWidth: 64 },
+      3: { cellWidth: 130 },
+      4: { cellWidth: 156 },
+      5: { cellWidth: 70, halign: "right" },
       6: { cellWidth: 60, halign: "center", fontStyle: "bold" },
     },
     didParseCell: (data) => {
@@ -207,45 +220,72 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   const finalY =
     (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 380;
 
+  const footerY = Math.min(finalY + 12, pageHeight - 120);
+
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(margin, finalY + 15, contentWidth, 105, 4, 4, "FD");
+  doc.roundedRect(margin, footerY, contentWidth, 95, 4, 4, "FD");
 
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.text("CRYPTOGRAPHIC CHAIN OF TITLE & MERKLE ATTESTATION", margin + 14, finalY + 32);
+  doc.setFontSize(9);
+  doc.text("CRYPTOGRAPHIC CHAIN OF TITLE & MERKLE ATTESTATION", margin + 12, footerY + 16);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
+  doc.setFont("courier", "normal");
+  doc.setFontSize(6.5);
   doc.setTextColor(71, 85, 105);
-  doc.text(`SHA-256 Merkle Root: ${report.merkleRootHash}`, margin + 14, finalY + 46);
   doc.text(
-    `Base Sepolia Transaction: ${report.onChainTxHash || "0x7f9a2b8e4c1d63ea0b8891f7c234a985d1e44f80219c6e3b"}`,
-    margin + 14,
-    finalY + 58
+    `SHA-256 Merkle Root: ${report.merkleRootHash}`,
+    margin + 12,
+    footerY + 30,
+    { maxWidth: contentWidth - 24 }
   );
   doc.text(
+    `Base Sepolia Tx: ${report.onChainTxHash || "0x7f9a2b8e4c1d63ea0b8891f7c234a985d1e44f80219c6e3b"}`,
+    margin + 12,
+    footerY + 42,
+    { maxWidth: contentWidth - 24 }
+  );
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.text(
     "Certification: DeepClear Studio hereby attests that all screenplay dialogue, brand references, and visual props have undergone multimodal clearance verification and live statutory grounding via the Parallel Search API.",
-    margin + 14,
-    finalY + 70,
-    { maxWidth: contentWidth - 28 }
+    margin + 12,
+    footerY + 56,
+    { maxWidth: contentWidth - 24 }
   );
 
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
   if (isFullyCleared) {
     doc.setTextColor(16, 185, 129); // Emerald
     doc.text(
       "Completion Bond Officer Sign-off: APPROVED FOR ENTERTAINMENT E&O ISSUANCE",
-      margin + 14,
-      finalY + 98
+      margin + 12,
+      footerY + 84
     );
   } else {
     doc.setTextColor(225, 29, 72); // Rose
     doc.text(
       "Completion Bond Officer Sign-off: REJECTED — UNRESOLVED STATUTORY HAZARDS REMAINING",
-      margin + 14,
-      finalY + 98
+      margin + 12,
+      footerY + 84
+    );
+  }
+
+  // 5. Page Numbers on All Pages
+  const totalPages = (doc.internal as unknown as { getNumberOfPages: () => number }).getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(148, 163, 184);
+    doc.text(
+      `DeepClear Studio • Page ${i} of ${totalPages}`,
+      pageWidth / 2,
+      pageHeight - 16,
+      { align: "center" }
     );
   }
 
