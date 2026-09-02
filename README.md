@@ -11,13 +11,13 @@
 
 ---
 
-## 🌟 The $50M Cinema Bottleneck
+## 🌟 Executive Summary
 
-In motion picture production, the creative vision of filmmakers constantly collides with legal liability, clearance bottlenecks, and insurance rejection. Before any film or series can stream on **Netflix, Amazon Prime, Apple TV+**, or premier at **Sundance / Cannes**, studios must secure an **Errors & Omissions (E&O) Insurance Policy** and verify a pristine **Chain of Title**.
+In cinematic production, the creative vision of filmmakers constantly collides with legal liability, clearance bottlenecks, and insurance rejection. Before any film or series can stream on **Netflix, Amazon Prime, Apple TV+**, or premiere at major film festivals, production companies must secure an **Errors & Omissions (E&O) Insurance Policy** and verify a pristine **Chain of Title**.
 
-Today, this clearance process is governed by $500/hr entertainment attorneys who manually comb through scripts, storyboards, and set designs. A single unvetted brand logo, unpermitted drone shot, or background billboard can trigger a multimillion-dollar copyright injunction and halt global release.
+Today, this clearance process is governed by entertainment attorneys who manually review scripts, storyboards, and set designs. A single unvetted brand logo, unpermitted drone shot, or background artwork can trigger costly copyright injunctions and delay distribution.
 
-**DeepClear Studio** automates this high-stakes clearance pipeline into a real-time, autonomous agent command center.
+**DeepClear Studio** automates this clearance pipeline into a real-time, multi-agent command center powered by Google Cloud Gemini and Parallel Search.
 
 ---
 
@@ -47,7 +47,7 @@ flowchart TD
     subgraph Outputs["📜 Cryptographic & Legal Deliverables"]
         PDF["📑 Form E&O-2026 Insurance Binder (jsPDF)"]
         W3["⛓️ On-Chain Clearance Passport (EVM SHA-256)"]
-        HD["📰 'Butterfly Effect' Trade Headline Simulation"]
+        HD["📰 Trade Impact Simulation"]
     end
 
     Inputs --> SS
@@ -68,7 +68,7 @@ flowchart TD
 
 ---
 
-## 🛸 5 "Alien-Tier" Innovations
+## ⚡ Key Features
 
 ### 1. 👁️ Multimodal Storyboard Defusal & Safe-Prop Swapper
 Scans storyboard frames with Gemini Multimodal to detect visible trademarks, copyrighted artwork, and unpermitted architecture with precision bounding boxes. Generates instant legal substitutions with an interactive **Before/After slider**:
@@ -76,7 +76,7 @@ Scans storyboard frames with Gemini Multimodal to detect visible trademarks, cop
 | Original Hazarded Frame | Agent-Negotiated Defusal | Legal Status |
 |---|---|---|
 | Character drinks from a **"Red Bull"** can on camera | Swapped to fictional **"VoltRush Energy"** prop | 🟢 **CLEARED (0% Infringement)** |
-| Background artwork resembles **Mike Tyson Face Tattoo** | Swapped to procedurally generated original neo-tribal mural | 🟢 **CLEARED (*Whitmill v. Warner Bros.* avoided)** |
+| Background artwork resembles copyrighted mural | Swapped to original generated artwork | 🟢 **CLEARED (Case law precedent avoided)** |
 
 ### 2. 🌐 4-Dimensional Parallel Grounding Matrix
 Queries live external databases across four critical vectors using the **Parallel Search API**:
@@ -86,64 +86,64 @@ Queries live external databases across four critical vectors using the **Paralle
 - **State Tax Rebate Arbitrage:** Real-time production incentive calculations (e.g., Georgia 30% vs California 0%).
 
 ### 3. 🎙️ Audible Dialectic War Room & Live Script Mutation
-Simulates real-time verbal debates between the passionate **Director** (arguing artistic fair-use) and analytical **Legal Counsel** (arguing statutory compliance) using dual-voice synthesis:
+Simulates real-time verbal debates between the **Director** (arguing artistic intent) and **Legal Counsel** (arguing statutory compliance) using dual-voice synthesis:
 ```
-[DIRECTOR]: "The character slamming a Red Bull is vital to his overclocked coder persona! It's Fair Use!"
-[COUNSEL]:  "Under 15 U.S.C. § 1125, Red Bull GmbH routinely sues for product tarnishment. We must defuse."
+[DIRECTOR]: "The character slamming a branded energy drink is vital to his persona! It's Fair Use!"
+[COUNSEL]:  "Under 15 U.S.C. § 1125, trademark owners routinely sue for product tarnishment. We must defuse."
 [MUTATION]: "He chugs a [~~can of Red Bull~~] [VoltRush Energy can] and hammers the keyboard."
 ```
 The screenplay text physically animates on screen with red strike-throughs and emerald-green typed compromises.
 
-### 4. 📰 "Butterfly Effect" Trade Headline Simulator
-Visualizes the financial consequence of production clearance decisions with a dynamic trade magazine headline:
-- 🔴 **High Liability State:** `"VARIETY: Indie Cyberpunk Thriller Halted by Injunction; $4.2M Sunk as Red Bull Sues Over Climax Scene"`
-- 🟢 **Post-Clearance State:** `"DEADLINE: Streamer Bidding War Erupts for Cyberpunk Thriller; 100% Cleared E&O Binder Expedites Q4 Release"`
+### 4. 📰 Production Liability & Trade Impact Simulation
+Visualizes the financial consequence of clearance decisions with a dynamic trade headline indicator:
+- 🔴 **High Liability State:** `"VARIETY: Production Halted by Injunction; $4.2M Exposure Over Unvetted Trademark"`
+- 🟢 **Post-Clearance State:** `"DEADLINE: Streamer Bidding War Erupts; 100% Cleared E&O Binder Expedites Release"`
 
-### 5. ⛓️ Form E&O-2026 Binder + Cryptographic Clearance Passport
+### 5. ⛓️ Form E&O-2026 Binder & Cryptographic Clearance Passport
 - **1-Click Underwriting PDF:** Generates a formal 4-page Errors & Omissions policy application with full chain-of-title logs and QR code.
-- **On-Chain Merkle Proof:** Mints an immutable SHA-256 clearance certificate to Base Sepolia testnet.
+- **On-Chain Audit Trail:** Mints an immutable SHA-256 clearance certificate to Base Sepolia testnet.
 
 ---
 
-## 🎯 Judge's 1-Click Evaluation Tour
+## 🎯 1-Click Evaluation Tour
 
-We provide 3 instant pre-loaded scenarios in the top control bar for zero-friction testing:
+We provide 3 preset scenarios in the top control bar for instant testing:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 🎬 PRESET 1: "Sci-Fi Cyberpunk Nightmare" → 🔴 High Risk ($2.8M Exposure)   │
-│ 🎬 PRESET 2: "Historical Drama Benchmark"  → 🟡 Moderate Risk ($420k Exp)   │
-│ 🎬 PRESET 3: "Fully Cleared Masterpiece"   → 🟢 Zero Liability (0% Risk)    │
+│ 🎬 PRESET 1: "Sci-Fi Cyberpunk Script"    → 🔴 High Risk ($2.8M Exposure)   │
+│ 🎬 PRESET 2: "Historical Drama Benchmark" → 🟡 Moderate Risk ($420k Exp)   │
+│ 🎬 PRESET 3: "Fully Cleared Production"   → 🟢 Zero Liability (0% Risk)     │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 <details>
 <summary><b>🔍 Step-by-Step Test Walkthrough (Click to Expand)</b></summary>
 
-1. **Load Scenario:** Click **"Sci-Fi Nightmare"** in the top navigation bar.
-2. **Execute Multimodal Scan:** Watch the 5-agent swarm illuminate with animated SVG telemetry links.
-3. **Inspect Parallel Grounding:** Observe live citations retrieved from USPTO and Federal case law via Parallel Search.
-4. **Listen to Audible War Room:** Toggle audio to hear the Director and Legal Counsel argue the script compromise.
-5. **Watch Script Mutation:** Witness the red strike-through and real-time typed green replacement.
+1. **Load Scenario:** Select a preset scenario from the top navigation bar.
+2. **Execute Multimodal Scan:** Observe the 5-agent swarm illuminate with live telemetry links.
+3. **Inspect Parallel Grounding:** Review citations retrieved from USPTO and case law via Parallel Search.
+4. **Listen to Audible War Room:** Hear the Director and Legal Counsel debate the script compromise.
+5. **Watch Script Mutation:** Witness the red strike-through and real-time typed replacement text.
 6. **Defuse Visual Props:** Drag the Before/After slider on the storyboard canvas.
-7. **Export Deliverables:** Download the official **Form E&O-2026 PDF Binder** and mint the **On-Chain Passport**.
+7. **Export Deliverables:** Download the **Form E&O-2026 PDF Binder** and view the **On-Chain Passport**.
 </details>
 
 ---
 
 ## 🏆 Hackathon Track Compliance
 
-| Hackathon Requirement | DeepClear Studio Implementation | Status |
+| Requirement | Implementation | Status |
 |---|---|---|
 | **Google Cloud AI at Runtime** | `@google/genai` (Gemini 2.0 Flash for Multimodal Vision, Reasoning, and Debate) | ✅ Active Runtime Usage |
 | **Parallel Search API at Runtime** | `parallel-web` SDK querying Trademark, Municipal, Case Law, and Tax databases | ✅ Active Runtime Usage |
 | **Open Source License** | Permissive MIT License in root repository | ✅ MIT Detectable |
 | **Platform Target** | Responsive Web App built with Next.js 14, Tailwind CSS, Framer Motion | ✅ Web App |
-| **No Prohibited AI APIs** | 100% powered by Google Cloud Gemini + Parallel Search (Zero OpenAI/Anthropic calls) | ✅ Fully Compliant |
+| **Model Restriction** | 100% powered by Google Cloud Gemini + Parallel Search (Zero third-party AI APIs) | ✅ Fully Compliant |
 
 ---
 
-## 🛠️ Tech Stack & Dependencies
+## 🛠️ Tech Stack & Directory Structure
 
 ```
 deepclear-studio/
@@ -151,11 +151,11 @@ deepclear-studio/
 │   ├── api/analyze/      # SSE Multimodal Swarm Extraction
 │   ├── api/debate/       # Agent Dialectic Debate Stream
 │   └── api/defuse-prop/  # Storyboard Safe-Prop Substitution
-├── components/           # War Room Glassmorphism UI
-│   ├── AgentNetworkGraph # 5-Node Swarm with Bezier Telemetry
+├── components/           # War Room UI
+│   ├── AgentNetworkGraph # 5-Node Swarm with Live Telemetry
 │   ├── ScriptViewer      # Dynamic Strike-Through & Mutation
 │   ├── StoryboardViewer  # Multimodal Bounding Box & Slider
-│   ├── DynamicHUD        # Actuarial Gauge & Butterfly Headline
+│   ├── DynamicHUD        # Actuarial Gauge & Trade Impact Card
 │   └── AudibleWarRoom    # Dual-Voice Web Speech Synthesizer
 ├── lib/
 │   ├── gemini.ts         # Google GenAI SDK Client
@@ -194,7 +194,7 @@ NEXT_PUBLIC_RPC_URL=https://sepolia.base.org
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to enter the DeepClear Studio War Room.
+Open [http://localhost:3000](http://localhost:3000) to launch DeepClear Studio.
 
 ---
 
@@ -205,5 +205,5 @@ Distributed under the **MIT License**. See [LICENSE](LICENSE) for more informati
 ---
 
 <div align="center">
-  <sub>Built with 🎬 passion for the Google Cloud Agentic Cinema Hackathon (Parallel Track).</sub>
+  <sub>DeepClear Studio — Google Cloud Agentic Cinema Hackathon (Parallel Track)</sub>
 </div>

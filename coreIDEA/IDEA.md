@@ -1,4 +1,4 @@
-# DeepClear Studio — Master Concept & Strategy (V4.5 Alien Blueprint)
+# DeepClear Studio — Master Concept & Strategy (V4.5 Architecture Blueprint)
 
 **Project Subtitle:** Autonomous Multimodal Film Clearance, Crew-Agent Dialectic Negotiation & E&O Underwriting Engine  
 **Hackathon:** Google Cloud Agentic Cinema: The Blockbuster Hackathon  
@@ -46,16 +46,16 @@ DeepClear Studio mirrors an authentic Hollywood production clearance war room wh
 
 ---
 
-## 3. The 5 "Alien-Tier" Core Breakthroughs
+## 3. The 5 Core Architectural Innovations
 
-### 🛸 Breakthrough 1: Multimodal "Vision Clearance" & Generative Safe-Prop In-Painting
-* **Why it's Alien:** Over 60% of real-world film clearance disputes happen in storyboards and footage (e.g., an actor holding a branded Rolex watch, a Nike logo on a jacket, or unpermitted background architectural art).
+### 1. Multimodal "Vision Clearance" & Generative Safe-Prop In-Painting
+* **Problem:** Over 60% of real-world film clearance disputes happen in storyboards and footage (e.g., an actor holding a branded Rolex watch, a Nike logo on a jacket, or unpermitted background architectural art).
 * **The Implementation:**
   * Script Supervisor parses uploaded storyboard sketches/images, pinpointing visual trademark infringements with precision bounding boxes (`[⚠️ Visual Trademark: Rolex Submariner on wrist]`).
   * **Generative Prop Defusal:** With 1 click, the swarm synthesizes a legally safe, fiction-universe replacement prop directly on the storyboard canvas (e.g., replacing a Rolex with a fictional "Chronos 1974" vintage timepiece or turning a Nike logo into a generic stripe).
   * **Interactive UI:** A split-screen **"Before (Infringing) vs. After (Cleared)"** comparison slider.
 
-### 🛸 Breakthrough 2: Parallel Search 4-Dimensional "Deep Grounding" Matrix
+### 2. Parallel Search 4-Dimensional "Deep Grounding" Matrix
 DeepClear Studio utilizes Parallel's live web infrastructure across four distinct search modalities:
 1. **USPTO & Trademark Registry Scans:** Verifies whether fictional brand names accidentally infringe active live commercial registrations (`category: "trademark"`).
 2. **Municipal Permitting & Drone Airspace Ordinances:** Queries live municipal film commission regulations, LAPD permit fees, and FAA drone restrictions (`category: "permit"`).
@@ -63,20 +63,20 @@ DeepClear Studio utilizes Parallel's live web infrastructure across four distinc
 4. **Active State Film Tax Credit Arbitrage:** Queries live state and international film incentive portals (Georgia 30%, New Mexico 35%, UK Film Tax Relief 25.5%) to compute dollar-for-dollar budget savings when switching filming locations (`category: "tax"`).
 * Every UI flag includes a **"Verified via Parallel Live Grounding" chip** showing live source URLs, timestamps, and legal quote snippets.
 
-### 🛸 Breakthrough 3: The Audible Dialectic War Room & Live Script Mutation
+### 3. The Audible Dialectic War Room & Live Script Mutation
 * **The Audible Debate:** The multi-agent debate is synthesized through dual-tone browser audio (passionate, urgent tone for the Director; calm, analytical tone for Legal Counsel).
 * **Live Script Mutation:** As the Director and Counsel negotiate, the script text on screen **physically strikes through red hazardous lines in real-time and types the negotiated compromise in glowing emerald green**.
 * **Dialectic Compromise Engine:** Resolves conflicts through realistic production compromises (e.g., "Blur brand in post-production", "Substitute vintage prop", or "Reroute stunt to private property").
 
-### 🛸 Breakthrough 4: Form E&O-2026 Insurance Binder PDF & On-Chain Clearance Passport
+### 4. Form E&O-2026 Insurance Binder PDF & On-Chain Clearance Passport
 * **Form E&O-2026 Binder:** DeepClear exports a publication-ready, multi-page **Standard Motion Picture Errors & Omissions Underwriting Binder (.PDF)** containing full itemized clearance schedules, Parallel citations, and risk sign-offs.
 * **On-Chain Clearance Passport:** Generates an immutable SHA-256 Merkle audit record of all agent debates, Parallel search proofs, and script revisions, minting a cryptographic clearance token to an EVM testnet (Base Sepolia / Polygon Amoy) with a live block explorer verification link.
 
-### 🛸 Breakthrough 5: The "Butterfly Effect" Trade Headline Simulation
-* A dynamic Hollywood trade magazine banner at the top of the HUD updates based on real-time liability score:
-  * **High-Risk State (Flashing Neon Red):**
+### 5. The Trade Impact & Production Simulation
+* A dynamic trade publication banner at the top of the HUD updates based on real-time liability score:
+  * **High-Risk State (Neon Red):**
     > *"VARIETY: Indie Feature Bankrupted After Unpermitted LA Bridge Stunt Halts Traffic; Studio Faces $2.4M Trademark Injunction."*
-  * **Cleared State (Glowing Emerald Green):**
+  * **Cleared State (Emerald Green):**
     > *"DEADLINE: Indie Sensation Sparks 5-Platform Bidding War at Sundance Following Clean E&O Clearance & $180K Tax Rebate."*
 
 ---
