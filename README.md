@@ -12,13 +12,6 @@
 
 ---
 
-## 🌐 Live Production Deployment
-
-🔗 **Official Hackathon URL**: **[https://deepclear-studio.vercel.app](https://deepclear-studio.vercel.app)**  
-📦 **GitHub Repository**: **[github.com/miracles2motion/deepclear-studio](https://github.com/miracles2motion/deepclear-studio)**
-
----
-
 ## 🌟 Executive Summary
 
 Before any independent film or studio series can stream on **Netflix, Amazon Prime, Apple TV+**, or premiere at major film festivals (Sundance, Cannes, TIFF), production companies must secure an **Errors & Omissions (E&O) Insurance Policy** and verify a pristine **Chain of Title**.

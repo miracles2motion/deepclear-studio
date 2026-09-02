@@ -4,6 +4,12 @@ All notable changes, fixes, and architectural milestones are documented in this 
 
 ---
 
+## [v0.3.4] — 2026-09-02 (07:18)
+### 🧹 Documentation Polish
+- Cleaned redundant repository URLs from `README.md` to keep the layout minimalist and focused.
+
+---
+
 ## [v0.3.3] — 2026-09-02 (07:15)
 ### 📚 Documentation & Judge Alignment
 - Synchronized `README.md` with the live production deployment URL: `https://deepclear-studio.vercel.app`.
