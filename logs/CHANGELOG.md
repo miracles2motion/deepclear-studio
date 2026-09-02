@@ -1,5 +1,16 @@
 # DeepClear Studio — Changelog
 
+## [v0.1.0] — 2026-09-02
+
+### 🚀 Changes
+- Scaffolding: Next.js 14 App Router, TypeScript, and Tailwind CSS Obsidian Film Lab design tokens
+- Backend: Integrated `@google/genai` (Gemini 2.0 Flash) and `parallel-web` (Parallel 4D Search)
+- Streaming: Built `/api/analyze` and `/api/debate` SSE routes for real-time multi-agent telemetry
+- Frontend UI: Built `HeaderControlBar`, `AgentNetworkGraph`, `ScriptViewer`, `StoryboardInspector`, `DynamicHUD`, and `AudibleWarRoom`
+- Deliverables: Built `pdfGenerator.ts` for Form E&O-2026 PDF export and `web3.ts` for Base Sepolia testnet minting
+- Deployment: Added `Dockerfile` and `cloudbuild.yaml` for Google Cloud Run containerization
+- Verification: Verified 100% clean TypeScript compilation and static page generation with zero errors
+
 ## [v0.0.1] — 2026-09-02
 
 ### 🚀 Changes
