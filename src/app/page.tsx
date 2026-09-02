@@ -42,6 +42,7 @@ interface ChatMessage {
   entities?: ExtractedEntity[];
   debateTurn?: DebateTurn;
   replyTo?: {
+    messageId?: string;
     senderName: string;
     snippet: string;
   };
@@ -374,6 +375,19 @@ export default function DeepClearStudioPage() {
   // Helper for paced async delays
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+  // Smooth scroll and glow-highlight target replied message
+  const handleScrollToMessage = (targetId?: string) => {
+    if (!targetId || typeof document === "undefined") return;
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-sky-400", "bg-sky-950/20");
+      setTimeout(() => {
+        el.classList.remove("ring-2", "ring-sky-400", "bg-sky-950/20");
+      }, 2200);
+    }
+  };
+
   // Handle Negotiate / Dialectic Debate with live Gemini dynamic dialogue generation & sequential voice
   const handleStartDebate = async (entity: ExtractedEntity) => {
     setIsLoading(true);
@@ -414,6 +428,13 @@ export default function DeepClearStudioPage() {
       // Fallback to contextual defaults if network drops
     }
 
+    // Unique IDs for deterministic reply tagging and scroll targets
+    const now = Date.now();
+    const counselMsgId = `deb-counsel-${now}`;
+    const dirMsgId = `deb-dir-${now + 1}`;
+    const compMsgId = `deb-comp-${now + 2}`;
+    const accMsgId = `deb-acc-${now + 3}`;
+
     // -------------------------------------------------------------
     // Step 1: Legal Counsel reviews and raises statutory objection
     // -------------------------------------------------------------
@@ -425,7 +446,7 @@ export default function DeepClearStudioPage() {
     setMessages((prev) => [
       ...prev,
       {
-        id: `deb-counsel-${Date.now()}`,
+        id: counselMsgId,
         sender: "legal_counsel",
         senderName: "Studio Legal Counsel",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -453,13 +474,14 @@ export default function DeepClearStudioPage() {
     setMessages((prev) => [
       ...prev,
       {
-        id: `deb-dir-${Date.now()}`,
+        id: dirMsgId,
         sender: "director",
         senderName: "The Director",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
         content: directorArg,
         replyTo: {
+          messageId: counselMsgId,
           senderName: "Studio Legal Counsel",
           snippet: counselArg.length > 55 ? counselArg.slice(0, 52) + "..." : counselArg,
         },
@@ -481,13 +503,14 @@ export default function DeepClearStudioPage() {
     setMessages((prev) => [
       ...prev,
       {
-        id: `deb-comp-${Date.now()}`,
+        id: compMsgId,
         sender: "legal_counsel",
         senderName: "Studio Legal Counsel",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
         content: counselCompromise,
         replyTo: {
+          messageId: dirMsgId,
           senderName: "The Director",
           snippet: directorArg.length > 55 ? directorArg.slice(0, 52) + "..." : directorArg,
         },
@@ -509,13 +532,14 @@ export default function DeepClearStudioPage() {
     setMessages((prev) => [
       ...prev,
       {
-        id: `deb-acc-${Date.now()}`,
+        id: accMsgId,
         sender: "director",
         senderName: "The Director",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
         content: directorAccept,
         replyTo: {
+          messageId: compMsgId,
           senderName: "Studio Legal Counsel",
           snippet: counselCompromise.length > 55 ? counselCompromise.slice(0, 52) + "..." : counselCompromise,
         },
@@ -557,6 +581,7 @@ export default function DeepClearStudioPage() {
             entity.originalExposure
           )}.`,
           replyTo: {
+            messageId: accMsgId,
             senderName: "The Director",
             snippet: directorAccept.length > 55 ? directorAccept.slice(0, 52) + "..." : directorAccept,
           },
@@ -760,7 +785,10 @@ export default function DeepClearStudioPage() {
               return (
                 <div
                   key={msg.id}
-                  className={`flex gap-3.5 items-start ${isUser ? "justify-end" : "justify-start"}`}
+                  id={msg.id}
+                  className={`flex gap-3.5 items-start transition-all duration-300 p-1 rounded-2xl ${
+                    isUser ? "justify-end" : "justify-start"
+                  }`}
                 >
                   {/* Agent Avatar */}
                   {!isUser && (
@@ -800,17 +828,22 @@ export default function DeepClearStudioPage() {
                             : "bg-[#141416] border border-white/[0.08] text-zinc-200 rounded-tl-sm shadow-sm"
                         }`}
                       >
-                        {/* Quoted Direct Reply Banner */}
+                        {/* Quoted Direct Reply Banner (Click to jump & highlight) */}
                         {msg.replyTo && (
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/90 border border-white/[0.06] border-l-2 border-l-sky-400 text-[11px] font-mono text-zinc-400 mb-2 max-w-full truncate">
-                            <CornerDownRight className="h-3 w-3 text-sky-400 shrink-0" />
+                          <button
+                            type="button"
+                            onClick={() => handleScrollToMessage(msg.replyTo?.messageId)}
+                            className="w-full flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-white/[0.06] border-l-2 border-l-sky-400 text-[11px] font-mono text-zinc-400 mb-2 max-w-full truncate text-left transition-all hover:border-l-sky-300 active:scale-[0.99] cursor-pointer group shadow-sm"
+                            title={msg.replyTo.messageId ? "Click to jump to replied message" : undefined}
+                          >
+                            <CornerDownRight className="h-3 w-3 text-sky-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
                             <span className="font-semibold text-zinc-300 shrink-0">
                               @{msg.replyTo.senderName}:
                             </span>
-                            <span className="truncate italic text-zinc-400">
+                            <span className="truncate italic text-zinc-400 group-hover:text-zinc-200">
                               "{msg.replyTo.snippet}"
                             </span>
-                          </div>
+                          </button>
                         )}
                         {msg.content}
                       </div>
