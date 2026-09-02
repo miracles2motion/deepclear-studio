@@ -113,17 +113,72 @@ ${scriptText}`;
 export async function generateScreenplayScene(customPrompt?: string) {
   const genAI = getGeminiClient();
 
-  const defaultPrompt = `You are an acclaimed Hollywood screenwriter.
-Generate a high-stakes, cinematic screenplay scene excerpt (15-20 lines in standard Fountain screenplay format) featuring vivid dramatic tension.
-Naturally include 2 to 3 real-world production elements that require legal clearance (such as a recognizable luxury brand prop, a commercial background song cue, or a complex municipal stunt/location like a bridge or aerial drone).
+  // Diverse real-world cinematic premises, locations, and varied legal clearance elements
+  const sceneThemes = [
+    {
+      genre: "Silicon Valley Cyber Heist",
+      setting: "INT. PALO ALTO BIOTECH LAB - NIGHT",
+      location: "San Francisco / Silicon Valley, California",
+      hazards: "Apple Vision Pro headset, a high-end Tesla Cybertruck, or a Radiohead soundtrack cue",
+    },
+    {
+      genre: "Savannah Southern Gothic Noir",
+      setting: "EXT. FORSYTH PARK - SAVANNAH, GEORGIA - DUSK",
+      location: "Savannah, Georgia (Historic District MOME permit zone)",
+      hazards: "a bottle of Macallan 25 Scotch, a vintage 1968 Ford Mustang Fastback, or an Otis Redding vinyl playing",
+    },
+    {
+      genre: "Tokyo Underground Espionage",
+      setting: "EXT. SHIBUYA CROSSING - RAIN - NIGHT",
+      location: "Tokyo, Japan (Public street crowd filming permit)",
+      hazards: "a neon billboard of Sony PlayStation, a customized Ducati Panigale, or a Daft Punk electronic beat",
+    },
+    {
+      genre: "Albuquerque Desert Drug Smuggling Standoff",
+      setting: "EXT. ROUTE 66 DESERT JUNKYARD - NEW MEXICO - DAY",
+      location: "Bernalillo County, New Mexico (Film Tax Incentive Zone)",
+      hazards: "a DJI Matrice Thermal Surveillance Drone, a Patagonia tactical jacket, or a classic Johnny Cash song playing",
+    },
+    {
+      genre: "Chicago Art Gallery Heist",
+      setting: "INT. RIVER NORTH CONTEMPORARY GALLERY - CHICAGO - NIGHT",
+      location: "Chicago, Illinois (Public museum & architectural copyright zone)",
+      hazards: "a prominent Jeff Koons balloon sculpture on display, a Leica M11 Rangefinder camera, or a Miles Davis jazz cue",
+    },
+    {
+      genre: "Miami High-Speed Harbor Pursuit",
+      setting: "EXT. BISCAYNE BAY - SPEEDBOAT COCKPIT - MIDNIGHT",
+      location: "Miami-Dade, Florida (Coast Guard maritime filming permit)",
+      hazards: "a Midnight Express 430 powerboat with triple Mercury Racing engines, a Hermès travel duffel, or a Bad Bunny reggaeton track",
+    },
+    {
+      genre: "London Financial District Thriller",
+      setting: "INT. CANARY WHARF PENTHOUSE - LONDON - SUNRISE",
+      location: "Greater London, UK (City of London filming & airspace clearance)",
+      hazards: "a Bloomberg Terminal display with proprietary financial feeds, a pair of bespoke Savile Row suits, or a David Bowie background track",
+    },
+  ];
 
-Output ONLY the formatted screenplay scene text in Fountain format without any markdown code fences, greetings, or extra explanations.`;
+  const selectedTheme = sceneThemes[Math.floor(Math.random() * sceneThemes.length)];
+
+  const defaultPrompt = `You are an Oscar-nominated Hollywood screenwriter.
+Write an original, gripping, hyper-realistic cinematic scene excerpt (16 to 22 lines in standard professional Fountain screenplay format).
+
+Genre & Mood: ${selectedTheme.genre}
+Setting Header: ${selectedTheme.setting}
+Geographic Location: ${selectedTheme.location}
+
+Rules for Real-World Clearance Authenticity:
+1. Ground the scene in natural, razor-sharp cinematic dialogue and visceral visual action.
+2. Naturally integrate 2 to 3 distinct real-world production elements that an E&O insurance underwriter would inspect (e.g., ${selectedTheme.hazards}, copyrighted brand props, municipal municipal stunt permits, fine art, or commercial music cues).
+3. Do NOT repeat the same cliché brands (avoid relying on Rolex or Queensboro bridge unless specifically requested). Be creative, versatile, and modern.
+4. Output ONLY the raw Fountain screenplay text (no markdown triple backticks, no introductions, no title cards).`;
 
   const result = await generateContentWithCascade(genAI, customPrompt || defaultPrompt, {
-    temperature: 0.8,
+    temperature: 0.9,
   });
 
-  return result.response.text().trim();
+  return result.response.text().trim().replace(/^```(?:fountain|markdown)?\n?/, "").replace(/\n?```$/, "");
 }
 
 /**
