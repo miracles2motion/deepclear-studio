@@ -12,6 +12,7 @@ interface HeaderControlBarProps {
   isScanning: boolean;
   isCleared: boolean;
   onOpenExportModal: () => void;
+  onOpenUploadModal: () => void;
 }
 
 export const HeaderControlBar: React.FC<HeaderControlBarProps> = ({
@@ -21,6 +22,7 @@ export const HeaderControlBar: React.FC<HeaderControlBarProps> = ({
   isScanning,
   isCleared,
   onOpenExportModal,
+  onOpenUploadModal,
 }) => {
   return (
     <header className="w-full bg-surface/90 backdrop-blur-md border-b border-surface-border sticky top-0 z-50 px-4 py-3">
@@ -45,7 +47,7 @@ export const HeaderControlBar: React.FC<HeaderControlBarProps> = ({
           </div>
         </div>
 
-        {/* 1-Click Preset Scenario Selector */}
+        {/* 1-Click Preset Scenario Selector + Import Button */}
         <div className="flex items-center gap-2 bg-surface-subtle/80 p-1 rounded-xl border border-surface-border text-xs">
           <span className="text-slate-400 font-mono px-2 font-medium hidden lg:inline">PRESETS:</span>
           {PRESET_SCENARIOS.map((sc) => {
@@ -65,6 +67,14 @@ export const HeaderControlBar: React.FC<HeaderControlBarProps> = ({
               </button>
             );
           })}
+
+          {/* Import Custom Script Button */}
+          <button
+            onClick={onOpenUploadModal}
+            className="px-3 py-1.5 rounded-lg font-medium text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/40 border border-cyan-500/30 transition-all ml-1 flex items-center gap-1.5"
+          >
+            <span>+ Import Script</span>
+          </button>
         </div>
 
         {/* Action Buttons */}

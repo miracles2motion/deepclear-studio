@@ -10,6 +10,7 @@ import { StoryboardInspector } from "@/components/StoryboardInspector";
 import { DynamicHUD } from "@/components/DynamicHUD";
 import { AudibleWarRoom } from "@/components/AudibleWarRoom";
 import { ExportModal } from "@/components/ExportModal";
+import { ScriptUploadModal } from "@/components/ScriptUploadModal";
 
 export default function DeepClearStudioPage() {
   const [selectedScenario, setSelectedScenario] = useState<PresetScenario>(PRESET_SCENARIOS[0]);
@@ -27,6 +28,32 @@ export default function DeepClearStudioPage() {
   );
   const [debateTurns, setDebateTurns] = useState<DebateTurn[]>([]);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
+
+  // Handle Custom Ingested Script
+  const handleIngestCustomScript = (data: {
+    title: string;
+    scriptText: string;
+    imageBase64?: string;
+  }) => {
+    const customScenario: PresetScenario = {
+      id: `custom-${Date.now()}`,
+      title: data.title,
+      genre: "Custom Production Script",
+      description: "User uploaded screenplay for autonomous multimodal clearance.",
+      initialRiskUsd: 1500000,
+      scriptText: data.scriptText,
+    };
+
+    setSelectedScenario(customScenario);
+    setInitialExposure(1500000);
+    setCurrentExposure(1500000);
+    setDebateTurns([]);
+    setIsDefused(false);
+    setClearedEntityIds([]);
+    setEntities([]);
+    setActiveThought(`Loaded custom screenplay "${data.title}". Click 'Execute Scan' to analyze.`);
+  };
 
   // Handle Scenario Switch
   const handleSelectScenario = (scenario: PresetScenario) => {
@@ -167,6 +194,7 @@ export default function DeepClearStudioPage() {
         isScanning={isScanning}
         isCleared={isFullyCleared}
         onOpenExportModal={() => setIsExportModalOpen(true)}
+        onOpenUploadModal={() => setIsUploadModalOpen(true)}
       />
 
       {/* Main War Room Body */}
@@ -232,6 +260,13 @@ export default function DeepClearStudioPage() {
         currentExposure={currentExposure}
         taxSavings={taxSavings}
         entities={entities}
+      />
+
+      {/* Script & Storyboard Asset Upload Modal */}
+      <ScriptUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onIngestScript={handleIngestCustomScript}
       />
     </main>
   );
