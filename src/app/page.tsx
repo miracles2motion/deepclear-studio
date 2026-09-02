@@ -341,6 +341,7 @@ export default function DeepClearStudioPage() {
 
   const [agentTypingStatus, setAgentTypingStatus] = useState<string | null>(null);
   const [speakingAgent, setSpeakingAgent] = useState<AgentRole | null>(null);
+  const [agentThinking, setAgentThinking] = useState<{ role: AgentRole; thought: string } | null>(null);
 
   // Helper to match distinct browser voices per agent persona
   const getAgentVoice = (
@@ -517,9 +518,14 @@ export default function DeepClearStudioPage() {
     // -------------------------------------------------------------
     setActiveAgent("legal_counsel");
     setAgentTypingStatus("Legal Counsel is citing statutory doctrine...");
-    await sleep(800);
+    setAgentThinking({
+      role: "legal_counsel",
+      thought: `Analyzing ${entity.category.toUpperCase()} exposure under Lanham Act § 43(a) for "${entity.rawText}"...`,
+    });
+    await sleep(1000);
 
     setAgentTypingStatus(null);
+    setAgentThinking(null);
     setMessages((prev) => [
       ...prev,
       {
@@ -548,9 +554,14 @@ export default function DeepClearStudioPage() {
     // -------------------------------------------------------------
     setActiveAgent("director");
     setAgentTypingStatus("The Director is formulating creative defense...");
-    await sleep(800);
+    setAgentThinking({
+      role: "director",
+      thought: `Evaluating Rogers v. Grimaldi artistic relevance and character motivation for "${entity.rawText}"...`,
+    });
+    await sleep(1000);
 
     setAgentTypingStatus(null);
+    setAgentThinking(null);
     setMessages((prev) => [
       ...prev,
       {
@@ -577,9 +588,14 @@ export default function DeepClearStudioPage() {
     // -------------------------------------------------------------
     setActiveAgent("legal_counsel");
     setAgentTypingStatus("Legal Counsel is drafting copyright-safe substitute prop...");
-    await sleep(800);
+    setAgentThinking({
+      role: "legal_counsel",
+      thought: `Drafting copyright-safe narrative prop substitution to defuse ${formatCurrency(entity.originalExposure)} exposure...`,
+    });
+    await sleep(1000);
 
     setAgentTypingStatus(null);
+    setAgentThinking(null);
     setMessages((prev) => [
       ...prev,
       {
@@ -606,9 +622,14 @@ export default function DeepClearStudioPage() {
     // -------------------------------------------------------------
     setActiveAgent("director");
     setAgentTypingStatus("The Director is reviewing aesthetic match...");
-    await sleep(700);
+    setAgentThinking({
+      role: "director",
+      thought: "Reviewing prop substitute aesthetic match and art department feasibility...",
+    });
+    await sleep(900);
 
     setAgentTypingStatus(null);
+    setAgentThinking(null);
     setMessages((prev) => [
       ...prev,
       {
@@ -634,6 +655,12 @@ export default function DeepClearStudioPage() {
     // Step 5: Script Supervisor mutates the script & Bond Officer clears risk
     // -------------------------------------------------------------
     setActiveAgent("script_supervisor");
+    setAgentThinking({
+      role: "script_supervisor",
+      thought: `Mutating screenplay text: substituting "${entity.rawText}" with "${compromiseText}"...`,
+    });
+    await sleep(800);
+    setAgentThinking(null);
     const newClearedIds = [...clearedEntityIds, entity.id];
     setClearedEntityIds(newClearedIds);
     const newExposure = Math.max(0, currentExposure - entity.originalExposure);
@@ -871,6 +898,26 @@ export default function DeepClearStudioPage() {
                         </p>
                       </div>
                     </div>
+
+                    {/* Agent Thinking Process Mini-Card */}
+                    {agentThinking?.role === ag.role && (
+                      <div className="mt-2.5 p-2 rounded-lg bg-[#0C0C0E] border border-sky-500/40 text-[10px] font-mono text-sky-300 animate-in fade-in slide-in-from-top-1 duration-200 shadow-md flex items-start gap-1.5">
+                        <Sparkles className="h-3 w-3 text-sky-400 shrink-0 mt-0.5 animate-spin" />
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="text-[9px] uppercase tracking-wider text-sky-400 font-bold flex items-center gap-1">
+                            <span>Thinking</span>
+                            <span className="inline-flex gap-0.5">
+                              <span className="h-1 w-1 rounded-full bg-sky-400 animate-bounce [animation-delay:-0.3s]" />
+                              <span className="h-1 w-1 rounded-full bg-sky-400 animate-bounce [animation-delay:-0.15s]" />
+                              <span className="h-1 w-1 rounded-full bg-sky-400 animate-bounce" />
+                            </span>
+                          </div>
+                          <p className="text-zinc-300 leading-snug break-words italic">
+                            "{agentThinking.thought}"
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
