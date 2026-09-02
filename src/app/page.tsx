@@ -625,12 +625,12 @@ export default function DeepClearStudioPage() {
     // Step 1: Legal Counsel reviews and raises statutory objection
     // -------------------------------------------------------------
     setActiveAgent("legal_counsel");
-    setAgentTypingStatus("Legal Counsel is citing statutory doctrine...");
+    setAgentTypingStatus("Legal Counsel is analyzing statutory exposure...");
     setAgentThinking({
       role: "legal_counsel",
       thought: `Analyzing ${entity.category.toUpperCase()} exposure under Lanham Act § 43(a) for "${entity.rawText}"...`,
     });
-    await sleep(1000);
+    await sleep(1800);
 
     setAgentTypingStatus(null);
     setAgentThinking(null);
@@ -666,7 +666,7 @@ export default function DeepClearStudioPage() {
       role: "director",
       thought: `Evaluating Rogers v. Grimaldi artistic relevance and character motivation for "${entity.rawText}"...`,
     });
-    await sleep(1000);
+    await sleep(1800);
 
     setAgentTypingStatus(null);
     setAgentThinking(null);
@@ -700,7 +700,7 @@ export default function DeepClearStudioPage() {
       role: "legal_counsel",
       thought: `Drafting copyright-safe narrative prop substitution to defuse ${formatCurrency(entity.originalExposure)} exposure...`,
     });
-    await sleep(1000);
+    await sleep(1800);
 
     setAgentTypingStatus(null);
     setAgentThinking(null);
@@ -734,7 +734,7 @@ export default function DeepClearStudioPage() {
       role: "director",
       thought: "Reviewing prop substitute aesthetic match and art department feasibility...",
     });
-    await sleep(900);
+    await sleep(1800);
 
     setAgentTypingStatus(null);
     setAgentThinking(null);
@@ -763,11 +763,13 @@ export default function DeepClearStudioPage() {
     // Step 5: Script Supervisor mutates the script & Bond Officer clears risk
     // -------------------------------------------------------------
     setActiveAgent("script_supervisor");
+    setAgentTypingStatus("Script Supervisor is mutating screenplay text...");
     setAgentThinking({
       role: "script_supervisor",
       thought: `Mutating screenplay text: substituting "${entity.rawText}" with "${compromiseText}"...`,
     });
-    await sleep(800);
+    await sleep(1500);
+    setAgentTypingStatus(null);
     setAgentThinking(null);
     const newClearedIds = [...clearedEntityIds, entity.id];
     setClearedEntityIds(newClearedIds);
@@ -1407,19 +1409,53 @@ export default function DeepClearStudioPage() {
               );
             })}
 
-            {/* Agent Typing & Reasoning Indicator with Rotating Spinner */}
-            {(isLoading || agentTypingStatus || isGeneratingScene) && (
-              <div className="flex items-center gap-2.5 text-xs font-mono text-zinc-300 bg-[#141416] border border-white/[0.08] p-3 rounded-xl shadow-sm">
-                <Loader2 className="h-4 w-4 text-sky-400 animate-spin shrink-0" />
-                <div className="flex flex-col">
-                  <span className="font-semibold text-zinc-200">
-                    [{activeAgent ? activeAgent.replace("_", " ").toUpperCase() : "SWARM"}]:
-                  </span>
-                  <span className="text-zinc-400">
+            {/* In-Chat Agent Reasoning & Typing Indicator */}
+            {(isLoading || agentTypingStatus || isGeneratingScene || agentThinking) && (
+              <div className="flex gap-3.5 items-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {/* Agent Persona Avatar */}
+                <div
+                  className={`h-7 w-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs ${
+                    activeAgent && AGENT_THEMES[activeAgent]
+                      ? `${AGENT_THEMES[activeAgent].iconBg} ${AGENT_THEMES[activeAgent].iconBorder} ${AGENT_THEMES[activeAgent].iconText}`
+                      : "bg-zinc-900 border-white/10 text-sky-400"
+                  }`}
+                >
+                  {activeAgent === "director" ? (
+                    <Clapperboard className="h-3.5 w-3.5 text-rose-400" />
+                  ) : activeAgent === "legal_counsel" ? (
+                    <Scale className="h-3.5 w-3.5 text-sky-400" />
+                  ) : activeAgent === "script_supervisor" ? (
+                    <Eye className="h-3.5 w-3.5 text-emerald-400" />
+                  ) : activeAgent === "location_manager" ? (
+                    <MapPin className="h-3.5 w-3.5 text-amber-400" />
+                  ) : (
+                    <ShieldAlert className="h-3.5 w-3.5 text-indigo-400" />
+                  )}
+                </div>
+
+                {/* Reasoning & Loading Bubble */}
+                <div className="p-3.5 rounded-2xl bg-[#141416] border border-white/[0.08] text-xs font-mono space-y-1.5 shadow-md max-w-[85%] rounded-tl-sm">
+                  <div className="flex items-center gap-2 text-zinc-400 font-semibold">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-400" />
+                    <span
+                      className={
+                        activeAgent && AGENT_THEMES[activeAgent]
+                          ? AGENT_THEMES[activeAgent].accentText
+                          : "text-sky-400"
+                      }
+                    >
+                      [{activeAgent ? activeAgent.replace("_", " ").toUpperCase() : "DEEPCLEAR SWARM"}]:
+                    </span>
+                    <span className="text-zinc-600">•</span>
+                    <span className="text-[10px] text-zinc-500 font-normal">Processing...</span>
+                  </div>
+                  <p className="text-zinc-300 leading-relaxed italic">
                     {isGeneratingScene
                       ? "Generating fresh original screenplay scene with Google Cloud Gemini..."
-                      : agentTypingStatus || "Querying Gemini Multimodal Vision & Parallel Search API..."}
-                  </span>
+                      : agentThinking?.thought ||
+                        agentTypingStatus ||
+                        "Querying Gemini Multimodal Vision & Parallel Search API..."}
+                  </p>
                 </div>
               </div>
             )}
