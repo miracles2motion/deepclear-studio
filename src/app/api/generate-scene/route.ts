@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGeminiClient } from "@/lib/gemini";
+import { getGeminiClient, GEMINI_MODEL_NAME } from "@/lib/gemini";
 
 export const runtime = "nodejs";
 
@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     const genAI = getGeminiClient();
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: GEMINI_MODEL_NAME,
       generationConfig: {
         temperature: 0.8,
       },

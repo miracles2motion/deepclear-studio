@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+export const GEMINI_MODEL_NAME = "gemini-3.6-flash";
+
 export function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === "your_gemini_api_key_here") {
@@ -17,7 +19,7 @@ export async function analyzeScreenplayWithGemini(
   const genAI = getGeminiClient();
 
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
+    model: GEMINI_MODEL_NAME,
     generationConfig: {
       responseMimeType: "application/json",
       temperature: 0.2,
@@ -76,7 +78,7 @@ export async function generateDialecticTurn(params: {
   const genAI = getGeminiClient();
 
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
+    model: GEMINI_MODEL_NAME,
     generationConfig: {
       temperature: params.speaker === "director" ? 0.7 : 0.2,
     },
