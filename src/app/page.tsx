@@ -483,10 +483,12 @@ export default function DeepClearStudioPage() {
           <div className="space-y-4">
             {/* Logo & New Chat */}
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-              <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-lg bg-zinc-800 border border-white/10 flex items-center justify-center font-bold text-xs text-zinc-100">
-                  DC
-                </div>
+              <div className="flex items-center gap-2.5">
+                <img
+                  src="/favicon.png"
+                  alt="DeepClear Studio"
+                  className="h-7 w-7 rounded-lg object-cover border border-white/10 shadow-sm"
+                />
                 <span className="font-semibold text-sm text-zinc-100 tracking-tight">
                   DeepClear Studio
                 </span>
