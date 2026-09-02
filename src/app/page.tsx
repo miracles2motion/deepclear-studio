@@ -1119,33 +1119,46 @@ export default function DeepClearStudioPage() {
             </div>
 
             {/* Dynamic Clearance & Distribution Risk Card */}
-            <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] font-mono uppercase">
-                <span className="text-zinc-400">Distribution Risk</span>
-                {initialExposure === 0 ? (
-                  <span className="text-zinc-500">IDLE</span>
-                ) : isCleared ? (
-                  <span className="text-emerald-400 font-semibold">APPROVED</span>
-                ) : (
-                  <span className="text-rose-400 font-semibold">HOLD</span>
-                )}
-              </div>
-              <p className="text-xs text-zinc-300 leading-snug">
-                {initialExposure === 0 ? (
-                  <span className="text-zinc-500">
-                    Awaiting script ingestion. Paste or attach screenplay text to calculate statutory exposure.
-                  </span>
-                ) : isCleared ? (
-                  <span className="text-emerald-300">
-                    All {entities.length} liabilities resolved with $0 exposure. Form E&O-2026 Underwriting Binder ready for distribution.
-                  </span>
-                ) : (
-                  <span className="text-rose-300">
-                    {entities.length} unmitigated liabilities detected ({entities.map((e) => e.rawText).slice(0, 2).join(", ")}). Distribution deal holds pending clearance.
-                  </span>
-                )}
-              </p>
-            </div>
+            {(() => {
+              const pendingEntities = entities.filter((e) => !clearedEntityIds.includes(e.id));
+              const pendingCount = pendingEntities.length;
+              const clearedCount = entities.length - pendingCount;
+              const isFullyResolved = initialExposure > 0 && (pendingCount === 0 || currentExposure === 0);
+
+              return (
+                <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] font-mono uppercase">
+                    <span className="text-zinc-400">Distribution Risk</span>
+                    {initialExposure === 0 ? (
+                      <span className="text-zinc-500 font-semibold">IDLE</span>
+                    ) : isFullyResolved ? (
+                      <span className="text-emerald-400 font-semibold">APPROVED</span>
+                    ) : (
+                      <span className="text-rose-400 font-semibold">
+                        HOLD ({clearedCount}/{entities.length} CLEARED)
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-300 leading-snug">
+                    {initialExposure === 0 ? (
+                      <span className="text-zinc-500">
+                        Awaiting screenplay ingestion to evaluate statutory exposure.
+                      </span>
+                    ) : isFullyResolved ? (
+                      <span className="text-emerald-300">
+                        All {entities.length} liabilities resolved with $0 exposure. Form E&O-2026 certified for distribution.
+                      </span>
+                    ) : (
+                      <span className="text-rose-300">
+                        {clearedCount > 0 ? `${clearedCount} cleared, ` : ""}
+                        {pendingCount} pending ({pendingEntities.slice(0, 2).map((e) => e.rawText).join(", ")}
+                        {pendingCount > 2 ? "..." : ""}). Distribution holds pending clearance.
+                      </span>
+                    )}
+                  </p>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Export Binder Action */}
