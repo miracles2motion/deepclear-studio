@@ -317,24 +317,52 @@ export default function DeepClearStudioPage() {
   // Helper for paced async delays
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  // Handle Negotiate / Dialectic Debate with guaranteed sequential voice playback
+  // Handle Negotiate / Dialectic Debate with live Gemini dynamic dialogue generation & sequential voice
   const handleStartDebate = async (entity: ExtractedEntity) => {
     setIsLoading(true);
+    setActiveAgent("legal_counsel");
+    setAgentTypingStatus(`Legal Counsel & Director are evaluating "${entity.rawText}" (${entity.category.toUpperCase()})...`);
 
-    const counselArg = `Under Lanham Act § 43(a), featuring "${entity.rawText}" prominently without a license creates estimated liability of ${formatCurrency(
+    // 1. Fetch dynamic, context-specific debate dialogue generated live by Gemini
+    let counselArg = `Under Lanham Act § 43(a), featuring "${entity.rawText}" prominently without a license creates estimated liability of ${formatCurrency(
       entity.originalExposure
     )}. We must defuse this asset.`;
-    const directorArg = `This item is crucial for character authenticity and atmosphere! It is protected artistic Fair Use!`;
+    let directorArg = `This item is crucial for character authenticity and atmosphere! It is protected artistic Fair Use!`;
     const compromiseText = entity.defusedText || "custom cleared narrative prop";
-    const counselCompromise = `Compromise proposed: Substitute "${entity.rawText}" with "${compromiseText}". This preserves your dramatic tone while reducing liability to $0.`;
-    const directorAccept = `Agreed. If the art department can match the aesthetic on "${compromiseText}", we have a deal. Script mutated.`;
+    let counselCompromise = `Compromise proposed: Substitute "${entity.rawText}" with "${compromiseText}". This preserves your dramatic tone while reducing liability to $0.`;
+    let directorAccept = `Agreed. If the art department can match the aesthetic on "${compromiseText}", we have a deal. Script mutated.`;
+
+    try {
+      // Find the last screenplay script text from messages
+      const scriptMessage = messages.find((m) => m.type === "script" || m.sender === "user");
+      const currentScript = scriptMessage?.content || "";
+
+      const debateRes = await fetch("/api/debate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scriptText: currentScript,
+          entity,
+        }),
+      });
+
+      if (debateRes.ok) {
+        const dynamicTurns = await debateRes.json();
+        if (dynamicTurns.counselObjection) counselArg = dynamicTurns.counselObjection;
+        if (dynamicTurns.directorDefense) directorArg = dynamicTurns.directorDefense;
+        if (dynamicTurns.counselCompromise) counselCompromise = dynamicTurns.counselCompromise;
+        if (dynamicTurns.directorAcceptance) directorAccept = dynamicTurns.directorAcceptance;
+      }
+    } catch {
+      // Fallback to contextual defaults if network drops
+    }
 
     // -------------------------------------------------------------
     // Step 1: Legal Counsel reviews and raises statutory objection
     // -------------------------------------------------------------
     setActiveAgent("legal_counsel");
-    setAgentTypingStatus("Legal Counsel is evaluating trademark statutes...");
-    await sleep(1500);
+    setAgentTypingStatus("Legal Counsel is citing statutory doctrine...");
+    await sleep(1000);
 
     setAgentTypingStatus(null);
     setMessages((prev) => [
@@ -350,18 +378,15 @@ export default function DeepClearStudioPage() {
     ]);
 
     // Speak counsel line completely before continuing
-    await speakTextAsync(
-      `Trademark hazard on ${entity.rawText}. Statutory exposure ${formatCurrency(entity.originalExposure)}.`,
-      "legal_counsel"
-    );
+    await speakTextAsync(counselArg, "legal_counsel");
     await sleep(1500); // 1.5s natural pause after speaking
 
     // -------------------------------------------------------------
     // Step 2: The Director steps in to defend artistic intent
     // -------------------------------------------------------------
     setActiveAgent("director");
-    setAgentTypingStatus("The Director is formulating artistic Fair Use defense...");
-    await sleep(1500);
+    setAgentTypingStatus("The Director is formulating creative defense...");
+    await sleep(1200);
 
     setAgentTypingStatus(null);
     setMessages((prev) => [
@@ -377,10 +402,7 @@ export default function DeepClearStudioPage() {
     ]);
 
     // Speak director line completely before continuing
-    await speakTextAsync(
-      "This prop is vital for character authenticity and Fair Use!",
-      "director"
-    );
+    await speakTextAsync(directorArg, "director");
     await sleep(1500); // 1.5s natural pause after speaking
 
     // -------------------------------------------------------------
@@ -388,7 +410,7 @@ export default function DeepClearStudioPage() {
     // -------------------------------------------------------------
     setActiveAgent("legal_counsel");
     setAgentTypingStatus("Legal Counsel is drafting copyright-safe substitute prop...");
-    await sleep(1500);
+    await sleep(1200);
 
     setAgentTypingStatus(null);
     setMessages((prev) => [
@@ -404,7 +426,7 @@ export default function DeepClearStudioPage() {
     ]);
 
     // Speak compromise line completely before continuing
-    await speakTextAsync(`Compromise: substitute with ${compromiseText}.`, "legal_counsel");
+    await speakTextAsync(counselCompromise, "legal_counsel");
     await sleep(1500); // 1.5s natural pause after speaking
 
     // -------------------------------------------------------------
@@ -412,7 +434,7 @@ export default function DeepClearStudioPage() {
     // -------------------------------------------------------------
     setActiveAgent("director");
     setAgentTypingStatus("The Director is reviewing aesthetic match...");
-    await sleep(1200);
+    await sleep(1000);
 
     setAgentTypingStatus(null);
     setMessages((prev) => [
@@ -428,7 +450,7 @@ export default function DeepClearStudioPage() {
     ]);
 
     // Speak director acceptance completely before continuing
-    await speakTextAsync("Agreed. Script mutated to cleared alternative.", "director");
+    await speakTextAsync(directorAccept, "director");
     await sleep(1000);
 
     // -------------------------------------------------------------
