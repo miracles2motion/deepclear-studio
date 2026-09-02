@@ -26,6 +26,7 @@ import {
   Radio,
   Image as ImageIcon,
   Zap,
+  Loader2,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -48,12 +49,13 @@ export default function DeepClearStudioPage() {
       timestamp: "Just now",
       type: "text",
       content:
-        "Welcome to DeepClear Studio. I am your autonomous film clearance and E&O underwriting co-pilot.\n\nPaste a screenplay scene below, upload a `.fountain` or `.md` script, or type a command to begin clearance analysis.",
+        "Welcome to DeepClear Studio. I am your autonomous film clearance and E&O underwriting co-pilot.\n\nPaste a screenplay scene below, upload a `.fountain` or `.md` script, or click 'Generate Scene with Gemini' to begin clearance analysis.",
     },
   ]);
 
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingScene, setIsGeneratingScene] = useState(false);
   const [activeAgent, setActiveAgent] = useState<AgentRole | undefined>(undefined);
   const [initialExposure, setInitialExposure] = useState(0);
   const [currentExposure, setCurrentExposure] = useState(0);
@@ -73,6 +75,42 @@ export default function DeepClearStudioPage() {
       synthRef.current = window.speechSynthesis;
     }
   }, []);
+
+  // Dynamically generate fresh scene from Gemini API on demand
+  const handleGenerateGeminiScene = async () => {
+    setIsGeneratingScene(true);
+    setActiveAgent("script_supervisor");
+
+    try {
+      const res = await fetch("/api/generate-scene", {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to generate scene with Gemini");
+      }
+
+      if (data.sceneText) {
+        // Pass the generated scene directly into the live swarm analyzer
+        handleSendMessage(data.sceneText);
+      }
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          sender: "system",
+          senderName: "DeepClear Swarm",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: `[Gemini Generation Error]: ${(err as Error).message}`,
+        },
+      ]);
+    } finally {
+      setIsGeneratingScene(false);
+    }
+  };
 
   // Smooth auto-scroll to latest message
   useEffect(() => {
@@ -535,6 +573,13 @@ export default function DeepClearStudioPage() {
         {/* MIDDLE COLUMN: Main Google Gemini Chat Feed (The Biggest)  */}
         {/* ========================================================= */}
         <main className="flex-1 flex flex-col h-full bg-[#0C0C0E] relative overflow-hidden">
+          {/* Top Active Loading / Shimmer Progress Bar */}
+          {(isLoading || isGeneratingScene) && (
+            <div className="h-1 w-full bg-zinc-900 overflow-hidden relative shrink-0 z-10">
+              <div className="h-full bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-400 animate-pulse w-full" />
+            </div>
+          )}
+
           {/* Top Bar for Mobile / Compact Navigation */}
           <div className="h-12 border-b border-white/[0.06] px-4 flex items-center justify-between md:hidden shrink-0">
             <div className="font-semibold text-xs text-zinc-200">DeepClear Studio</div>
@@ -671,14 +716,20 @@ export default function DeepClearStudioPage() {
               );
             })}
 
-            {/* Agent Typing & Reasoning Indicator */}
-            {(isLoading || agentTypingStatus) && (
-              <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 pt-2 pb-1 animate-pulse">
-                <Sparkles className="h-3.5 w-3.5 text-sky-400" />
-                <span>
-                  [{activeAgent ? activeAgent.replace("_", " ").toUpperCase() : "SWARM"}]:{" "}
-                  {agentTypingStatus || "Processing clearance reasoning..."}
-                </span>
+            {/* Agent Typing & Reasoning Indicator with Rotating Spinner */}
+            {(isLoading || agentTypingStatus || isGeneratingScene) && (
+              <div className="flex items-center gap-2.5 text-xs font-mono text-zinc-300 bg-[#141416] border border-white/[0.08] p-3 rounded-xl shadow-sm">
+                <Loader2 className="h-4 w-4 text-sky-400 animate-spin shrink-0" />
+                <div className="flex flex-col">
+                  <span className="font-semibold text-zinc-200">
+                    [{activeAgent ? activeAgent.replace("_", " ").toUpperCase() : "SWARM"}]:
+                  </span>
+                  <span className="text-zinc-400">
+                    {isGeneratingScene
+                      ? "Generating fresh original screenplay scene with Gemini 2.0 Flash..."
+                      : agentTypingStatus || "Querying Gemini Multimodal Vision & Parallel Search API..."}
+                  </span>
+                </div>
               </div>
             )}
 
@@ -690,7 +741,7 @@ export default function DeepClearStudioPage() {
           {/* FLOATING GOOGLE GEMINI-STYLE PROMPT BAR AT BOTTOM         */}
           {/* ========================================================= */}
           <div className="w-full max-w-3xl mx-auto px-4 pb-4 pt-1 shrink-0 space-y-2">
-            {/* PINNED QUICK ACTION BAR FOR PENDING HAZARDS (Fixes scrolling up) */}
+            {/* PINNED QUICK ACTION BAR FOR PENDING HAZARDS */}
             {pendingHazards.length > 0 && (
               <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
                 <span className="text-zinc-500 font-mono text-[10px] shrink-0 font-semibold uppercase">
@@ -713,27 +764,43 @@ export default function DeepClearStudioPage() {
             {/* Clean Prompt Starters (when empty) */}
             {messages.length === 1 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-medium">
+                {/* 1. Dynamic Gemini Scene Generator Button */}
                 <button
-                  onClick={() =>
-                    handleSendMessage(
-                      "INT. MODERN TECH OFFICE - NIGHT\n\nALEX types rapidly at his workstation, drinking from a can of PEPSI. In the background, a commercial pop track plays while an aerial drone camera records the city skyline."
-                    )
-                  }
-                  className="p-3 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-white/[0.08] text-left text-zinc-300 hover:text-white transition-all space-y-1"
+                  onClick={handleGenerateGeminiScene}
+                  disabled={isLoading || isGeneratingScene}
+                  className="p-3 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-white/[0.08] text-left text-zinc-300 hover:text-white transition-all space-y-1 relative overflow-hidden group"
                 >
-                  <p className="font-semibold text-zinc-100">🎬 Analyze Sample Scene</p>
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold text-zinc-100 flex items-center gap-1.5">
+                      {isGeneratingScene ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-400" />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5 text-sky-400 group-hover:scale-110 transition-transform" />
+                      )}
+                      <span>Generate Scene with Gemini</span>
+                    </p>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-950/60 text-sky-300 border border-sky-500/30 font-semibold">
+                      AI Studio
+                    </span>
+                  </div>
                   <p className="text-[11px] text-zinc-500 font-mono">
-                    Scans scene for brand trademarks, music rights, and municipal permits
+                    {isGeneratingScene
+                      ? "Gemini 2.0 Flash is writing a dramatic scene..."
+                      : "Generates an original scene on the fly and scans for brand liabilities"}
                   </p>
                 </button>
 
+                {/* 2. Attach File Button */}
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="p-3 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-white/[0.08] text-left text-zinc-300 hover:text-white transition-all space-y-1"
                 >
-                  <p className="font-semibold text-zinc-100">📁 Attach Script File</p>
+                  <p className="font-semibold text-zinc-100 flex items-center gap-1.5">
+                    <Paperclip className="h-3.5 w-3.5 text-zinc-400" />
+                    <span>Attach Script File</span>
+                  </p>
                   <p className="text-[11px] text-zinc-500 font-mono">
-                    Upload your .fountain, .md, or .txt screenplay directly
+                    Upload your own .fountain, .md, or .txt screenplay directly
                   </p>
                 </button>
               </div>
@@ -769,14 +836,18 @@ export default function DeepClearStudioPage() {
                   </span>
                 </button>
 
-                {/* Send Button */}
+                {/* Send Button with Rotating Loader */}
                 <button
                   type="button"
                   onClick={() => handleSendMessage()}
                   disabled={!input.trim() || isLoading}
                   className="h-8 w-8 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
                 >
-                  <ArrowUp className="h-4 w-4 stroke-[2.5]" />
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
+                  ) : (
+                    <ArrowUp className="h-4 w-4 stroke-[2.5]" />
+                  )}
                 </button>
               </div>
             </div>
