@@ -72,7 +72,7 @@ export default function DeepClearStudioPage() {
   const [taxJurisdiction, setTaxJurisdiction] = useState("Qualified Film Credit (30%)");
   const [entities, setEntities] = useState<ExtractedEntity[]>([]);
   const [clearedEntityIds, setClearedEntityIds] = useState<string[]>([]);
-  const [isAudioMuted, setIsAudioMuted] = useState(true); // Default muted to avoid audio obstruction
+  const [isAudioMuted, setIsAudioMuted] = useState(false); // Unmuted by default
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [productionTitle, setProductionTitle] = useState<string>("Indie Motion Picture");
@@ -1152,11 +1152,17 @@ export default function DeepClearStudioPage() {
                   {/* Message Bubble / Card */}
                   <div
                     className={`space-y-1.5 max-w-[88%] ${
-                      isUser ? "items-end text-right" : "items-start text-left"
+                      isUser ? "ml-auto" : ""
                     }`}
                   >
-                    <div className="text-[10px] text-zinc-500 font-mono flex items-center gap-1.5">
-                      <span>{msg.senderName}</span>
+                    <div
+                      className={`text-[10px] text-zinc-500 font-mono flex items-center gap-1.5 ${
+                        isUser ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      <span className={isUser ? "text-zinc-400 font-semibold" : ""}>
+                        {msg.senderName}
+                      </span>
                       <span>•</span>
                       <span>{msg.timestamp}</span>
                     </div>
@@ -1164,9 +1170,9 @@ export default function DeepClearStudioPage() {
                     {/* Standard Text */}
                     {msg.type === "text" && (
                       <div
-                        className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                        className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap text-left ${
                           isUser
-                            ? "bg-[#1C1C20] border border-white/[0.1] text-zinc-100 rounded-tr-sm shadow-sm"
+                            ? "bg-[#1C1C22] border border-white/[0.12] text-zinc-100 rounded-tr-sm shadow-md font-sans"
                             : "bg-[#141416] border border-white/[0.08] text-zinc-200 rounded-tl-sm shadow-sm"
                         }`}
                       >
