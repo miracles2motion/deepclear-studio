@@ -107,21 +107,30 @@ export const InspectorSidebar: React.FC<InspectorSidebarProps> = ({
         </div>
       </div>
 
-      {/* 2. Trade Impact Headline Simulation */}
+      {/* 2. Dynamic Distribution Risk */}
       <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-4 space-y-2">
-        <div className="flex items-center gap-1.5 text-xs font-mono text-zinc-400">
-          <Newspaper className="h-3.5 w-3.5" />
-          <span>TRADE PUBLICATION SIMULATION</span>
+        <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+          <div className="flex items-center gap-1.5">
+            <Newspaper className="h-3.5 w-3.5" />
+            <span>DISTRIBUTION RISK</span>
+          </div>
+          <span className={isCleared ? "text-emerald-400 font-semibold" : initialExposure === 0 ? "text-zinc-500" : "text-rose-400 font-semibold"}>
+            {initialExposure === 0 ? "IDLE" : isCleared ? "APPROVED" : "HOLD"}
+          </span>
         </div>
 
         <p className="text-xs leading-relaxed text-zinc-300 font-medium">
-          {isCleared ? (
-            <span>
-              <strong className="text-emerald-400 font-mono">DEADLINE:</strong> "Indie sensation sparks 5-platform bidding war; clean E&O binder expedites release."
+          {initialExposure === 0 ? (
+            <span className="text-zinc-500">
+              Awaiting script ingestion to compute real-time distribution risk.
+            </span>
+          ) : isCleared ? (
+            <span className="text-emerald-300">
+              All statutory liabilities cleared. Form E&O-2026 Underwriting Binder ready for distribution.
             </span>
           ) : (
-            <span>
-              <strong className="text-rose-400 font-mono">VARIETY:</strong> "Indie thriller halted by $2.8M trademark injunction over unpermitted assets."
+            <span className="text-rose-300">
+              Active statutory liabilities detected. Distribution deal holds pending crew negotiation.
             </span>
           )}
         </p>

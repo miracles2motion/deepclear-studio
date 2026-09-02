@@ -763,19 +763,30 @@ export default function DeepClearStudioPage() {
               <div className="text-[10px] text-zinc-500 font-mono">Georgia 30% Uplift</div>
             </div>
 
-            {/* Trade Impact Simulation */}
+            {/* Dynamic Clearance & Distribution Risk Card */}
             <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-1.5">
-              <span className="text-[10px] font-mono text-zinc-400 uppercase">Trade Impact</span>
+              <div className="flex items-center justify-between text-[10px] font-mono uppercase">
+                <span className="text-zinc-400">Distribution Risk</span>
+                {initialExposure === 0 ? (
+                  <span className="text-zinc-500">IDLE</span>
+                ) : isCleared ? (
+                  <span className="text-emerald-400 font-semibold">APPROVED</span>
+                ) : (
+                  <span className="text-rose-400 font-semibold">HOLD</span>
+                )}
+              </div>
               <p className="text-xs text-zinc-300 leading-snug">
-                {isCleared ? (
-                  <span>
-                    <strong className="text-emerald-400 font-mono">DEADLINE:</strong> "Sundance bidding
-                    war erupts; 100% cleared E&O binder expedites release."
+                {initialExposure === 0 ? (
+                  <span className="text-zinc-500">
+                    Awaiting script ingestion. Paste or attach screenplay text to calculate statutory exposure.
+                  </span>
+                ) : isCleared ? (
+                  <span className="text-emerald-300">
+                    All {entities.length} liabilities resolved with $0 exposure. Form E&O-2026 Underwriting Binder ready for distribution.
                   </span>
                 ) : (
-                  <span>
-                    <strong className="text-rose-400 font-mono">VARIETY:</strong> "Indie thriller halted
-                    by trademark injunction; distribution delayed."
+                  <span className="text-rose-300">
+                    {entities.length} unmitigated liabilities detected ({entities.map((e) => e.rawText).slice(0, 2).join(", ")}). Distribution deal holds pending clearance.
                   </span>
                 )}
               </p>
