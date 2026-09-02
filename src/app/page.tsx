@@ -635,34 +635,30 @@ export default function DeepClearStudioPage() {
           {/* FLOATING GOOGLE GEMINI-STYLE PROMPT BAR AT BOTTOM         */}
           {/* ========================================================= */}
           <div className="w-full max-w-3xl mx-auto px-4 pb-4 pt-2 shrink-0">
-            {/* Preset Starters (when empty) */}
+            {/* Clean Prompt Starters (when empty) */}
             {messages.length === 1 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3 text-xs font-medium">
                 <button
                   onClick={() =>
                     handleSendMessage(
-                      "EXT. 6TH STREET VIADUCT - LOS ANGELES - NIGHT\n\nKAI checks his vintage ROLEX SUBMARINER on his wrist while sipping a RED BULL can. In the background, 'RUNNING UP THAT HILL' by Kate Bush blares as a high-speed drone tears across active traffic."
+                      "INT. MODERN TECH OFFICE - NIGHT\n\nALEX types rapidly at his workstation, drinking from a can of PEPSI. In the background, a commercial pop track plays while an aerial drone camera records the city skyline."
                     )
                   }
                   className="p-3 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-white/[0.08] text-left text-zinc-300 hover:text-white transition-all space-y-1"
                 >
-                  <p className="font-semibold text-zinc-100">🎬 Test Sci-Fi Screenplay</p>
+                  <p className="font-semibold text-zinc-100">🎬 Analyze Sample Scene</p>
                   <p className="text-[11px] text-zinc-500 font-mono">
-                    Rolex, Red Bull prop, Kate Bush sync music, LA drone permit
+                    Scans scene for brand trademarks, music rights, and municipal permits
                   </p>
                 </button>
 
                 <button
-                  onClick={() =>
-                    handleSendMessage(
-                      "INT. BANGKOK LUXURY HOTEL - MORNING\n\nMARCUS wakes up groggy to find an exact replica of the iconic MIKE TYSON TRIBAL TATTOO inked on his left temple next to a Lebbeus Woods copyrighted architectural model."
-                    )
-                  }
+                  onClick={() => fileInputRef.current?.click()}
                   className="p-3 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-white/[0.08] text-left text-zinc-300 hover:text-white transition-all space-y-1"
                 >
-                  <p className="font-semibold text-zinc-100">⚖️ Historical Benchmark</p>
+                  <p className="font-semibold text-zinc-100">📁 Attach Script File</p>
                   <p className="text-[11px] text-zinc-500 font-mono">
-                    Hangover II Mike Tyson tattoo & 12 Monkeys architecture
+                    Upload your .fountain, .md, or .txt screenplay directly
                   </p>
                 </button>
               </div>
