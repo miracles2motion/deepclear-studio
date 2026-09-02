@@ -668,6 +668,48 @@ export default function DeepClearStudioPage() {
     setActiveAgent("bond_officer");
   };
 
+  // Handle User Marking an Item as Pre-Licensed or Permitted
+  const handleMarkAsLicensed = (entity: ExtractedEntity) => {
+    const newClearedIds = [...clearedEntityIds, entity.id];
+    setClearedEntityIds(newClearedIds);
+    const newExposure = Math.max(0, currentExposure - entity.originalExposure);
+    setCurrentExposure(newExposure);
+
+    const isNowFullyCleared = newClearedIds.length >= entities.length || newExposure === 0;
+
+    setMessages((prev) => {
+      const nextMsgs: ChatMessage[] = [
+        ...prev,
+        {
+          id: `lic-${Date.now()}`,
+          sender: "bond_officer",
+          senderName: "Completion Bond Officer",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: `📜 Production License Verified: Written release/permit on file for "${entity.rawText}". Statutory liability reduced by ${formatCurrency(
+            entity.originalExposure
+          )} to $0 under production indemnity agreement. Original asset retained in screenplay.`,
+        },
+      ];
+
+      // If all liabilities are resolved, deliver final script
+      if (isNowFullyCleared && currentScriptText) {
+        nextMsgs.push({
+          id: `final-script-${Date.now()}`,
+          sender: "bond_officer",
+          senderName: "Completion Bond Officer",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "script",
+          content: currentScriptText,
+        });
+      }
+
+      return nextMsgs;
+    });
+
+    speakTextAsync(`License on file for ${entity.rawText}. Exposure cleared.`, "bond_officer");
+  };
+
   // Handle File Upload (.md, .fountain, .txt)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -994,13 +1036,26 @@ export default function DeepClearStudioPage() {
                                   </div>
 
                                   {!isEntityCleared && (
-                                    <button
-                                      onClick={() => handleStartDebate(ent)}
-                                      disabled={isLoading}
-                                      className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-white/10 transition-all shadow-sm"
-                                    >
-                                      Negotiate
-                                    </button>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <button
+                                        onClick={() => handleMarkAsLicensed(ent)}
+                                        disabled={isLoading}
+                                        className="px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/30 transition-all shadow-sm flex items-center gap-1"
+                                        title="Mark as already licensed or permitted by production"
+                                      >
+                                        <CheckCircle className="h-3 w-3 text-emerald-400" />
+                                        <span>Licensed</span>
+                                      </button>
+
+                                      <button
+                                        onClick={() => handleStartDebate(ent)}
+                                        disabled={isLoading}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-white/10 transition-all shadow-sm"
+                                        title="Initiate crew negotiation and legal compromise"
+                                      >
+                                        Negotiate
+                                      </button>
+                                    </div>
                                   )}
                                 </div>
                               </div>
