@@ -14,7 +14,9 @@ interface ExportModalProps {
   initialExposure: number;
   currentExposure: number;
   taxSavings: number;
+  taxJurisdiction?: string;
   entities: ExtractedEntity[];
+  clearedEntityIds?: string[];
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -24,7 +26,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   initialExposure,
   currentExposure,
   taxSavings,
+  taxJurisdiction,
   entities,
+  clearedEntityIds = [],
 }) => {
   const [isMinting, setIsMinting] = useState(false);
   const [mintResult, setMintResult] = useState<{
@@ -45,7 +49,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       initialExposureUsd: initialExposure,
       finalExposureUsd: currentExposure,
       potentialTaxRebateUsd: taxSavings,
+      taxJurisdiction: taxJurisdiction || "Qualified Film Credit",
       entities,
+      clearedEntityIds,
       debateTurns: [],
       merkleRootHash: merkleHash,
       onChainTxHash: mintResult?.txHash,

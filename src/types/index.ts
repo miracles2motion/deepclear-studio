@@ -81,7 +81,9 @@ export interface ClearanceReport {
   initialExposureUsd: number;
   finalExposureUsd: number;
   potentialTaxRebateUsd: number;
+  taxJurisdiction?: string;
   entities: ExtractedEntity[];
+  clearedEntityIds?: string[];
   debateTurns: DebateTurn[];
   merkleRootHash: string;
   onChainTxHash?: string;

@@ -1043,7 +1043,9 @@ export default function DeepClearStudioPage() {
         initialExposure={initialExposure}
         currentExposure={currentExposure}
         taxSavings={taxSavings}
+        taxJurisdiction={taxJurisdiction}
         entities={entities}
+        clearedEntityIds={clearedEntityIds}
       />
     </div>
   );
