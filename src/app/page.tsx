@@ -248,20 +248,31 @@ export default function DeepClearStudioPage() {
     }
   };
 
-  // Handle Negotiate / Dialectic Debate on a specific hazard
-  const handleStartDebate = (entity: ExtractedEntity) => {
+  const [agentTypingStatus, setAgentTypingStatus] = useState<string | null>(null);
+
+  // Helper for paced async delays
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // Handle Negotiate / Dialectic Debate with realistic, paced agent turn-taking
+  const handleStartDebate = async (entity: ExtractedEntity) => {
     setIsLoading(true);
-    setActiveAgent("legal_counsel");
 
     const counselArg = `Under Lanham Act § 43(a), featuring "${entity.rawText}" prominently without a license creates estimated liability of ${formatCurrency(
       entity.originalExposure
-    )}. We must defuse this prop.`;
+    )}. We must defuse this asset.`;
     const directorArg = `This item is crucial for character authenticity and atmosphere! It is protected artistic Fair Use!`;
     const compromiseText = entity.defusedText || "custom cleared narrative prop";
     const counselCompromise = `Compromise proposed: Substitute "${entity.rawText}" with "${compromiseText}". This preserves your dramatic tone while reducing liability to $0.`;
     const directorAccept = `Agreed. If the art department can match the aesthetic on "${compromiseText}", we have a deal. Script mutated.`;
 
-    // 1. Counsel Opening (short punchy audio)
+    // -------------------------------------------------------------
+    // Step 1: Legal Counsel reviews and raises statutory objection
+    // -------------------------------------------------------------
+    setActiveAgent("legal_counsel");
+    setAgentTypingStatus("Legal Counsel is evaluating trademark statutes...");
+    await sleep(1500);
+
+    setAgentTypingStatus(null);
     speakText(`Trademark hazard on ${entity.rawText}. Statutory exposure ${formatCurrency(entity.originalExposure)}.`, "legal_counsel");
     setMessages((prev) => [
       ...prev,
@@ -275,72 +286,103 @@ export default function DeepClearStudioPage() {
       },
     ]);
 
-    // 2. Director Counter
-    setTimeout(() => {
-      setActiveAgent("director");
-      speakText("This prop is vital for character authenticity and Fair Use!", "director");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `deb-dir-${Date.now()}`,
-          sender: "director",
-          senderName: "The Director",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "text",
-          content: directorArg,
-        },
-      ]);
-    }, 1200);
+    // Give user 3.5 seconds to comfortably read Legal Counsel's argument
+    await sleep(3500);
 
-    // 3. Counsel Compromise
-    setTimeout(() => {
-      setActiveAgent("legal_counsel");
-      speakText(`Compromise: substitute with ${compromiseText}.`, "legal_counsel");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `deb-comp-${Date.now()}`,
-          sender: "legal_counsel",
-          senderName: "Studio Legal Counsel",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "text",
-          content: counselCompromise,
-        },
-      ]);
-    }, 2500);
+    // -------------------------------------------------------------
+    // Step 2: The Director steps in to defend artistic intent
+    // -------------------------------------------------------------
+    setActiveAgent("director");
+    setAgentTypingStatus("The Director is formulating artistic Fair Use defense...");
+    await sleep(1500);
 
-    // 4. Director Accept & Mutation
-    setTimeout(() => {
-      setActiveAgent("director");
-      speakText("Agreed. Script mutated to cleared alternative.", "director");
-      setClearedEntityIds((prev) => [...prev, entity.id]);
-      setCurrentExposure((prev) => Math.max(0, prev - entity.originalExposure));
+    setAgentTypingStatus(null);
+    speakText("This prop is vital for character authenticity and Fair Use!", "director");
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `deb-dir-${Date.now()}`,
+        sender: "director",
+        senderName: "The Director",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: directorArg,
+      },
+    ]);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `deb-acc-${Date.now()}`,
-          sender: "director",
-          senderName: "The Director",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "text",
-          content: directorAccept,
-        },
-        {
-          id: `mut-${Date.now()}`,
-          sender: "script_supervisor",
-          senderName: "Script Supervisor",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "text",
-          content: `✍️ Script Mutated: "${entity.rawText}" ➔ "${compromiseText}". Statutory liability reduced by ${formatCurrency(
-            entity.originalExposure
-          )}.`,
-        },
-      ]);
+    // Give user 3.5 seconds to read The Director's counter-argument
+    await sleep(3500);
 
-      setIsLoading(false);
-      setActiveAgent("bond_officer");
-    }, 3800);
+    // -------------------------------------------------------------
+    // Step 3: Legal Counsel proposes negotiated compromise
+    // -------------------------------------------------------------
+    setActiveAgent("legal_counsel");
+    setAgentTypingStatus("Legal Counsel is drafting copyright-safe substitute prop...");
+    await sleep(1500);
+
+    setAgentTypingStatus(null);
+    speakText(`Compromise: substitute with ${compromiseText}.`, "legal_counsel");
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `deb-comp-${Date.now()}`,
+        sender: "legal_counsel",
+        senderName: "Studio Legal Counsel",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: counselCompromise,
+      },
+    ]);
+
+    // Give user 3.5 seconds to read the proposed compromise
+    await sleep(3500);
+
+    // -------------------------------------------------------------
+    // Step 4: The Director accepts the compromise
+    // -------------------------------------------------------------
+    setActiveAgent("director");
+    setAgentTypingStatus("The Director is reviewing aesthetic match...");
+    await sleep(1200);
+
+    setAgentTypingStatus(null);
+    speakText("Agreed. Script mutated to cleared alternative.", "director");
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `deb-acc-${Date.now()}`,
+        sender: "director",
+        senderName: "The Director",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: directorAccept,
+      },
+    ]);
+
+    await sleep(1500);
+
+    // -------------------------------------------------------------
+    // Step 5: Script Supervisor mutates the script & Bond Officer clears risk
+    // -------------------------------------------------------------
+    setActiveAgent("script_supervisor");
+    setClearedEntityIds((prev) => [...prev, entity.id]);
+    setCurrentExposure((prev) => Math.max(0, prev - entity.originalExposure));
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `mut-${Date.now()}`,
+        sender: "script_supervisor",
+        senderName: "Script Supervisor",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: `✍️ Script Mutated: "${entity.rawText}" ➔ "${compromiseText}". Statutory liability reduced by ${formatCurrency(
+          entity.originalExposure
+        )}.`,
+      },
+    ]);
+
+    setIsLoading(false);
+    setActiveAgent("bond_officer");
   };
 
   // Handle File Upload (.md, .fountain, .txt)
@@ -629,13 +671,13 @@ export default function DeepClearStudioPage() {
               );
             })}
 
-            {/* Loading Indicator */}
-            {isLoading && (
-              <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 pt-2 animate-pulse">
+            {/* Agent Typing & Reasoning Indicator */}
+            {(isLoading || agentTypingStatus) && (
+              <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 pt-2 pb-1 animate-pulse">
                 <Sparkles className="h-3.5 w-3.5 text-sky-400" />
                 <span>
-                  [{activeAgent ? activeAgent.replace("_", " ").toUpperCase() : "SWARM"}]: Processing
-                  clearance reasoning...
+                  [{activeAgent ? activeAgent.replace("_", " ").toUpperCase() : "SWARM"}]:{" "}
+                  {agentTypingStatus || "Processing clearance reasoning..."}
                 </span>
               </div>
             )}
