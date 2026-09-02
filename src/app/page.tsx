@@ -321,6 +321,7 @@ export default function DeepClearStudioPage() {
   };
 
   const [agentTypingStatus, setAgentTypingStatus] = useState<string | null>(null);
+  const [speakingAgent, setSpeakingAgent] = useState<AgentRole | null>(null);
 
   // Helper to match distinct browser voices per agent persona
   const getAgentVoice = (
@@ -400,20 +401,30 @@ export default function DeepClearStudioPage() {
         }
 
         // Safety fallback timer so it never hangs if browser audio suspends
-        const timeout = setTimeout(() => resolve(), 8000);
+        const timeout = setTimeout(() => {
+          setSpeakingAgent(null);
+          resolve();
+        }, 8000);
+
+        utterance.onstart = () => {
+          setSpeakingAgent(speaker);
+        };
 
         utterance.onend = () => {
+          setSpeakingAgent(null);
           clearTimeout(timeout);
           resolve();
         };
 
         utterance.onerror = () => {
+          setSpeakingAgent(null);
           clearTimeout(timeout);
           resolve();
         };
 
         synthRef.current.speak(utterance);
       } catch {
+        setSpeakingAgent(null);
         resolve();
       }
     });
@@ -745,25 +756,48 @@ export default function DeepClearStudioPage() {
 
               {agents.map((ag) => {
                 const isActive = activeAgent === ag.role;
+                const isSpeaking = speakingAgent === ag.role;
+
                 return (
                   <div
                     key={ag.role}
-                    className={`p-2.5 rounded-xl border text-xs transition-all ${
-                      isActive
+                    className={`p-2.5 rounded-xl border text-xs transition-all duration-300 ${
+                      isSpeaking
+                        ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-100 shadow-md ring-1 ring-emerald-500/30"
+                        : isActive
                         ? "bg-zinc-800/90 border-white/20 text-zinc-100 shadow-sm"
                         : "bg-transparent border-transparent hover:bg-zinc-900/60 text-zinc-400"
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 shrink-0">
+                      <div
+                        className={`p-1.5 rounded-lg border shrink-0 transition-colors ${
+                          isSpeaking
+                            ? "bg-emerald-900/60 border-emerald-500/40 text-emerald-400"
+                            : "bg-zinc-900 border-white/5"
+                        }`}
+                      >
                         {ag.icon}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="font-medium text-xs text-zinc-200 truncate">{ag.name}</p>
-                          {isActive && (
+                          <p
+                            className={`font-medium text-xs truncate ${
+                              isSpeaking ? "text-emerald-300 font-semibold" : "text-zinc-200"
+                            }`}
+                          >
+                            {ag.name}
+                          </p>
+
+                          {/* Animated Speaker Badge when agent is actively speaking */}
+                          {isSpeaking ? (
+                            <span className="flex items-center gap-1 text-[9px] font-mono font-bold text-emerald-300 bg-emerald-950 border border-emerald-500/40 px-1.5 py-0.5 rounded-md animate-pulse shrink-0">
+                              <Volume2 className="h-3 w-3 animate-bounce text-emerald-400" />
+                              <span>LIVE</span>
+                            </span>
+                          ) : isActive ? (
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
-                          )}
+                          ) : null}
                         </div>
                         <p className="text-[10px] text-zinc-500 truncate font-mono mt-0.5">
                           {ag.description}
