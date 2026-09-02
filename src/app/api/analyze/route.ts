@@ -5,106 +5,16 @@ import { ExtractedEntity } from "@/types";
 
 export const runtime = "nodejs";
 
-// Dynamic heuristic extractor if Gemini key is missing or on free rate limit
-function dynamicExtractHazards(scriptText: string): ExtractedEntity[] {
-  const entities: ExtractedEntity[] = [];
-  const lines = scriptText.split("\n");
-
-  // Common high-risk patterns in film production
-  const trademarkRegex = /\b(Rolex|Pepsi|Coca-Cola|Nike|Apple|Sony|Ferrari|Porsche|Red Bull|Starbucks|McDonald's|Gucci|Prada|BMW|Mercedes|Tesla|Ford|Doritos|Heineken|Budweiser)\b/gi;
-  const copyrightRegex = /\b(song|track|album|theme|score|music by|plays in background|playing on radio|tune)\b/gi;
-  const permitRegex = /\b(bridge|highway|freeway|drone|traffic|airport|tunnel|helicopter|pyro|explosion|stunt|public street|viaduct)\b/gi;
-
-  let idCounter = 1;
-
-  lines.forEach((line, idx) => {
-    // Check Trademark
-    const tmMatch = line.match(trademarkRegex);
-    if (tmMatch) {
-      tmMatch.forEach((brand) => {
-        entities.push({
-          id: `ent-${idCounter++}`,
-          sceneNumber: 1,
-          rawText: brand,
-          category: "trademark",
-          description: `Unlicensed commercial brand mark "${brand}" detected in scene text.`,
-          status: "hazard",
-          originalExposure: 350000,
-          clearedExposure: 0,
-          defusedText: `fictionalized custom narrative prop`,
-          citations: [
-            {
-              id: `cit-tm-${Date.now()}-${idCounter}`,
-              category: "trademark",
-              title: `USPTO Principal Register: "${brand}" Verification`,
-              sourceUrl: "https://uspto.gov/trademarks",
-              snippet: `Active commercial trademark registration. Unauthorized commercial prominence in media creates false endorsement risk under Lanham Act § 43(a).`,
-              verified: true,
-            },
-          ],
-        });
-      });
-    }
-
-    // Check Copyright / Music
-    const cpMatch = line.match(copyrightRegex);
-    if (cpMatch) {
-      entities.push({
-        id: `ent-${idCounter++}`,
-        sceneNumber: 1,
-        rawText: line.trim().slice(0, 40),
-        category: "copyright",
-        description: `Potential unlicensed synchronization music or audio track reference.`,
-        status: "hazard",
-        originalExposure: 250000,
-        clearedExposure: 0,
-        defusedText: `original bespoke score by production composer`,
-        citations: [
-          {
-            id: `cit-cp-${Date.now()}-${idCounter}`,
-            category: "caselaw",
-            title: "Campbell v. Acuff-Rose / Music Synchronization Precedent",
-            sourceUrl: "https://casetext.com",
-            snippet: `Synchronization licenses require direct publisher and master rights clearance; commercial narrative background usage cannot claim fair use.`,
-            verified: true,
-          },
-        ],
-      });
-    }
-
-    // Check Municipal Permit / Stunt
-    const pmMatch = line.match(permitRegex);
-    if (pmMatch) {
-      entities.push({
-        id: `ent-${idCounter++}`,
-        sceneNumber: 1,
-        rawText: line.trim().slice(0, 45),
-        category: "permit",
-        description: `High-impact municipal filming or aerial drone operation requiring specialized municipal permits and police closure.`,
-        status: "hazard",
-        originalExposure: 500000,
-        clearedExposure: 0,
-        defusedText: `Filmed on private soundstage facility with active 30% state tax rebate`,
-        citations: [
-          {
-            id: `cit-pm-${Date.now()}-${idCounter}`,
-            category: "permit",
-            title: "Municipal Film Commission Ordinance & Safety Code",
-            sourceUrl: "https://filmla.com/permits",
-            snippet: `Requires municipal location agreement, notification of neighborhood council, and minimum $2M commercial general liability rider.`,
-            verified: true,
-          },
-        ],
-      });
-    }
-  });
-
-  return entities;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const { scriptText, imageBase64 } = await req.json();
+
+    if (!scriptText || !scriptText.trim()) {
+      return new Response(
+        JSON.stringify({ error: "No screenplay text provided for analysis." }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -113,105 +23,114 @@ export async function POST(req: NextRequest) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
         };
 
-        // 1. Script Supervisor Thought
-        sendEvent({
-          type: "AGENT_THOUGHT",
-          agent: "script_supervisor",
-          payload: {
-            message: "Ingesting screenplay & visual assets. Executing Gemini 2.0 Multimodal clearance scan...",
-          },
-        });
-
-        let entities: ExtractedEntity[] = [];
-
-        if (process.env.GEMINI_API_KEY) {
-          try {
-            const geminiResult = await analyzeScreenplayWithGemini(
-              scriptText,
-              imageBase64 ? { data: imageBase64, mimeType: "image/jpeg" } : undefined
-            );
-            entities = geminiResult.entities || [];
-          } catch {
-            entities = dynamicExtractHazards(scriptText);
-          }
-        } else {
-          entities = dynamicExtractHazards(scriptText);
-        }
-
-        // If nothing was caught by regex or AI, create a clean extraction
-        if (entities.length === 0) {
-          entities = dynamicExtractHazards(scriptText);
-        }
-
-        // 2. Stream extracted entities
-        for (const entity of entities) {
+        try {
+          // 1. Script Supervisor Thought
           sendEvent({
             type: "AGENT_THOUGHT",
             agent: "script_supervisor",
             payload: {
-              message: `Identified liability in Scene ${entity.sceneNumber}: "${entity.rawText}" (${entity.category.toUpperCase()})`,
-              entityId: entity.id,
+              message: "Ingesting screenplay & visual assets. Calling live Google Cloud Gemini 2.0 Flash engine...",
             },
           });
 
-          // 3. Parallel Search Grounding
+          // 2. Direct live Gemini Analysis
+          const geminiResult = await analyzeScreenplayWithGemini(
+            scriptText,
+            imageBase64 ? { data: imageBase64, mimeType: "image/jpeg" } : undefined
+          );
+
+          const entities: ExtractedEntity[] = geminiResult.entities || [];
+
+          // 3. Process each detected entity with live Parallel Search
+          for (const entity of entities) {
+            sendEvent({
+              type: "AGENT_THOUGHT",
+              agent: "script_supervisor",
+              payload: {
+                message: `Identified liability: "${entity.rawText}" (${entity.category.toUpperCase()}) - ${entity.description}`,
+                entityId: entity.id,
+              },
+            });
+
+            sendEvent({
+              type: "PARALLEL_QUERY",
+              agent: "legal_counsel",
+              payload: {
+                query: entity.rawText,
+                category: entity.category,
+                message: `Executing live Parallel Search query for "${entity.rawText}" in ${entity.category.toUpperCase()} registry...`,
+              },
+            });
+
+            try {
+              const citations = await searchParallelGrounding({
+                query: entity.rawText,
+                category:
+                  entity.category === "trademark" ||
+                  entity.category === "permit" ||
+                  entity.category === "caselaw" ||
+                  entity.category === "tax"
+                    ? entity.category
+                    : "trademark",
+              });
+
+              entity.citations = citations;
+
+              sendEvent({
+                type: "PARALLEL_RESULT",
+                agent: "legal_counsel",
+                payload: {
+                  entityId: entity.id,
+                  citations,
+                  message: `Retrieved ${citations.length} verified live citations from Parallel Search.`,
+                },
+              });
+            } catch (parallelErr) {
+              sendEvent({
+                type: "AGENT_THOUGHT",
+                agent: "legal_counsel",
+                payload: {
+                  message: `Parallel Search note: ${(parallelErr as Error).message}`,
+                },
+              });
+            }
+          }
+
+          // 4. Bond Officer Risk Calculation
+          const totalExposure = entities.reduce((sum, e) => sum + (e.originalExposure || 0), 0);
           sendEvent({
-            type: "PARALLEL_QUERY",
-            agent: "legal_counsel",
+            type: "RISK_UPDATE",
+            agent: "bond_officer",
             payload: {
-              query: entity.rawText,
-              category: entity.category,
-              message: `Querying Parallel Search for ${entity.category.toUpperCase()} regulations on "${entity.rawText}"...`,
+              initialExposure: totalExposure,
+              currentExposure: totalExposure,
+              riskLevel: totalExposure > 1000000 ? "HIGH" : totalExposure > 0 ? "MODERATE" : "CLEARED",
+              entities,
             },
           });
 
-          const citations = await searchParallelGrounding({
-            query: entity.rawText,
-            category:
-              entity.category === "trademark" ||
-              entity.category === "permit" ||
-              entity.category === "caselaw" ||
-              entity.category === "tax"
-                ? entity.category
-                : "trademark",
-          });
-
+          // 5. Complete scan
           sendEvent({
-            type: "PARALLEL_RESULT",
-            agent: "legal_counsel",
+            type: "CLEARANCE_COMPLETE",
+            agent: "bond_officer",
             payload: {
-              entityId: entity.id,
-              citations,
-              message: `Retrieved ${citations.length} verified citations from Parallel Search.`,
+              entities,
+              totalExposure,
+              timestamp: new Date().toISOString(),
             },
           });
+        } catch (innerErr) {
+          sendEvent({
+            type: "AGENT_ERROR",
+            agent: "bond_officer",
+            payload: {
+              error: (innerErr as Error).message,
+              message: `API Error: ${(innerErr as Error).message}`,
+            },
+          });
+        } finally {
+          controller.close();
         }
-
-        // 4. Bond Officer Risk Calculation
-        const totalExposure = entities.reduce((sum, e) => sum + (e.originalExposure || 0), 0);
-        sendEvent({
-          type: "RISK_UPDATE",
-          agent: "bond_officer",
-          payload: {
-            initialExposure: totalExposure,
-            currentExposure: totalExposure,
-            riskLevel: totalExposure > 1000000 ? "HIGH" : totalExposure > 0 ? "MODERATE" : "CLEARED",
-            entities,
-          },
-        });
-
-        // 5. Complete scan
-        sendEvent({
-          type: "CLEARANCE_COMPLETE",
-          agent: "bond_officer",
-          payload: {
-            entities,
-            totalExposure,
-            timestamp: new Date().toISOString(),
-          },
-        });
-
-        controller.close();
       },
     });
 
