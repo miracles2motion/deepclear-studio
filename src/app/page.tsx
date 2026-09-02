@@ -440,7 +440,7 @@ export default function DeepClearStudioPage() {
     // -------------------------------------------------------------
     setActiveAgent("legal_counsel");
     setAgentTypingStatus("Legal Counsel is citing statutory doctrine...");
-    await sleep(1000);
+    await sleep(800);
 
     setAgentTypingStatus(null);
     setMessages((prev) => [
@@ -459,16 +459,19 @@ export default function DeepClearStudioPage() {
       },
     ]);
 
-    // Speak counsel line completely before continuing
-    await speakTextAsync(counselArg, "legal_counsel");
-    await sleep(1500); // 1.5s natural pause after speaking
+    // Straight to the point: punchy 1-sentence executive summary
+    await speakTextAsync(
+      `${entity.category.toUpperCase()} hazard on ${entity.rawText}. Exposure ${formatCurrency(entity.originalExposure)}.`,
+      "legal_counsel"
+    );
+    await sleep(1000);
 
     // -------------------------------------------------------------
     // Step 2: The Director steps in to defend artistic intent
     // -------------------------------------------------------------
     setActiveAgent("director");
     setAgentTypingStatus("The Director is formulating creative defense...");
-    await sleep(1200);
+    await sleep(800);
 
     setAgentTypingStatus(null);
     setMessages((prev) => [
@@ -488,16 +491,16 @@ export default function DeepClearStudioPage() {
       },
     ]);
 
-    // Speak director line completely before continuing
-    await speakTextAsync(directorArg, "director");
-    await sleep(1500); // 1.5s natural pause after speaking
+    // Straight to the point: punchy 1-sentence director defense
+    await speakTextAsync("This prop is vital for dramatic character authenticity.", "director");
+    await sleep(1000);
 
     // -------------------------------------------------------------
     // Step 3: Legal Counsel proposes negotiated compromise
     // -------------------------------------------------------------
     setActiveAgent("legal_counsel");
     setAgentTypingStatus("Legal Counsel is drafting copyright-safe substitute prop...");
-    await sleep(1200);
+    await sleep(800);
 
     setAgentTypingStatus(null);
     setMessages((prev) => [
@@ -517,16 +520,16 @@ export default function DeepClearStudioPage() {
       },
     ]);
 
-    // Speak compromise line completely before continuing
-    await speakTextAsync(counselCompromise, "legal_counsel");
-    await sleep(1500); // 1.5s natural pause after speaking
+    // Straight to the point: punchy 1-sentence compromise
+    await speakTextAsync(`Compromise: substitute with ${compromiseText}.`, "legal_counsel");
+    await sleep(1000);
 
     // -------------------------------------------------------------
     // Step 4: The Director accepts the compromise
     // -------------------------------------------------------------
     setActiveAgent("director");
     setAgentTypingStatus("The Director is reviewing aesthetic match...");
-    await sleep(1000);
+    await sleep(700);
 
     setAgentTypingStatus(null);
     setMessages((prev) => [
@@ -546,9 +549,9 @@ export default function DeepClearStudioPage() {
       },
     ]);
 
-    // Speak director acceptance completely before continuing
-    await speakTextAsync(directorAccept, "director");
-    await sleep(1000);
+    // Straight to the point: punchy 1-sentence acceptance
+    await speakTextAsync("Agreed. Script mutated to cleared alternative.", "director");
+    await sleep(800);
 
     // -------------------------------------------------------------
     // Step 5: Script Supervisor mutates the script & Bond Officer clears risk
