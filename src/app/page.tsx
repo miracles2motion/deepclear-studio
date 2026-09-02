@@ -64,6 +64,7 @@ export default function DeepClearStudioPage() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
+  const chatBottomRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
 
@@ -72,6 +73,11 @@ export default function DeepClearStudioPage() {
       synthRef.current = window.speechSynthesis;
     }
   }, []);
+
+  // Smooth auto-scroll to latest message
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
 
   // Sequential, non-obstructing voice synthesis
   const speakText = (shortSummary: string, speaker: "director" | "legal_counsel" | "bond_officer") => {
@@ -633,6 +639,9 @@ export default function DeepClearStudioPage() {
                 </span>
               </div>
             )}
+
+            {/* Scroll Anchor */}
+            <div ref={chatBottomRef} />
           </div>
 
           {/* ========================================================= */}
