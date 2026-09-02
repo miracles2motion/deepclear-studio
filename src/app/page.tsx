@@ -27,6 +27,7 @@ import {
   Image as ImageIcon,
   Zap,
   Loader2,
+  Film,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -60,6 +61,7 @@ export default function DeepClearStudioPage() {
   const [initialExposure, setInitialExposure] = useState(0);
   const [currentExposure, setCurrentExposure] = useState(0);
   const [taxSavings, setTaxSavings] = useState(0);
+  const [currentScriptText, setCurrentScriptText] = useState<string>("");
   const [taxJurisdiction, setTaxJurisdiction] = useState("Qualified Film Credit (30%)");
   const [entities, setEntities] = useState<ExtractedEntity[]>([]);
   const [clearedEntityIds, setClearedEntityIds] = useState<string[]>([]);
@@ -175,6 +177,7 @@ export default function DeepClearStudioPage() {
     };
 
     setMessages((prev) => [...prev, userMsg]);
+    setCurrentScriptText(queryText);
     setInput("");
     setIsLoading(true);
     setActiveAgent("script_supervisor");
@@ -504,22 +507,49 @@ export default function DeepClearStudioPage() {
     // Step 5: Script Supervisor mutates the script & Bond Officer clears risk
     // -------------------------------------------------------------
     setActiveAgent("script_supervisor");
-    setClearedEntityIds((prev) => [...prev, entity.id]);
-    setCurrentExposure((prev) => Math.max(0, prev - entity.originalExposure));
+    const newClearedIds = [...clearedEntityIds, entity.id];
+    setClearedEntityIds(newClearedIds);
+    const newExposure = Math.max(0, currentExposure - entity.originalExposure);
+    setCurrentExposure(newExposure);
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `mut-${Date.now()}`,
-        sender: "script_supervisor",
-        senderName: "Script Supervisor",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "text",
-        content: `✍️ Script Mutated: "${entity.rawText}" ➔ "${compromiseText}". Statutory liability reduced by ${formatCurrency(
-          entity.originalExposure
-        )}.`,
-      },
-    ]);
+    // Replace hazard with cleared legal compromise in screenplay text
+    let updatedScript = currentScriptText;
+    if (updatedScript && entity.rawText) {
+      updatedScript = updatedScript.replaceAll(entity.rawText, compromiseText);
+      setCurrentScriptText(updatedScript);
+    }
+
+    const isNowFullyCleared = newClearedIds.length >= entities.length || newExposure === 0;
+
+    setMessages((prev) => {
+      const nextMsgs: ChatMessage[] = [
+        ...prev,
+        {
+          id: `mut-${Date.now()}`,
+          sender: "script_supervisor",
+          senderName: "Script Supervisor",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: `✍️ Script Mutated: "${entity.rawText}" ➔ "${compromiseText}". Statutory liability reduced by ${formatCurrency(
+            entity.originalExposure
+          )}.`,
+        },
+      ];
+
+      // If all liabilities are resolved, output the Final Cleared Production Script card!
+      if (isNowFullyCleared && updatedScript) {
+        nextMsgs.push({
+          id: `final-script-${Date.now()}`,
+          sender: "bond_officer",
+          senderName: "Completion Bond Officer",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "script",
+          content: updatedScript,
+        });
+      }
+
+      return nextMsgs;
+    });
 
     setIsLoading(false);
     setActiveAgent("bond_officer");
@@ -750,21 +780,29 @@ export default function DeepClearStudioPage() {
                     {/* Detected Hazards List Card */}
                     {msg.type === "hazards" && msg.entities && (
                       <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-4 space-y-3 w-full shadow-sm">
-                        <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-                          <span className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
-                            <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
-                            Identified Scene Liabilities ({msg.entities.length})
+                        <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-rose-400" />
+                            <span className="font-semibold text-xs text-zinc-100">
+                              Identified Scene Liabilities ({msg.entities.length})
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-zinc-400">
+                            Parallel Grounded
                           </span>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                           {msg.entities.map((ent) => {
                             const isEntityCleared =
-                              clearedEntityIds.includes(ent.id) || ent.status === "cleared";
+                              clearedEntityIds.includes(ent.id) ||
+                              ent.status === "cleared" ||
+                              isCleared;
+
                             return (
                               <div
                                 key={ent.id}
-                                className={`p-3 rounded-xl border text-xs transition-all ${
+                                className={`p-3 rounded-xl border text-xs space-y-1.5 transition-all ${
                                   isEntityCleared
                                     ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-300"
                                     : "bg-zinc-900/90 border-white/[0.08] text-zinc-200"
@@ -812,6 +850,64 @@ export default function DeepClearStudioPage() {
                               </div>
                             );
                           })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Final Cleared Production Script Card */}
+                    {msg.type === "script" && (
+                      <div className="bg-[#121214] border border-emerald-500/40 rounded-2xl p-4 sm:p-5 space-y-3.5 w-full shadow-lg shadow-emerald-950/20 animate-in fade-in">
+                        <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <Film className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-semibold text-white">
+                                Final Cleared Production Script
+                              </h3>
+                              <p className="text-[11px] text-emerald-400 font-mono">
+                                Certified 100% Cleared for Principal Photography • $0 Statutory Exposure
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
+                            E&O APPROVED
+                          </span>
+                        </div>
+
+                        {/* Screenplay text block */}
+                        <div className="p-4 rounded-xl bg-zinc-950/80 border border-white/5 font-mono text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto selection:bg-emerald-500/30 selection:text-emerald-200">
+                          {msg.content}
+                        </div>
+
+                        {/* Download Action Bar */}
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            onClick={() => {
+                              const blob = new Blob([msg.content || ""], { type: "text/plain;charset=utf-8" });
+                              const url = URL.createObjectURL(blob);
+                              const link = document.createElement("a");
+                              link.href = url;
+                              link.download = `Indie_Production_CLEARED_FINAL.fountain`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="flex-1 py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            <span>Download Cleared Script (.fountain / .md)</span>
+                          </button>
+
+                          <button
+                            onClick={() => setIsExportModalOpen(true)}
+                            className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 font-medium text-xs transition-all flex items-center gap-1.5"
+                          >
+                            <FileText className="h-3.5 w-3.5 text-indigo-400" />
+                            <span>Export Binder PDF</span>
+                          </button>
                         </div>
                       </div>
                     )}
@@ -1046,6 +1142,7 @@ export default function DeepClearStudioPage() {
         taxJurisdiction={taxJurisdiction}
         entities={entities}
         clearedEntityIds={clearedEntityIds}
+        finalScriptText={currentScriptText}
       />
     </div>
   );
