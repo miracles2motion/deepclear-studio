@@ -884,58 +884,90 @@ export default function DeepClearStudioPage() {
                         </div>
 
                         {/* Download & Copy Action Bar */}
-                        <div className="flex flex-wrap items-center gap-2 pt-1">
-                          <button
-                            onClick={() => {
-                              const ext = uploadedFileName ? (uploadedFileName.split(".").pop() || "fountain") : "fountain";
-                              const baseName = uploadedFileName ? uploadedFileName.replace(/\.[^/.]+$/, "") : "Indie_Production";
-                              const blob = new Blob([msg.content || ""], { type: "text/plain;charset=utf-8" });
-                              const url = URL.createObjectURL(blob);
-                              const link = document.createElement("a");
-                              link.href = url;
-                              link.download = `${baseName}_CLEARED_FINAL.${ext}`;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                              URL.revokeObjectURL(url);
-                            }}
-                            className="flex-1 min-w-[200px] py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                            <span>Download Cleared Script ({uploadedFileName ? `.${uploadedFileName.split(".").pop()}` : ".fountain / .md"})</span>
-                          </button>
+                        <div className="space-y-2 pt-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Primary Full Download Button */}
+                            <button
+                              onClick={() => {
+                                const ext = uploadedFileName ? (uploadedFileName.split(".").pop() || "fountain") : "fountain";
+                                const baseName = uploadedFileName ? uploadedFileName.replace(/\.[^/.]+$/, "") : "Indie_Production";
+                                const blob = new Blob([msg.content || ""], { type: "text/plain;charset=utf-8" });
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement("a");
+                                link.href = url;
+                                link.download = `${baseName}_CLEARED_FINAL.${ext}`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                URL.revokeObjectURL(url);
+                              }}
+                              className="flex-1 min-w-[200px] py-2 px-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              <span>Download Script ({uploadedFileName ? `.${uploadedFileName.split(".").pop()}` : ".fountain"})</span>
+                            </button>
 
-                          <button
-                            onClick={() => {
-                              if (typeof navigator !== "undefined" && navigator.clipboard && msg.content) {
-                                navigator.clipboard.writeText(msg.content);
-                                setIsCopied(true);
-                                setTimeout(() => setIsCopied(false), 2500);
-                              }
-                            }}
-                            className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 font-medium text-xs transition-all flex items-center gap-1.5"
-                            title="Copy script to clipboard"
-                          >
-                            {isCopied ? (
-                              <>
-                                <Check className="h-3.5 w-3.5 text-emerald-400" />
-                                <span className="text-emerald-300 font-semibold">Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="h-3.5 w-3.5 text-zinc-400" />
-                                <span>Copy Script</span>
-                              </>
-                            )}
-                          </button>
+                            {/* Copy Script */}
+                            <button
+                              onClick={() => {
+                                if (typeof navigator !== "undefined" && navigator.clipboard && msg.content) {
+                                  navigator.clipboard.writeText(msg.content);
+                                  setIsCopied(true);
+                                  setTimeout(() => setIsCopied(false), 2500);
+                                }
+                              }}
+                              className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 font-medium text-xs transition-all flex items-center gap-1.5"
+                              title="Copy script text"
+                            >
+                              {isCopied ? (
+                                <>
+                                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                                  <span className="text-emerald-300 font-semibold">Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="h-3.5 w-3.5 text-zinc-400" />
+                                  <span>Copy Script</span>
+                                </>
+                              )}
+                            </button>
 
-                          <button
-                            onClick={() => setIsExportModalOpen(true)}
-                            className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 font-medium text-xs transition-all flex items-center gap-1.5"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-indigo-400" />
-                            <span>Export Binder PDF</span>
-                          </button>
+                            {/* Export Binder PDF */}
+                            <button
+                              onClick={() => setIsExportModalOpen(true)}
+                              className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 font-medium text-xs transition-all flex items-center gap-1.5"
+                            >
+                              <FileText className="h-3.5 w-3.5 text-indigo-400" />
+                              <span>Export Binder PDF</span>
+                            </button>
+                          </div>
+
+                          {/* Quick Format Pills */}
+                          <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400 pt-1">
+                            <span className="text-zinc-500 text-[10px] uppercase">Format:</span>
+                            {(["fountain", "md", "txt"] as const).map((fmt) => (
+                              <button
+                                key={fmt}
+                                onClick={() => {
+                                  const baseName = uploadedFileName
+                                    ? uploadedFileName.replace(/\.[^/.]+$/, "")
+                                    : "Indie_Production";
+                                  const blob = new Blob([msg.content || ""], { type: "text/plain;charset=utf-8" });
+                                  const url = URL.createObjectURL(blob);
+                                  const link = document.createElement("a");
+                                  link.href = url;
+                                  link.download = `${baseName}_CLEARED_FINAL.${fmt}`;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  URL.revokeObjectURL(url);
+                                }}
+                                className="px-2 py-0.5 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-white/5 hover:border-emerald-500/30 transition-all"
+                              >
+                                .{fmt}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}

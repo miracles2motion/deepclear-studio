@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { ClearanceReport, ExtractedEntity } from "@/types";
 import { generateEOBinderPDF } from "@/lib/pdfGenerator";
 import { generateClearanceMerkleHash, mintClearancePassportTestnet } from "@/lib/web3";
-import { X, ShieldCheck, Download, ExternalLink, CheckCircle2, Lock, FileText, Film } from "lucide-react";
+import { X, ShieldCheck, Download, ExternalLink, CheckCircle2, Lock, FileText, Film, Copy, Check } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface ExportModalProps {
@@ -35,6 +35,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   uploadedFileName,
 }) => {
   const [isMinting, setIsMinting] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const [mintResult, setMintResult] = useState<{
     txHash: string;
     explorerUrl: string;
@@ -75,11 +76,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     }
   };
 
-  // Download Cleared Screenplay File (.fountain / .md / .txt)
-  const handleDownloadScript = () => {
+  // Download Cleared Screenplay File in user's desired format
+  const handleDownloadScriptFormat = (format: "fountain" | "md" | "txt") => {
     if (!finalScriptText) return;
 
-    const ext = uploadedFileName ? (uploadedFileName.split(".").pop() || "fountain") : "fountain";
     const baseName = uploadedFileName
       ? uploadedFileName.replace(/\.[^/.]+$/, "")
       : productionTitle.replace(/\s+/g, "_");
@@ -88,7 +88,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${baseName}_CLEARED_FINAL.${ext}`;
+    link.download = `${baseName}_CLEARED_FINAL.${format}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -101,11 +101,19 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     }
   };
 
-  // Download Complete Distribution Package (PDF + Screenplay)
+  // Copy Final Screenplay Text
+  const handleCopyScript = () => {
+    if (!finalScriptText || typeof navigator === "undefined" || !navigator.clipboard) return;
+    navigator.clipboard.writeText(finalScriptText);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2500);
+  };
+
+  // Download Complete Distribution Package (PDF + .fountain Screenplay)
   const handleDownloadBundle = () => {
     handleDownloadPDF();
     setTimeout(() => {
-      handleDownloadScript();
+      handleDownloadScriptFormat("fountain");
     }, 400);
   };
 
@@ -181,7 +189,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         </div>
 
         {/* Delivery Download Actions */}
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {/* Complete Distribution Bundle */}
           <button
             onClick={handleDownloadBundle}
@@ -191,6 +199,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <span>Download Full Distribution Bundle (PDF + Screenplay)</span>
           </button>
 
+          {/* Primary Options Grid */}
           <div className="grid grid-cols-2 gap-2">
             {/* Download PDF only */}
             <button
@@ -201,23 +210,66 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <span>Form E&O-2026 (.PDF)</span>
             </button>
 
-            {/* Download Cleared Screenplay only */}
+            {/* Copy Screenplay Text */}
             <button
-              onClick={handleDownloadScript}
+              onClick={handleCopyScript}
               disabled={!finalScriptText}
               className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 font-medium text-xs disabled:opacity-40 transition-all"
             >
-              <Film className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Final Script (.fountain)</span>
+              {isCopied ? (
+                <>
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="text-emerald-300 font-semibold">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5 text-zinc-400" />
+                  <span>Copy Screenplay Text</span>
+                </>
+              )}
             </button>
           </div>
+
+          {/* Screenplay Format Download Options */}
+          {finalScriptText && (
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-white/5 space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400">
+                <span className="flex items-center gap-1 text-zinc-300">
+                  <Film className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Download Screenplay Format:</span>
+                </span>
+                <span className="text-[10px] text-zinc-500">Industry Standard</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => handleDownloadScriptFormat("fountain")}
+                  className="py-1.5 px-2 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-white/5 text-xs font-mono transition-all text-center hover:border-emerald-500/40"
+                >
+                  .fountain
+                </button>
+                <button
+                  onClick={() => handleDownloadScriptFormat("md")}
+                  className="py-1.5 px-2 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-white/5 text-xs font-mono transition-all text-center hover:border-sky-500/40"
+                >
+                  .md (Markdown)
+                </button>
+                <button
+                  onClick={() => handleDownloadScriptFormat("txt")}
+                  className="py-1.5 px-2 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-white/5 text-xs font-mono transition-all text-center hover:border-zinc-500/40"
+                >
+                  .txt (Text)
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Mint On-Chain Passport */}
           {!mintResult ? (
             <button
               onClick={handleMintOnChain}
               disabled={isMinting}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-white/10 text-xs font-mono transition-all mt-1"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-white/10 text-xs font-mono transition-all"
             >
               <Lock className="h-3.5 w-3.5 text-zinc-400" />
               <span>{isMinting ? "Minting to Base Sepolia..." : "Mint On-Chain Clearance Passport (EVM)"}</span>
