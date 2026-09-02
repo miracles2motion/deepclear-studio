@@ -47,7 +47,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const isFullyCleared = currentExposure === 0 && initialExposure > 0;
   const merkleHash = generateClearanceMerkleHash(productionTitle, entities, new Date().toISOString());
 
-  // Download Form E&O-2026 PDF
+  // Download Form E&O-2026 PDF (Single file only)
   const handleDownloadPDF = () => {
     const report: ClearanceReport = {
       id: `CERT-EO-${Date.now().toString().slice(-6)}`,
@@ -76,7 +76,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     }
   };
 
-  // Download Cleared Screenplay File in user's desired format
+  // Download Cleared Screenplay in user-chosen format (Single file only)
   const handleDownloadScriptFormat = (format: "fountain" | "md" | "txt") => {
     if (!finalScriptText) return;
 
@@ -107,14 +107,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     navigator.clipboard.writeText(finalScriptText);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2500);
-  };
-
-  // Download Complete Distribution Package (PDF + .fountain Screenplay)
-  const handleDownloadBundle = () => {
-    handleDownloadPDF();
-    setTimeout(() => {
-      handleDownloadScriptFormat("fountain");
-    }, 400);
   };
 
   const handleMintOnChain = async () => {
@@ -151,7 +143,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
           <div>
             <h2 className="text-base font-semibold text-white">
-              Distribution Clearance & Delivery Package
+              Distribution Clearance & Export
             </h2>
             <p className="text-xs text-zinc-400 font-mono">
               Form E&O-2026 Binder • Mutated Screenplay • Web3 Passport
@@ -188,77 +180,66 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
         </div>
 
-        {/* Delivery Download Actions */}
+        {/* Explicit Single-File Download Actions */}
         <div className="space-y-3">
-          {/* Complete Distribution Bundle */}
+          {/* Primary Action: Download Form E&O-2026 PDF (Single File) */}
           <button
-            onClick={handleDownloadBundle}
+            onClick={handleDownloadPDF}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs shadow-md transition-all"
           >
             <Download className="h-4 w-4" />
-            <span>Download Full Distribution Bundle (PDF + Screenplay)</span>
+            <span>Download Form E&O-2026 Binder (.PDF)</span>
           </button>
 
-          {/* Primary Options Grid */}
-          <div className="grid grid-cols-2 gap-2">
-            {/* Download PDF only */}
-            <button
-              onClick={handleDownloadPDF}
-              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 font-medium text-xs transition-all"
-            >
-              <FileText className="h-3.5 w-3.5 text-indigo-400" />
-              <span>Form E&O-2026 (.PDF)</span>
-            </button>
-
-            {/* Copy Screenplay Text */}
-            <button
-              onClick={handleCopyScript}
-              disabled={!finalScriptText}
-              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 font-medium text-xs disabled:opacity-40 transition-all"
-            >
-              {isCopied ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-emerald-400" />
-                  <span className="text-emerald-300 font-semibold">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5 text-zinc-400" />
-                  <span>Copy Screenplay Text</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Screenplay Format Download Options */}
+          {/* Screenplay Options */}
           {finalScriptText && (
             <div className="p-3 rounded-xl bg-zinc-900/60 border border-white/5 space-y-2">
               <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400">
-                <span className="flex items-center gap-1 text-zinc-300">
+                <span className="flex items-center gap-1 text-zinc-300 font-semibold">
                   <Film className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>Download Screenplay Format:</span>
+                  <span>Download Cleared Screenplay:</span>
                 </span>
-                <span className="text-[10px] text-zinc-500">Industry Standard</span>
+                {/* Copy Button */}
+                <button
+                  onClick={handleCopyScript}
+                  className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors"
+                >
+                  {isCopied ? (
+                    <>
+                      <Check className="h-3 w-3 text-emerald-400" />
+                      <span className="text-emerald-300 text-[10px]">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3" />
+                      <span className="text-[10px]">Copy Text</span>
+                    </>
+                  )}
+                </button>
               </div>
 
+              {/* Explicit Single-Format Download Buttons */}
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => handleDownloadScriptFormat("fountain")}
-                  className="py-1.5 px-2 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-white/5 text-xs font-mono transition-all text-center hover:border-emerald-500/40"
+                  className="py-1.5 px-2 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-white/5 text-xs font-mono transition-all text-center hover:border-emerald-500/40 flex items-center justify-center gap-1"
                 >
-                  .fountain
+                  <Download className="h-3 w-3 text-emerald-400" />
+                  <span>.fountain</span>
                 </button>
                 <button
                   onClick={() => handleDownloadScriptFormat("md")}
-                  className="py-1.5 px-2 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-white/5 text-xs font-mono transition-all text-center hover:border-sky-500/40"
+                  className="py-1.5 px-2 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-white/5 text-xs font-mono transition-all text-center hover:border-sky-500/40 flex items-center justify-center gap-1"
                 >
-                  .md (Markdown)
+                  <Download className="h-3 w-3 text-sky-400" />
+                  <span>.md</span>
                 </button>
                 <button
                   onClick={() => handleDownloadScriptFormat("txt")}
-                  className="py-1.5 px-2 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-white/5 text-xs font-mono transition-all text-center hover:border-zinc-500/40"
+                  className="py-1.5 px-2 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 border border-white/5 text-xs font-mono transition-all text-center hover:border-zinc-500/40 flex items-center justify-center gap-1"
                 >
-                  .txt (Text)
+                  <Download className="h-3 w-3 text-zinc-400" />
+                  <span>.txt</span>
                 </button>
               </div>
             </div>
