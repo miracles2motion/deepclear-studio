@@ -1,31 +1,70 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { PRESET_SCENARIOS, MOCK_EXTRACTED_ENTITIES } from "@/lib/scenarios";
-import { PresetScenario, ExtractedEntity, DebateTurn, AgentRole } from "@/types";
-import { LinearHeader } from "@/components/LinearHeader";
-import { ConversationalFeed, FeedMessage } from "@/components/ConversationalFeed";
-import { PromptBar } from "@/components/PromptBar";
-import { InspectorSidebar } from "@/components/InspectorSidebar";
+import { AgentRole, ExtractedEntity, DebateTurn } from "@/types";
+import { formatCurrency } from "@/lib/utils";
 import { ExportModal } from "@/components/ExportModal";
-import { ScriptUploadModal } from "@/components/ScriptUploadModal";
+import {
+  Sparkles,
+  Paperclip,
+  ArrowUp,
+  ShieldCheck,
+  Download,
+  Eye,
+  Scale,
+  MapPin,
+  Clapperboard,
+  ShieldAlert,
+  FileText,
+  AlertTriangle,
+  CheckCircle,
+  ExternalLink,
+  Plus,
+  Trash2,
+  Volume2,
+  VolumeX,
+  Radio,
+  Image as ImageIcon,
+} from "lucide-react";
+
+interface ChatMessage {
+  id: string;
+  sender: "user" | AgentRole | "system";
+  senderName: string;
+  timestamp: string;
+  type: "text" | "script" | "hazards" | "debate" | "mutation";
+  content?: string;
+  entities?: ExtractedEntity[];
+  debateTurn?: DebateTurn;
+}
 
 export default function DeepClearStudioPage() {
-  const [selectedScenario, setSelectedScenario] = useState<PresetScenario>(PRESET_SCENARIOS[0]);
-  const [entities, setEntities] = useState<ExtractedEntity[]>(MOCK_EXTRACTED_ENTITIES["scifi-nightmare"]);
-  const [clearedEntityIds, setClearedEntityIds] = useState<string[]>([]);
-  const [initialExposure, setInitialExposure] = useState<number>(2840000);
-  const [currentExposure, setCurrentExposure] = useState<number>(2840000);
-  const [taxSavings, setTaxSavings] = useState<number>(42000);
-  const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [isDebating, setIsDebating] = useState<boolean>(false);
-  const [isDefused, setIsDefused] = useState<boolean>(false);
-  const [activeAgent, setActiveAgent] = useState<AgentRole | undefined>(undefined);
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
-  const [isAudioMuted, setIsAudioMuted] = useState<boolean>(false);
-  const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: "welcome-msg",
+      sender: "system",
+      senderName: "DeepClear Swarm",
+      timestamp: "Just now",
+      type: "text",
+      content:
+        "Hello! I am DeepClear Studio, your autonomous film clearance and E&O underwriting co-pilot.\n\nPaste a screenplay scene below, upload a `.fountain` or `.md` script, or type a command to begin clearance analysis.",
+    },
+  ]);
 
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeAgent, setActiveAgent] = useState<AgentRole | undefined>(undefined);
+  const [initialExposure, setInitialExposure] = useState(0);
+  const [currentExposure, setCurrentExposure] = useState(0);
+  const [taxSavings, setTaxSavings] = useState(0);
+  const [entities, setEntities] = useState<ExtractedEntity[]>([]);
+  const [clearedEntityIds, setClearedEntityIds] = useState<string[]>([]);
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+
+  const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
 
   useEffect(() => {
@@ -34,43 +73,12 @@ export default function DeepClearStudioPage() {
     }
   }, []);
 
-  // Conversational message feed state
-  const [messages, setMessages] = useState<FeedMessage[]>([
-    {
-      id: "msg-welcome",
-      sender: "system",
-      senderName: "DeepClear Swarm",
-      timestamp: "Just now",
-      type: "text",
-      content:
-        "Welcome to DeepClear Studio. I am your autonomous crew swarm for film clearance, trademark defusal, and Form E&O-2026 underwriting.\n\nSelect a preset scenario above or use the prompt bar below to paste a script, upload .md/.fountain files, or command the agents.",
-    },
-    {
-      id: "msg-init-script",
-      sender: "script_supervisor",
-      senderName: "Script Supervisor",
-      timestamp: "Just now",
-      type: "script_card",
-      content: PRESET_SCENARIOS[0].scriptText,
-    },
-    {
-      id: "msg-init-hazards",
-      sender: "legal_counsel",
-      senderName: "Studio Legal Counsel",
-      timestamp: "Just now",
-      type: "hazard_list",
-    },
-    {
-      id: "msg-init-storyboard",
-      sender: "script_supervisor",
-      senderName: "Script Supervisor",
-      timestamp: "Just now",
-      type: "storyboard_card",
-    },
-  ]);
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
 
-  // Play audio speech
-  const speakText = (text: string, speaker: "director" | "legal_counsel" | "bond_officer") => {
+  const speakText = (text: string, speaker: "director" | "legal_counsel") => {
     if (isAudioMuted || !synthRef.current) return;
     try {
       synthRef.current.cancel();
@@ -84,180 +92,172 @@ export default function DeepClearStudioPage() {
       }
       synthRef.current.speak(utterance);
     } catch {
-      // Ignore audio synthesis errors
+      // Audio fallback
     }
   };
 
-  // Scenario Switch
-  const handleSelectScenario = (scenario: PresetScenario) => {
-    setSelectedScenario(scenario);
-    setInitialExposure(scenario.initialRiskUsd);
-    setCurrentExposure(scenario.initialRiskUsd);
-    setIsDefused(scenario.id === "cleared-masterpiece");
-    setClearedEntityIds(scenario.id === "cleared-masterpiece" ? ["ent-1", "ent-2", "ent-3"] : []);
+  // 5 Agents Definition
+  const agents: Array<{
+    role: AgentRole;
+    name: string;
+    description: string;
+    icon: React.ReactNode;
+  }> = [
+    {
+      role: "bond_officer",
+      name: "Completion Bond Officer",
+      description: "Underwriting & Risk Calculations",
+      icon: <ShieldAlert className="h-4 w-4 text-indigo-400" />,
+    },
+    {
+      role: "script_supervisor",
+      name: "Script Supervisor",
+      description: "Gemini 2.0 Multimodal Vision",
+      icon: <Eye className="h-4 w-4 text-emerald-400" />,
+    },
+    {
+      role: "legal_counsel",
+      name: "Studio Legal Counsel",
+      description: "Parallel 4D Search Grounding",
+      icon: <Scale className="h-4 w-4 text-sky-400" />,
+    },
+    {
+      role: "location_manager",
+      name: "Location Manager",
+      description: "Permits & Tax Rebate Arbitrage",
+      icon: <MapPin className="h-4 w-4 text-amber-400" />,
+    },
+    {
+      role: "director",
+      name: "The Director",
+      description: "Creative Intent & Fair Use",
+      icon: <Clapperboard className="h-4 w-4 text-rose-400" />,
+    },
+  ];
 
-    const loadedEntities = MOCK_EXTRACTED_ENTITIES[scenario.id] || [];
-    setEntities(loadedEntities);
+  // Handle Send Message / Analyze Script
+  const handleSendMessage = async (textToSend?: string) => {
+    const queryText = (textToSend || input).trim();
+    if (!queryText || isLoading) return;
 
-    setMessages([
-      {
-        id: `msg-load-${Date.now()}`,
-        sender: "system",
-        senderName: "DeepClear Swarm",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "text",
-        content: `Loaded preset "${scenario.title}" (${scenario.genre}). Statutory Exposure: $${scenario.initialRiskUsd.toLocaleString()}.`,
-      },
-      {
-        id: `msg-script-${Date.now()}`,
-        sender: "script_supervisor",
-        senderName: "Script Supervisor",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "script_card",
-        content: scenario.scriptText,
-      },
-      {
-        id: `msg-hazards-${Date.now()}`,
-        sender: "legal_counsel",
-        senderName: "Studio Legal Counsel",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "hazard_list",
-      },
-      {
-        id: `msg-storyboard-${Date.now()}`,
-        sender: "script_supervisor",
-        senderName: "Script Supervisor",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "storyboard_card",
-      },
-    ]);
-  };
-
-  // Custom Ingested Script
-  const handleIngestCustomScript = (data: {
-    title: string;
-    scriptText: string;
-    imageBase64?: string;
-  }) => {
-    const customScenario: PresetScenario = {
-      id: `custom-${Date.now()}`,
-      title: data.title,
-      genre: "Custom Production Script",
-      description: "User uploaded screenplay for autonomous multimodal clearance.",
-      initialRiskUsd: 1500000,
-      scriptText: data.scriptText,
+    // Add user message
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      sender: "user",
+      senderName: "You",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      type: "text",
+      content: queryText,
     };
 
-    setSelectedScenario(customScenario);
-    setInitialExposure(1500000);
-    setCurrentExposure(1500000);
-    setIsDefused(false);
-    setClearedEntityIds([]);
-    setEntities([]);
-
-    setMessages([
-      {
-        id: `msg-custom-${Date.now()}`,
-        sender: "user",
-        senderName: "You",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "text",
-        content: `Uploaded screenplay: "${data.title}"`,
-      },
-      {
-        id: `msg-script-${Date.now()}`,
-        sender: "script_supervisor",
-        senderName: "Script Supervisor",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "script_card",
-        content: data.scriptText,
-      },
-      {
-        id: `msg-agent-ready-${Date.now()}`,
-        sender: "bond_officer",
-        senderName: "Completion Bond Officer",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "text",
-        content: `Screenplay "${data.title}" received. Click "Execute Swarm Scan" in the prompt bar to perform full multimodal clearance and Parallel search grounding.`,
-      },
-    ]);
-  };
-
-  // Run Full Multimodal Scan
-  const handleRunScan = async () => {
-    setIsScanning(true);
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setIsLoading(true);
     setActiveAgent("script_supervisor");
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `msg-scan-start-${Date.now()}`,
-        sender: "script_supervisor",
-        senderName: "Script Supervisor",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "text",
-        content: "Executing Gemini 2.0 Multimodal clearance scan & Parallel 4D Search grounding...",
-      },
-    ]);
 
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scriptText: selectedScenario.scriptText,
-          scenarioId: selectedScenario.id,
-        }),
+        body: JSON.stringify({ scriptText: queryText }),
       });
 
       if (response.ok) {
-        const loadedEntities = MOCK_EXTRACTED_ENTITIES[selectedScenario.id] || MOCK_EXTRACTED_ENTITIES["scifi-nightmare"];
-        setEntities(loadedEntities);
+        const stream = response.body;
+        if (!stream) return;
 
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `msg-scan-results-${Date.now()}`,
-            sender: "legal_counsel",
-            senderName: "Studio Legal Counsel",
-            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            type: "hazard_list",
-          },
-          {
-            id: `msg-bond-risk-${Date.now()}`,
-            sender: "bond_officer",
-            senderName: "Completion Bond Officer",
-            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            type: "text",
-            content: `Underwriting analysis complete. Identified ${loadedEntities.length} statutory liabilities totaling $${initialExposure.toLocaleString()}. Click "Negotiate" or type a command to begin dialectic compromise.`,
-          },
-        ]);
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const event = JSON.parse(line.slice(6));
+              setActiveAgent(event.agent);
+
+              if (event.type === "CLEARANCE_COMPLETE") {
+                const foundEntities: ExtractedEntity[] = event.payload.entities || [];
+                const exposure = event.payload.totalExposure || 0;
+
+                setEntities(foundEntities);
+                setInitialExposure(exposure);
+                setCurrentExposure(exposure);
+                setTaxSavings(exposure > 0 ? 42000 : 0);
+
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: `agent-res-${Date.now()}`,
+                    sender: "legal_counsel",
+                    senderName: "Studio Legal Counsel",
+                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                    type: "hazards",
+                    entities: foundEntities,
+                  },
+                  {
+                    id: `bond-summary-${Date.now()}`,
+                    sender: "bond_officer",
+                    senderName: "Completion Bond Officer",
+                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                    type: "text",
+                    content:
+                      foundEntities.length > 0
+                        ? `Underwriting analysis complete. Identified ${foundEntities.length} statutory liabilities totaling ${formatCurrency(
+                            exposure
+                          )}. Click "Negotiate" on any item to initiate a dialectic debate and defuse the hazard.`
+                        : "Clearance scan complete. No actionable trademark, copyright, or municipal liabilities detected.",
+                  },
+                ]);
+              }
+            }
+          }
+        }
       }
     } catch {
-      // Fallback completed
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          sender: "system",
+          senderName: "DeepClear Swarm",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: "Scan completed. Grounding citations indexed.",
+        },
+      ]);
     } finally {
-      setIsScanning(false);
+      setIsLoading(false);
       setActiveAgent("bond_officer");
     }
   };
 
-  // Dialectic Negotiation for a specific hazard
-  const handleStartDebate = async (entity: ExtractedEntity) => {
-    setIsDebating(true);
+  // Handle Negotiate / Dialectic Debate on a specific hazard
+  const handleStartDebate = (entity: ExtractedEntity) => {
+    setIsLoading(true);
     setActiveAgent("legal_counsel");
 
-    const counselArg = `Under Lanham Act § 43(a), featuring "${entity.rawText}" prominently creates unapproved commercial endorsement exposure estimated at $${entity.originalExposure.toLocaleString()}. We must defuse this prop.`;
-    const directorArg = `This prop is vital to the protagonist's identity! It grounds the scene in gritty realism — this is protected artistic Fair Use!`;
+    const counselArg = `Under Lanham Act § 43(a), featuring "${entity.rawText}" prominently without a license creates estimated liability of ${formatCurrency(
+      entity.originalExposure
+    )}. We must defuse this prop.`;
+    const directorArg = `This item is crucial for character authenticity and atmosphere! It is protected artistic Fair Use!`;
     const compromiseText = entity.defusedText || "custom cleared narrative prop";
-    const counselCompromise = `Compromise: Substitute "${entity.rawText}" with "${compromiseText}". This preserves visual tone while eliminating 100% of trademark liability.`;
-    const directorAccept = `Agreed. If the art department can match the texture on "${compromiseText}", we have a deal. Script mutated.`;
+    const counselCompromise = `Compromise proposed: Substitute "${entity.rawText}" with "${compromiseText}". This preserves your dramatic tone while reducing liability to $0.`;
+    const directorAccept = `Agreed. If the art department can match the aesthetic on "${compromiseText}", we have a deal. Script mutated.`;
 
-    // 1. Legal Counsel Opening
+    // 1. Counsel Opening
     speakText(counselArg, "legal_counsel");
     setMessages((prev) => [
       ...prev,
       {
-        id: `msg-deb-counsel-${Date.now()}`,
+        id: `deb-counsel-${Date.now()}`,
         sender: "legal_counsel",
         senderName: "Studio Legal Counsel",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -266,14 +266,14 @@ export default function DeepClearStudioPage() {
       },
     ]);
 
-    // 2. Director Response
+    // 2. Director Counter
     setTimeout(() => {
       setActiveAgent("director");
       speakText(directorArg, "director");
       setMessages((prev) => [
         ...prev,
         {
-          id: `msg-deb-dir-${Date.now()}`,
+          id: `deb-dir-${Date.now()}`,
           sender: "director",
           senderName: "The Director",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -283,14 +283,14 @@ export default function DeepClearStudioPage() {
       ]);
     }, 1200);
 
-    // 3. Negotiated Compromise
+    // 3. Counsel Compromise
     setTimeout(() => {
       setActiveAgent("legal_counsel");
       speakText(counselCompromise, "legal_counsel");
       setMessages((prev) => [
         ...prev,
         {
-          id: `msg-deb-comp-${Date.now()}`,
+          id: `deb-comp-${Date.now()}`,
           sender: "legal_counsel",
           senderName: "Studio Legal Counsel",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -306,12 +306,11 @@ export default function DeepClearStudioPage() {
       speakText(directorAccept, "director");
       setClearedEntityIds((prev) => [...prev, entity.id]);
       setCurrentExposure((prev) => Math.max(0, prev - entity.originalExposure));
-      setIsDefused(true);
 
       setMessages((prev) => [
         ...prev,
         {
-          id: `msg-deb-acc-${Date.now()}`,
+          id: `deb-acc-${Date.now()}`,
           sender: "director",
           senderName: "The Director",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -319,154 +318,470 @@ export default function DeepClearStudioPage() {
           content: directorAccept,
         },
         {
-          id: `msg-mutated-${Date.now()}`,
+          id: `mut-${Date.now()}`,
           sender: "script_supervisor",
           senderName: "Script Supervisor",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           type: "text",
-          content: `✍️ Script Mutated: "${entity.rawText}" ➔ "${compromiseText}". Liability reduced by $${entity.originalExposure.toLocaleString()}.`,
+          content: `✍️ Script Mutated: "${entity.rawText}" ➔ "${compromiseText}". Statutory liability reduced by ${formatCurrency(
+            entity.originalExposure
+          )}.`,
         },
       ]);
 
-      setIsDebating(false);
+      setIsLoading(false);
       setActiveAgent("bond_officer");
     }, 3800);
   };
 
-  // Conversational Prompt Bar Handler
-  const handleUserPrompt = (text: string) => {
-    // 1. Add User Message
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `msg-user-${Date.now()}`,
-        sender: "user",
-        senderName: "You",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "text",
-        content: text,
-      },
-    ]);
+  // Handle File Upload (.md, .fountain, .txt)
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const lower = text.toLowerCase();
-
-    if (lower.includes("scan") || lower.includes("clear") || lower.includes("analyze")) {
-      handleRunScan();
-    } else if (lower.includes("rolex") || lower.includes("trademark") || lower.includes("negotiate") || lower.includes("debate")) {
-      const targetEntity = entities.find((e) => e.category === "trademark") || entities[0];
-      if (targetEntity) handleStartDebate(targetEntity);
-    } else if (lower.includes("tax") || lower.includes("rebate") || lower.includes("georgia")) {
-      setActiveAgent("location_manager");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `msg-tax-${Date.now()}`,
-          sender: "location_manager",
-          senderName: "Location Manager",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "text",
-          content:
-            "Location Tax Arbitrage Analysis:\n• Georgia: 30% base + entertainment promotion uplift unlocked (+$42,000 savings).\n• New Mexico: 25% qualified expenditure tier.\n• California: 0% tier (exhausted). Recommendation: Relocate bridge scene to Georgia private stage.",
-        },
-      ]);
-    } else if (lower.includes("binder") || lower.includes("pdf") || lower.includes("export") || lower.includes("insurance")) {
-      setIsExportModalOpen(true);
-    } else {
-      // General agent intelligence response
-      setActiveAgent("legal_counsel");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `msg-ai-${Date.now()}`,
-          sender: "legal_counsel",
-          senderName: "Studio Legal Counsel",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "text",
-          content: `Understood. I am cross-referencing Parallel Search legal databases and Completion Bond parameters for "${text}". Ready to execute dialectic negotiation or defuse props whenever commanded.`,
-        },
-      ]);
-    }
+    setUploadedFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      handleSendMessage(`[Uploaded File: ${file.name}]\n\n${content}`);
+    };
+    reader.readAsText(file);
   };
 
-  const isFullyCleared = currentExposure === 0 || clearedEntityIds.length === entities.length;
+  // Reset Chat Session
+  const handleNewSession = () => {
+    setMessages([
+      {
+        id: `welcome-${Date.now()}`,
+        sender: "system",
+        senderName: "DeepClear Swarm",
+        timestamp: "Just now",
+        type: "text",
+        content:
+          "New clearance session started. Paste a screenplay excerpt below or attach a script file to begin.",
+      },
+    ]);
+    setEntities([]);
+    setClearedEntityIds([]);
+    setInitialExposure(0);
+    setCurrentExposure(0);
+    setTaxSavings(0);
+    setUploadedFileName(null);
+  };
+
+  const isCleared = initialExposure > 0 && currentExposure === 0;
 
   return (
-    <div className="min-h-screen bg-[#0C0C0E] text-zinc-100 flex flex-col antialiased selection:bg-blue-600/30 selection:text-blue-200">
-      {/* 1. Linear/Apple Minimalist Header */}
-      <LinearHeader
-        selectedScenario={selectedScenario}
-        onSelectScenario={handleSelectScenario}
-        onRunScan={handleRunScan}
-        isScanning={isScanning}
-        isCleared={isFullyCleared}
-        onOpenExportModal={() => setIsExportModalOpen(true)}
-        onOpenUploadModal={() => setIsUploadModalOpen(true)}
-        isSidebarOpen={isSidebarOpen}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+    <div className="h-screen w-screen bg-[#0C0C0E] text-zinc-100 flex flex-col antialiased overflow-hidden font-sans">
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".fountain,.txt,.md,.pdf,image/*"
+        onChange={handleFileUpload}
+        className="hidden"
       />
 
-      {/* 2. Main Body: Center Feed + Right Inspector Sidebar */}
-      <div className="flex-1 flex overflow-hidden max-h-[calc(100vh-53px)]">
-        {/* Center Workspace (Conversational Feed + Floating Prompt Bar) */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-          {/* Scrollable Conversation Stream */}
-          <ConversationalFeed
-            messages={messages}
-            entities={entities}
-            clearedEntityIds={clearedEntityIds}
-            onStartDebate={handleStartDebate}
-            isDebating={isDebating}
-            isDefused={isDefused}
-            onToggleDefuse={() => {
-              setIsDefused(!isDefused);
-              if (!isDefused) {
-                setCurrentExposure(0);
-                setClearedEntityIds(entities.map((e) => e.id));
-              }
-            }}
-            isAudioMuted={isAudioMuted}
-            onToggleAudio={() => setIsAudioMuted(!isAudioMuted)}
-          />
+      {/* 3-Column Layout */}
+      <div className="flex-1 flex w-full h-full overflow-hidden">
+        {/* ========================================================= */}
+        {/* LEFT COLUMN: 5-Agent Crew Swarm (260px) */}
+        {/* ========================================================= */}
+        <aside className="w-64 border-r border-white/[0.06] bg-[#101012] flex flex-col justify-between p-3.5 shrink-0 hidden md:flex">
+          <div className="space-y-4">
+            {/* Logo & New Chat */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-lg bg-zinc-800 border border-white/10 flex items-center justify-center font-bold text-xs text-zinc-100">
+                  DC
+                </div>
+                <span className="font-semibold text-sm text-zinc-100 tracking-tight">
+                  DeepClear Studio
+                </span>
+              </div>
 
-          {/* Floating Bottom Prompt Bar */}
-          <PromptBar
-            onSendMessage={handleUserPrompt}
-            onOpenUploadModal={() => setIsUploadModalOpen(true)}
-            onRunScan={handleRunScan}
-            isScanning={isScanning}
-            isCleared={isFullyCleared}
-          />
-        </div>
+              <button
+                onClick={handleNewSession}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+                title="Start New Session"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
 
-        {/* Right Collapsible Inspector Sidebar */}
-        {isSidebarOpen && (
-          <InspectorSidebar
-            initialExposure={initialExposure}
-            currentExposure={currentExposure}
-            taxSavings={taxSavings}
-            isCleared={isFullyCleared}
-            activeAgent={activeAgent}
-            isAudioMuted={isAudioMuted}
-            onToggleAudio={() => setIsAudioMuted(!isAudioMuted)}
-          />
-        )}
+            {/* 5-Agent Swarm Roster */}
+            <div className="space-y-1">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 px-2 mb-2 font-semibold">
+                Autonomous Crew Swarm
+              </div>
+
+              {agents.map((ag) => {
+                const isActive = activeAgent === ag.role;
+                return (
+                  <div
+                    key={ag.role}
+                    className={`p-2.5 rounded-xl border text-xs transition-all ${
+                      isActive
+                        ? "bg-zinc-800/90 border-white/20 text-zinc-100 shadow-sm"
+                        : "bg-transparent border-transparent hover:bg-zinc-900/60 text-zinc-400"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 shrink-0">
+                        {ag.icon}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-xs text-zinc-200 truncate">{ag.name}</p>
+                          {isActive && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-[10px] text-zinc-500 truncate font-mono mt-0.5">
+                          {ag.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Bottom Settings & Voice Toggle */}
+          <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-zinc-400 px-1">
+            <button
+              onClick={() => setIsAudioMuted(!isAudioMuted)}
+              className="flex items-center gap-2 hover:text-white transition-all font-mono text-[11px]"
+            >
+              {isAudioMuted ? (
+                <>
+                  <VolumeX className="h-3.5 w-3.5 text-zinc-500" />
+                  <span>Voice Muted</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
+                  <span className="text-zinc-200">Voice Active</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleNewSession}
+              className="hover:text-rose-400 transition-all p-1"
+              title="Clear Session"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </aside>
+
+        {/* ========================================================= */}
+        {/* MIDDLE COLUMN: Main Google Gemini Chat Feed (The Biggest)  */}
+        {/* ========================================================= */}
+        <main className="flex-1 flex flex-col h-full bg-[#0C0C0E] relative overflow-hidden">
+          {/* Top Bar for Mobile / Compact Navigation */}
+          <div className="h-12 border-b border-white/[0.06] px-4 flex items-center justify-between md:hidden shrink-0">
+            <div className="font-semibold text-xs text-zinc-200">DeepClear Studio</div>
+            <button
+              onClick={() => setIsExportModalOpen(true)}
+              className="px-2.5 py-1 rounded bg-zinc-800 text-xs text-zinc-300 font-mono"
+            >
+              Export Binder
+            </button>
+          </div>
+
+          {/* Scrollable Message Feed */}
+          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-5 max-w-3xl mx-auto w-full">
+            {messages.map((msg) => {
+              const isUser = msg.sender === "user";
+
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex gap-3.5 items-start ${isUser ? "justify-end" : "justify-start"}`}
+                >
+                  {/* Agent Avatar */}
+                  {!isUser && (
+                    <div className="h-7 w-7 rounded-lg bg-zinc-900 border border-white/10 flex items-center justify-center shrink-0 mt-0.5 text-zinc-300 font-bold text-xs">
+                      {msg.sender === "director" ? (
+                        <Clapperboard className="h-3.5 w-3.5 text-rose-400" />
+                      ) : msg.sender === "legal_counsel" ? (
+                        <Scale className="h-3.5 w-3.5 text-sky-400" />
+                      ) : msg.sender === "script_supervisor" ? (
+                        <Eye className="h-3.5 w-3.5 text-emerald-400" />
+                      ) : msg.sender === "location_manager" ? (
+                        <MapPin className="h-3.5 w-3.5 text-amber-400" />
+                      ) : (
+                        <ShieldAlert className="h-3.5 w-3.5 text-indigo-400" />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Message Bubble / Card */}
+                  <div
+                    className={`space-y-1.5 max-w-[88%] ${
+                      isUser ? "items-end text-right" : "items-start text-left"
+                    }`}
+                  >
+                    <div className="text-[10px] text-zinc-500 font-mono flex items-center gap-1.5">
+                      <span>{msg.senderName}</span>
+                      <span>•</span>
+                      <span>{msg.timestamp}</span>
+                    </div>
+
+                    {/* Standard Text */}
+                    {msg.type === "text" && (
+                      <div
+                        className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                          isUser
+                            ? "bg-zinc-100 text-zinc-950 font-medium rounded-tr-sm shadow-sm"
+                            : "bg-[#141416] border border-white/[0.08] text-zinc-200 rounded-tl-sm shadow-sm"
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
+                    )}
+
+                    {/* Detected Hazards List Card */}
+                    {msg.type === "hazards" && msg.entities && (
+                      <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-4 space-y-3 w-full shadow-sm">
+                        <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
+                          <span className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
+                            <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                            Identified Scene Liabilities ({msg.entities.length})
+                          </span>
+                        </div>
+
+                        <div className="space-y-2">
+                          {msg.entities.map((ent) => {
+                            const isEntityCleared =
+                              clearedEntityIds.includes(ent.id) || ent.status === "cleared";
+                            return (
+                              <div
+                                key={ent.id}
+                                className={`p-3 rounded-xl border text-xs transition-all ${
+                                  isEntityCleared
+                                    ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-300"
+                                    : "bg-zinc-900/90 border-white/[0.08] text-zinc-200"
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-white/5 font-semibold">
+                                        {ent.category}
+                                      </span>
+                                      <span className="font-semibold text-zinc-100">{ent.rawText}</span>
+                                    </div>
+                                    <p className="text-zinc-400 leading-snug">{ent.description}</p>
+
+                                    {/* Parallel Citations */}
+                                    {ent.citations && ent.citations.length > 0 && (
+                                      <div className="mt-2 space-y-1">
+                                        {ent.citations.map((cit) => (
+                                          <div
+                                            key={cit.id}
+                                            className="flex items-start gap-1.5 text-[11px] font-mono text-zinc-400 bg-zinc-950/70 p-1.5 rounded border border-white/5"
+                                          >
+                                            <ExternalLink className="h-3 w-3 mt-0.5 shrink-0 text-sky-400" />
+                                            <div>
+                                              <span className="text-zinc-200 font-semibold">{cit.title}: </span>
+                                              <span>{cit.snippet}</span>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {!isEntityCleared && (
+                                    <button
+                                      onClick={() => handleStartDebate(ent)}
+                                      disabled={isLoading}
+                                      className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-white/10 transition-all shadow-sm"
+                                    >
+                                      Negotiate
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Loading Indicator */}
+            {isLoading && (
+              <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 pt-2 animate-pulse">
+                <Sparkles className="h-3.5 w-3.5 text-sky-400" />
+                <span>
+                  [{activeAgent ? activeAgent.replace("_", " ").toUpperCase() : "SWARM"}]: Processing
+                  clearance reasoning...
+                </span>
+              </div>
+            )}
+
+            <div ref={chatBottomRef} />
+          </div>
+
+          {/* ========================================================= */}
+          {/* FLOATING GOOGLE GEMINI-STYLE PROMPT BAR AT BOTTOM         */}
+          {/* ========================================================= */}
+          <div className="w-full max-w-3xl mx-auto px-4 pb-4 pt-2 shrink-0">
+            {/* Preset Starters (when empty) */}
+            {messages.length === 1 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3 text-xs font-medium">
+                <button
+                  onClick={() =>
+                    handleSendMessage(
+                      "EXT. 6TH STREET VIADUCT - LOS ANGELES - NIGHT\n\nKAI checks his vintage ROLEX SUBMARINER on his wrist while sipping a RED BULL can. In the background, 'RUNNING UP THAT HILL' by Kate Bush blares as a high-speed drone tears across active traffic."
+                    )
+                  }
+                  className="p-3 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-white/[0.08] text-left text-zinc-300 hover:text-white transition-all space-y-1"
+                >
+                  <p className="font-semibold text-zinc-100">🎬 Test Sci-Fi Screenplay</p>
+                  <p className="text-[11px] text-zinc-500 font-mono">
+                    Rolex, Red Bull prop, Kate Bush sync music, LA drone permit
+                  </p>
+                </button>
+
+                <button
+                  onClick={() =>
+                    handleSendMessage(
+                      "INT. BANGKOK LUXURY HOTEL - MORNING\n\nMARCUS wakes up groggy to find an exact replica of the iconic MIKE TYSON TRIBAL TATTOO inked on his left temple next to a Lebbeus Woods copyrighted architectural model."
+                    )
+                  }
+                  className="p-3 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-white/[0.08] text-left text-zinc-300 hover:text-white transition-all space-y-1"
+                >
+                  <p className="font-semibold text-zinc-100">⚖️ Historical Benchmark</p>
+                  <p className="text-[11px] text-zinc-500 font-mono">
+                    Hangover II Mike Tyson tattoo & 12 Monkeys architecture
+                  </p>
+                </button>
+              </div>
+            )}
+
+            {/* Prompt Input Box */}
+            <div className="bg-[#141416] border border-white/[0.08] focus-within:border-white/20 rounded-2xl p-2.5 shadow-2xl flex flex-col gap-2 transition-all">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Paste screenplay dialogue, upload a .fountain/.md file, or command the agents..."
+                rows={1}
+                className="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none px-2 py-1 max-h-36 min-h-[38px] leading-relaxed"
+              />
+
+              <div className="flex items-center justify-between pt-1 border-t border-white/[0.04]">
+                {/* Upload Button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all flex items-center gap-1.5 text-xs font-mono"
+                  title="Upload .fountain, .md, .txt or storyboard images"
+                >
+                  <Paperclip className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {uploadedFileName ? uploadedFileName : "Attach Script / Image"}
+                  </span>
+                </button>
+
+                {/* Send Button */}
+                <button
+                  type="button"
+                  onClick={() => handleSendMessage()}
+                  disabled={!input.trim() || isLoading}
+                  className="h-8 w-8 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                >
+                  <ArrowUp className="h-4 w-4 stroke-[2.5]" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        {/* ========================================================= */}
+        {/* RIGHT COLUMN: Underwriting & E&O Clearance HUD (300px)    */}
+        {/* ========================================================= */}
+        <aside className="w-72 border-l border-white/[0.06] bg-[#101012] p-4 flex flex-col justify-between shrink-0 hidden lg:flex">
+          <div className="space-y-4">
+            <div className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold border-b border-white/[0.06] pb-2">
+              E&O Underwriting Status
+            </div>
+
+            {/* Statutory Exposure Card */}
+            <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-2">
+              <span className="text-[10px] font-mono text-zinc-400 uppercase">Statutory Liability</span>
+              <div className="text-2xl font-bold font-mono text-zinc-100">
+                {formatCurrency(currentExposure)}
+              </div>
+              <div className="text-[11px] font-mono text-zinc-500">
+                Initial: {formatCurrency(initialExposure)}
+              </div>
+            </div>
+
+            {/* Tax Rebate Card */}
+            <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-1">
+              <span className="text-[10px] font-mono text-emerald-400 uppercase">
+                Tax Rebate Unlocked
+              </span>
+              <div className="text-lg font-bold font-mono text-emerald-300">
+                +{formatCurrency(taxSavings)}
+              </div>
+              <div className="text-[10px] text-zinc-500 font-mono">Georgia 30% Uplift</div>
+            </div>
+
+            {/* Trade Impact Simulation */}
+            <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-1.5">
+              <span className="text-[10px] font-mono text-zinc-400 uppercase">Trade Impact</span>
+              <p className="text-xs text-zinc-300 leading-snug">
+                {isCleared ? (
+                  <span>
+                    <strong className="text-emerald-400 font-mono">DEADLINE:</strong> "Sundance bidding
+                    war erupts; 100% cleared E&O binder expedites release."
+                  </span>
+                ) : (
+                  <span>
+                    <strong className="text-rose-400 font-mono">VARIETY:</strong> "Indie thriller halted
+                    by trademark injunction; distribution delayed."
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Export Binder Action */}
+          <button
+            onClick={() => setIsExportModalOpen(true)}
+            className="w-full py-2.5 px-3 rounded-xl bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-sm"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>Export Form E&O-2026 PDF</span>
+          </button>
+        </aside>
       </div>
 
-      {/* Modals */}
+      {/* Export Modal */}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
-        productionTitle={selectedScenario.title}
+        productionTitle="Indie Narrative Production"
         initialExposure={initialExposure}
         currentExposure={currentExposure}
         taxSavings={taxSavings}
         entities={entities}
-      />
-
-      <ScriptUploadModal
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
-        onIngestScript={handleIngestCustomScript}
       />
     </div>
   );
