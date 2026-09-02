@@ -322,10 +322,48 @@ export default function DeepClearStudioPage() {
 
   const [agentTypingStatus, setAgentTypingStatus] = useState<string | null>(null);
 
-  // Promise-based sequential voice synthesis that waits for speech to 100% finish
+  // Helper to match distinct browser voices per agent persona
+  const getAgentVoice = (
+    speaker: "director" | "legal_counsel" | "script_supervisor" | "bond_officer"
+  ): SpeechSynthesisVoice | null => {
+    if (!synthRef.current) return null;
+    const voices = synthRef.current.getVoices();
+    if (!voices || voices.length === 0) return null;
+
+    const englishVoices = voices.filter((v) => v.lang.startsWith("en"));
+    const pool = englishVoices.length > 0 ? englishVoices : voices;
+
+    if (speaker === "director") {
+      // Passionate, dramatic male voice
+      const match = pool.find((v) =>
+        /david|guy|daniel|george|mark|alex|fred|male/i.test(v.name)
+      );
+      return match || pool[0];
+    } else if (speaker === "legal_counsel") {
+      // Articulate, sharp female legal counsel voice
+      const match = pool.find((v) =>
+        /zira|samantha|victoria|karen|serena|stephanie|female/i.test(v.name)
+      );
+      return match || (pool.length > 1 ? pool[1] : pool[0]);
+    } else if (speaker === "script_supervisor") {
+      // Crisp, attentive supervisor voice
+      const match = pool.find((v) =>
+        /hazel|catherine|clara|libby|fiona|moira/i.test(v.name)
+      );
+      return match || (pool.length > 2 ? pool[2] : pool[0]);
+    } else {
+      // Formal, deep bond officer voice
+      const match = pool.find((v) =>
+        /natural|james|christopher|richard|oliver|tom/i.test(v.name)
+      );
+      return match || (pool.length > 3 ? pool[3] : pool[0]);
+    }
+  };
+
+  // Promise-based sequential voice synthesis with unique voice casting per agent
   const speakTextAsync = (
     shortSummary: string,
-    speaker: "director" | "legal_counsel" | "bond_officer"
+    speaker: "director" | "legal_counsel" | "script_supervisor" | "bond_officer"
   ): Promise<void> => {
     return new Promise((resolve) => {
       if (
@@ -341,15 +379,24 @@ export default function DeepClearStudioPage() {
       try {
         const utterance = new SpeechSynthesisUtterance(shortSummary);
 
+        // Assign dedicated voice actor profile
+        const assignedVoice = getAgentVoice(speaker);
+        if (assignedVoice) {
+          utterance.voice = assignedVoice;
+        }
+
         if (speaker === "director") {
-          utterance.pitch = 1.25;
+          utterance.pitch = 0.9;
           utterance.rate = 1.05;
         } else if (speaker === "legal_counsel") {
-          utterance.pitch = 0.85;
-          utterance.rate = 0.95;
-        } else {
-          utterance.pitch = 1.0;
+          utterance.pitch = 1.1;
+          utterance.rate = 0.98;
+        } else if (speaker === "script_supervisor") {
+          utterance.pitch = 1.15;
           utterance.rate = 1.0;
+        } else {
+          utterance.pitch = 0.8;
+          utterance.rate = 0.92;
         }
 
         // Safety fallback timer so it never hangs if browser audio suspends
