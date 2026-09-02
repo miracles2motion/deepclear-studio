@@ -1,6 +1,16 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export const GEMINI_MODEL_NAME = "gemini-3.6-flash";
+// Priority list of Gemini model candidates for automatic self-healing fallback
+const MODEL_CANDIDATES = [
+  "gemini-3.6-flash",
+  "gemini-2.5-flash",
+  "gemini-1.5-flash",
+  "gemini-1.5-pro",
+  "gemini-2.0-flash",
+  "gemini-pro",
+];
+
+let cachedWorkingModel: string | null = null;
 
 export function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -12,19 +22,46 @@ export function getGeminiClient() {
   return new GoogleGenerativeAI(apiKey);
 }
 
+/**
+ * Self-healing model invoker: Tries the cached working model first,
+ * then cascades through all available Gemini models if Google updates or deprecates an alias.
+ */
+async function generateContentWithCascade(
+  genAI: GoogleGenerativeAI,
+  contents: Parameters<ReturnType<GoogleGenerativeAI["getGenerativeModel"]>["generateContent"]>[0],
+  config?: { responseMimeType?: string; temperature?: number }
+) {
+  const modelsToTry = cachedWorkingModel
+    ? [cachedWorkingModel, ...MODEL_CANDIDATES.filter((m) => m !== cachedWorkingModel)]
+    : MODEL_CANDIDATES;
+
+  let lastError: Error | null = null;
+
+  for (const modelName of modelsToTry) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: config,
+      });
+
+      const result = await model.generateContent(contents);
+      cachedWorkingModel = modelName; // Cache working model for future fast calls
+      return result;
+    } catch (err) {
+      lastError = err as Error;
+      // If 404 / model deprecated or unavailable, smoothly continue to next candidate
+      continue;
+    }
+  }
+
+  throw lastError || new Error("All Gemini model candidates failed to respond.");
+}
+
 export async function analyzeScreenplayWithGemini(
   scriptText: string,
   imagePartBase64?: { data: string; mimeType: string }
 ) {
   const genAI = getGeminiClient();
-
-  const model = genAI.getGenerativeModel({
-    model: GEMINI_MODEL_NAME,
-    generationConfig: {
-      responseMimeType: "application/json",
-      temperature: 0.2,
-    },
-  });
 
   const prompt = `You are the Lead Script Supervisor and Legal Clearance Inspector for DeepClear Studio.
 Analyze the following screenplay excerpt and visual scene elements for legal liabilities:
@@ -63,9 +100,12 @@ ${scriptText}`;
     });
   }
 
-  const result = await model.generateContent(contents);
-  const text = result.response.text();
+  const result = await generateContentWithCascade(genAI, contents, {
+    responseMimeType: "application/json",
+    temperature: 0.2,
+  });
 
+  const text = result.response.text();
   return JSON.parse(text);
 }
 
@@ -76,13 +116,6 @@ export async function generateDialecticTurn(params: {
   conversationHistory: Array<{ speaker: string; text: string }>;
 }) {
   const genAI = getGeminiClient();
-
-  const model = genAI.getGenerativeModel({
-    model: GEMINI_MODEL_NAME,
-    generationConfig: {
-      temperature: params.speaker === "director" ? 0.7 : 0.2,
-    },
-  });
 
   const personaPrompt =
     params.speaker === "director"
@@ -104,6 +137,25 @@ ${params.conversationHistory.map((h) => `${h.speaker.toUpperCase()}: "${h.text}"
 
 Respond as ${params.speaker.toUpperCase()}:`;
 
-  const result = await model.generateContent(prompt);
+  const result = await generateContentWithCascade(genAI, prompt, {
+    temperature: params.speaker === "director" ? 0.7 : 0.2,
+  });
+
+  return result.response.text().trim();
+}
+
+export async function generateScreenplayScene(customPrompt?: string) {
+  const genAI = getGeminiClient();
+
+  const defaultPrompt = `You are an acclaimed Hollywood screenwriter.
+Generate a high-stakes, cinematic screenplay scene excerpt (15-20 lines in standard Fountain screenplay format) featuring vivid dramatic tension.
+Naturally include 2 to 3 real-world production elements that require legal clearance (such as a recognizable luxury brand prop, a commercial background song cue, or a complex municipal stunt/location like a bridge or aerial drone).
+
+Output ONLY the formatted screenplay scene text in Fountain format without any markdown code fences, greetings, or extra explanations.`;
+
+  const result = await generateContentWithCascade(genAI, customPrompt || defaultPrompt, {
+    temperature: 0.8,
+  });
+
   return result.response.text().trim();
 }
