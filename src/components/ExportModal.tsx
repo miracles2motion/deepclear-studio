@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { ClearanceReport, ExtractedEntity } from "@/types";
 import { generateEOBinderPDF } from "@/lib/pdfGenerator";
 import { generateClearanceMerkleHash, mintClearancePassportTestnet } from "@/lib/web3";
-import { X, ShieldCheck, Download, ExternalLink, CheckCircle2, Lock, FileText, Film, Copy, Check } from "lucide-react";
+import { X, ShieldCheck, Download, ExternalLink, CheckCircle2, Lock, Film, Copy, Check, Edit3 } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface ExportModalProps {
@@ -19,6 +19,7 @@ interface ExportModalProps {
   clearedEntityIds?: string[];
   finalScriptText?: string;
   uploadedFileName?: string | null;
+  onUpdateTitle?: (title: string) => void;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -33,7 +34,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   clearedEntityIds = [],
   finalScriptText,
   uploadedFileName,
+  onUpdateTitle,
 }) => {
+  const [activeTitle, setActiveTitle] = useState(productionTitle);
   const [isMinting, setIsMinting] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [mintResult, setMintResult] = useState<{
@@ -42,16 +45,22 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     blockNumber: number;
   } | null>(null);
 
+  // Sync title if prop updates
+  React.useEffect(() => {
+    setActiveTitle(productionTitle);
+  }, [productionTitle]);
+
   if (!isOpen) return null;
 
+  const currentTitle = activeTitle.trim() || "Indie Narrative Production";
   const isFullyCleared = currentExposure === 0 && initialExposure > 0;
-  const merkleHash = generateClearanceMerkleHash(productionTitle, entities, new Date().toISOString());
+  const merkleHash = generateClearanceMerkleHash(currentTitle, entities, new Date().toISOString());
 
   // Download Form E&O-2026 PDF (Single file only)
   const handleDownloadPDF = () => {
     const report: ClearanceReport = {
       id: `CERT-EO-${Date.now().toString().slice(-6)}`,
-      productionTitle,
+      productionTitle: currentTitle,
       totalScenes: 1,
       initialExposureUsd: initialExposure,
       finalExposureUsd: currentExposure,
@@ -67,7 +76,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     };
 
     const doc = generateEOBinderPDF(report);
-    doc.save(`Form_EO_2026_${productionTitle.replace(/\s+/g, "_")}.pdf`);
+    doc.save(`Form_EO_2026_${currentTitle.replace(/\s+/g, "_")}.pdf`);
 
     try {
       confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
@@ -82,7 +91,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
     const baseName = uploadedFileName
       ? uploadedFileName.replace(/\.[^/.]+$/, "")
-      : productionTitle.replace(/\s+/g, "_");
+      : currentTitle.replace(/\s+/g, "_");
 
     const blob = new Blob([finalScriptText], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -112,7 +121,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const handleMintOnChain = async () => {
     setIsMinting(true);
     try {
-      const res = await mintClearancePassportTestnet(merkleHash, productionTitle);
+      const res = await mintClearancePassportTestnet(merkleHash, currentTitle);
       setMintResult(res);
 
       try {
@@ -153,9 +162,22 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
         {/* Executive Summary Metrics Card */}
         <div className="p-4 rounded-xl bg-zinc-900/90 border border-white/[0.08] space-y-2.5 mb-5 font-mono text-xs">
-          <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-400">Production Title:</span>
-            <span className="font-semibold text-white truncate max-w-[200px]">{productionTitle}</span>
+          {/* Editable Production Title */}
+          <div className="flex justify-between items-center text-zinc-300 gap-2">
+            <span className="text-zinc-400 shrink-0">Production Title:</span>
+            <div className="flex items-center gap-1.5 flex-1 justify-end">
+              <input
+                type="text"
+                value={activeTitle}
+                onChange={(e) => {
+                  setActiveTitle(e.target.value);
+                  if (onUpdateTitle) onUpdateTitle(e.target.value);
+                }}
+                placeholder="Enter Project Title..."
+                className="bg-zinc-800 border border-white/10 focus:border-emerald-500/50 rounded px-2 py-0.5 text-xs text-white font-sans font-semibold focus:outline-none max-w-[220px] text-right"
+              />
+              <Edit3 className="h-3 w-3 text-zinc-500 shrink-0" />
+            </div>
           </div>
 
           <div className="flex justify-between items-center text-zinc-300">

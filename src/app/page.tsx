@@ -75,6 +75,7 @@ export default function DeepClearStudioPage() {
   const [isAudioMuted, setIsAudioMuted] = useState(true); // Default muted to avoid audio obstruction
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [productionTitle, setProductionTitle] = useState<string>("Indie Motion Picture");
   const [isCopied, setIsCopied] = useState(false);
 
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
@@ -103,6 +104,11 @@ export default function DeepClearStudioPage() {
       }
 
       if (data.sceneText) {
+        const firstLine = data.sceneText.split("\n").find((l: string) => l.trim().length > 0) || "";
+        const match = firstLine.match(/^(?:EXT\.|INT\.)\s+([^-–—]+)/i);
+        if (match && match[1]) {
+          setProductionTitle(match[1].trim().replace(/\b\w/g, (c: string) => c.toUpperCase()) + " Feature");
+        }
         // Pass the generated scene directly into the live swarm analyzer
         handleSendMessage(data.sceneText);
       }
@@ -189,6 +195,19 @@ export default function DeepClearStudioPage() {
     setInput("");
     setIsLoading(true);
     setActiveAgent("script_supervisor");
+
+    // Auto-detect production title if specified or from setting header
+    const titleMatch = queryText.match(/^Title:\s*(.+)$/im);
+    if (titleMatch && titleMatch[1]) {
+      setProductionTitle(titleMatch[1].trim());
+    } else {
+      const cleanContent = queryText.replace(/^\[Uploaded File:[^\]]+\]\s*/i, "");
+      const firstLine = cleanContent.split("\n").find((l: string) => l.trim().length > 0) || "";
+      const sceneMatch = firstLine.match(/^(?:EXT\.|INT\.)\s+([^-–—]+)/i);
+      if (sceneMatch && sceneMatch[1] && productionTitle === "Indie Motion Picture") {
+        setProductionTitle(sceneMatch[1].trim().replace(/\b\w/g, (c: string) => c.toUpperCase()) + " Project");
+      }
+    }
 
     try {
       const response = await fetch("/api/analyze", {
@@ -716,6 +735,12 @@ export default function DeepClearStudioPage() {
     if (!file) return;
 
     setUploadedFileName(file.name);
+    const cleanTitle = file.name
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[-_]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    setProductionTitle(cleanTitle);
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
@@ -1417,7 +1442,8 @@ export default function DeepClearStudioPage() {
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
-        productionTitle="Indie Narrative Production"
+        productionTitle={productionTitle}
+        onUpdateTitle={setProductionTitle}
         initialExposure={initialExposure}
         currentExposure={currentExposure}
         taxSavings={taxSavings}
