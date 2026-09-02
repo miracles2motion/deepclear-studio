@@ -12,6 +12,12 @@
 
 ---
 
+## 🌐 Live Production Demo
+
+👉 **Live Application**: **[https://deepclear-studio.vercel.app](https://deepclear-studio.vercel.app)**
+
+---
+
 ## 🌟 Executive Summary
 
 Before any independent film or studio series can stream on **Netflix, Amazon Prime, Apple TV+**, or premiere at major film festivals (Sundance, Cannes, TIFF), production companies must secure an **Errors & Omissions (E&O) Insurance Policy** and verify a pristine **Chain of Title**.
