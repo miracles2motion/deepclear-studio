@@ -18,6 +18,7 @@ interface ExportModalProps {
   entities: ExtractedEntity[];
   clearedEntityIds?: string[];
   finalScriptText?: string;
+  uploadedFileName?: string | null;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -31,6 +32,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   entities,
   clearedEntityIds = [],
   finalScriptText,
+  uploadedFileName,
 }) => {
   const [isMinting, setIsMinting] = useState(false);
   const [mintResult, setMintResult] = useState<{
@@ -73,15 +75,20 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     }
   };
 
-  // Download Cleared Screenplay File (.fountain / .md)
+  // Download Cleared Screenplay File (.fountain / .md / .txt)
   const handleDownloadScript = () => {
     if (!finalScriptText) return;
+
+    const ext = uploadedFileName ? (uploadedFileName.split(".").pop() || "fountain") : "fountain";
+    const baseName = uploadedFileName
+      ? uploadedFileName.replace(/\.[^/.]+$/, "")
+      : productionTitle.replace(/\s+/g, "_");
 
     const blob = new Blob([finalScriptText], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${productionTitle.replace(/\s+/g, "_")}_CLEARED_FINAL.fountain`;
+    link.download = `${baseName}_CLEARED_FINAL.${ext}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

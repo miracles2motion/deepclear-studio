@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
             type: "AGENT_THOUGHT",
             agent: "script_supervisor",
             payload: {
-              message: "Ingesting screenplay & visual assets. Calling live Google Cloud Gemini 2.0 Flash engine...",
+              message: "Ingesting screenplay & visual assets. Calling live Google Cloud Gemini engine...",
             },
           });
 

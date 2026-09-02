@@ -44,7 +44,7 @@ export const AgentNetworkGraph: React.FC<AgentNetworkGraphProps> = ({
     {
       role: "script_supervisor",
       title: "Script Supervisor",
-      subtitle: "Gemini 2.0 Multimodal Vision",
+      subtitle: "Gemini Multimodal Vision",
       icon: <Eye className="h-5 w-5 text-emerald-400" />,
       colorClass: "border-emerald-500/40 bg-emerald-950/20 text-emerald-300",
     },

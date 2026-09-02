@@ -24,10 +24,11 @@ import {
   Volume2,
   VolumeX,
   Radio,
-  Image as ImageIcon,
   Zap,
   Loader2,
   Film,
+  Copy,
+  Check,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -68,6 +69,7 @@ export default function DeepClearStudioPage() {
   const [isAudioMuted, setIsAudioMuted] = useState(true); // Default muted to avoid audio obstruction
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
 
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -138,7 +140,7 @@ export default function DeepClearStudioPage() {
     {
       role: "script_supervisor",
       name: "Script Supervisor",
-      description: "Gemini 2.0 Multimodal Vision",
+      description: "Gemini Multimodal Vision",
       icon: <Eye className="h-4 w-4 text-emerald-400" />,
     },
     {
@@ -881,24 +883,50 @@ export default function DeepClearStudioPage() {
                           {msg.content}
                         </div>
 
-                        {/* Download Action Bar */}
-                        <div className="flex items-center gap-2 pt-1">
+                        {/* Download & Copy Action Bar */}
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
                           <button
                             onClick={() => {
+                              const ext = uploadedFileName ? (uploadedFileName.split(".").pop() || "fountain") : "fountain";
+                              const baseName = uploadedFileName ? uploadedFileName.replace(/\.[^/.]+$/, "") : "Indie_Production";
                               const blob = new Blob([msg.content || ""], { type: "text/plain;charset=utf-8" });
                               const url = URL.createObjectURL(blob);
                               const link = document.createElement("a");
                               link.href = url;
-                              link.download = `Indie_Production_CLEARED_FINAL.fountain`;
+                              link.download = `${baseName}_CLEARED_FINAL.${ext}`;
                               document.body.appendChild(link);
                               link.click();
                               document.body.removeChild(link);
                               URL.revokeObjectURL(url);
                             }}
-                            className="flex-1 py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                            className="flex-1 min-w-[200px] py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm"
                           >
                             <Download className="h-3.5 w-3.5" />
-                            <span>Download Cleared Script (.fountain / .md)</span>
+                            <span>Download Cleared Script ({uploadedFileName ? `.${uploadedFileName.split(".").pop()}` : ".fountain / .md"})</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              if (typeof navigator !== "undefined" && navigator.clipboard && msg.content) {
+                                navigator.clipboard.writeText(msg.content);
+                                setIsCopied(true);
+                                setTimeout(() => setIsCopied(false), 2500);
+                              }
+                            }}
+                            className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 font-medium text-xs transition-all flex items-center gap-1.5"
+                            title="Copy script to clipboard"
+                          >
+                            {isCopied ? (
+                              <>
+                                <Check className="h-3.5 w-3.5 text-emerald-400" />
+                                <span className="text-emerald-300 font-semibold">Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3.5 w-3.5 text-zinc-400" />
+                                <span>Copy Script</span>
+                              </>
+                            )}
                           </button>
 
                           <button
@@ -926,7 +954,7 @@ export default function DeepClearStudioPage() {
                   </span>
                   <span className="text-zinc-400">
                     {isGeneratingScene
-                      ? "Generating fresh original screenplay scene with Gemini 2.0 Flash..."
+                      ? "Generating fresh original screenplay scene with Google Cloud Gemini..."
                       : agentTypingStatus || "Querying Gemini Multimodal Vision & Parallel Search API..."}
                   </span>
                 </div>
@@ -985,7 +1013,7 @@ export default function DeepClearStudioPage() {
                   </div>
                   <p className="text-[11px] text-zinc-500 font-mono">
                     {isGeneratingScene
-                      ? "Gemini 2.0 Flash is writing a dramatic scene..."
+                      ? "Gemini is writing a dramatic scene..."
                       : "Generates an original scene on the fly and scans for brand liabilities"}
                   </p>
                 </button>
@@ -1143,6 +1171,7 @@ export default function DeepClearStudioPage() {
         entities={entities}
         clearedEntityIds={clearedEntityIds}
         finalScriptText={currentScriptText}
+        uploadedFileName={uploadedFileName}
       />
     </div>
   );
