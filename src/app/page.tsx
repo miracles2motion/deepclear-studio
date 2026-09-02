@@ -136,6 +136,114 @@ export default function DeepClearStudioPage() {
 
 
 
+  // Unique Design Aesthetic & Signature Gradients per Agent
+  const AGENT_THEMES: Record<
+    AgentRole,
+    {
+      gradient: string;
+      glowColor: string;
+      accentText: string;
+      badgeBg: string;
+      badgeBorder: string;
+      badgeText: string;
+      cardActiveBorder: string;
+      cardActiveBg: string;
+      cardActiveRing: string;
+      iconBg: string;
+      iconBorder: string;
+      iconText: string;
+      pingBg: string;
+      thoughtBorder: string;
+      thoughtText: string;
+    }
+  > = {
+    director: {
+      gradient: "from-rose-500 via-red-500 to-amber-500",
+      glowColor: "rgba(244, 63, 94, 0.45)",
+      accentText: "text-rose-400",
+      badgeBg: "bg-rose-950/90",
+      badgeBorder: "border-rose-500/50",
+      badgeText: "text-rose-300",
+      cardActiveBorder: "border-rose-500/40",
+      cardActiveBg: "bg-rose-950/25",
+      cardActiveRing: "ring-rose-500/25",
+      iconBg: "bg-rose-950/70",
+      iconBorder: "border-rose-500/30",
+      iconText: "text-rose-400",
+      pingBg: "bg-rose-400",
+      thoughtBorder: "border-rose-500/40",
+      thoughtText: "text-rose-300",
+    },
+    legal_counsel: {
+      gradient: "from-sky-500 via-blue-500 to-indigo-500",
+      glowColor: "rgba(14, 165, 233, 0.45)",
+      accentText: "text-sky-400",
+      badgeBg: "bg-sky-950/90",
+      badgeBorder: "border-sky-500/50",
+      badgeText: "text-sky-300",
+      cardActiveBorder: "border-sky-500/40",
+      cardActiveBg: "bg-sky-950/25",
+      cardActiveRing: "ring-sky-500/25",
+      iconBg: "bg-sky-950/70",
+      iconBorder: "border-sky-500/30",
+      iconText: "text-sky-400",
+      pingBg: "bg-sky-400",
+      thoughtBorder: "border-sky-500/40",
+      thoughtText: "text-sky-300",
+    },
+    script_supervisor: {
+      gradient: "from-emerald-500 via-teal-500 to-cyan-400",
+      glowColor: "rgba(16, 185, 129, 0.45)",
+      accentText: "text-emerald-400",
+      badgeBg: "bg-emerald-950/90",
+      badgeBorder: "border-emerald-500/50",
+      badgeText: "text-emerald-300",
+      cardActiveBorder: "border-emerald-500/40",
+      cardActiveBg: "bg-emerald-950/25",
+      cardActiveRing: "ring-emerald-500/25",
+      iconBg: "bg-emerald-950/70",
+      iconBorder: "border-emerald-500/30",
+      iconText: "text-emerald-400",
+      pingBg: "bg-emerald-400",
+      thoughtBorder: "border-emerald-500/40",
+      thoughtText: "text-emerald-300",
+    },
+    location_manager: {
+      gradient: "from-amber-500 via-orange-500 to-yellow-400",
+      glowColor: "rgba(245, 158, 11, 0.45)",
+      accentText: "text-amber-400",
+      badgeBg: "bg-amber-950/90",
+      badgeBorder: "border-amber-500/50",
+      badgeText: "text-amber-300",
+      cardActiveBorder: "border-amber-500/40",
+      cardActiveBg: "bg-amber-950/25",
+      cardActiveRing: "ring-amber-500/25",
+      iconBg: "bg-amber-950/70",
+      iconBorder: "border-amber-500/30",
+      iconText: "text-amber-400",
+      pingBg: "bg-amber-400",
+      thoughtBorder: "border-amber-500/40",
+      thoughtText: "text-amber-300",
+    },
+    bond_officer: {
+      gradient: "from-indigo-500 via-purple-500 to-violet-400",
+      glowColor: "rgba(99, 102, 241, 0.45)",
+      accentText: "text-indigo-400",
+      badgeBg: "bg-indigo-950/90",
+      badgeBorder: "border-indigo-500/50",
+      badgeText: "text-indigo-300",
+      cardActiveBorder: "border-indigo-500/40",
+      cardActiveBg: "bg-indigo-950/25",
+      cardActiveRing: "ring-indigo-500/25",
+      iconBg: "bg-indigo-950/70",
+      iconBorder: "border-indigo-500/30",
+      iconText: "text-indigo-400",
+      pingBg: "bg-indigo-400",
+      thoughtBorder: "border-indigo-500/40",
+      thoughtText: "text-indigo-300",
+    },
+  };
+
   // 5 Agents Definition
   const agents: Array<{
     role: AgentRole;
@@ -851,24 +959,28 @@ export default function DeepClearStudioPage() {
               {agents.map((ag) => {
                 const isActive = activeAgent === ag.role;
                 const isSpeaking = speakingAgent === ag.role;
+                const isThinking = agentThinking?.role === ag.role;
+                const theme = AGENT_THEMES[ag.role];
 
                 return (
                   <div
                     key={ag.role}
                     className={`p-2.5 rounded-xl border text-xs transition-all duration-300 ${
                       isSpeaking
-                        ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-100 shadow-md ring-1 ring-emerald-500/30"
+                        ? `${theme.cardActiveBg} ${theme.cardActiveBorder} ${theme.badgeText} shadow-md ring-1 ${theme.cardActiveRing}`
+                        : isThinking
+                        ? `${theme.cardActiveBg} ${theme.cardActiveBorder} ${theme.thoughtText} shadow-md ring-1 ${theme.cardActiveRing}`
                         : isActive
-                        ? "bg-zinc-800/90 border-white/20 text-zinc-100 shadow-sm"
+                        ? `${theme.cardActiveBg} ${theme.cardActiveBorder} text-zinc-100 shadow-sm`
                         : "bg-transparent border-transparent hover:bg-zinc-900/60 text-zinc-400"
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <div
                         className={`p-1.5 rounded-lg border shrink-0 transition-colors ${
-                          isSpeaking
-                            ? "bg-emerald-900/60 border-emerald-500/40 text-emerald-400"
-                            : "bg-zinc-900 border-white/5"
+                          isSpeaking || isThinking || isActive
+                            ? `${theme.iconBg} ${theme.iconBorder} ${theme.iconText}`
+                            : "bg-zinc-900 border-white/5 text-zinc-400"
                         }`}
                       >
                         {ag.icon}
@@ -877,7 +989,11 @@ export default function DeepClearStudioPage() {
                         <div className="flex items-center justify-between">
                           <p
                             className={`font-medium text-xs truncate ${
-                              isSpeaking ? "text-emerald-300 font-semibold" : "text-zinc-200"
+                              isSpeaking || isThinking
+                                ? `${theme.accentText} font-semibold`
+                                : isActive
+                                ? "text-zinc-100 font-semibold"
+                                : "text-zinc-300"
                             }`}
                           >
                             {ag.name}
@@ -885,12 +1001,14 @@ export default function DeepClearStudioPage() {
 
                           {/* Animated Speaker Badge when agent is actively speaking */}
                           {isSpeaking ? (
-                            <span className="flex items-center gap-1 text-[9px] font-mono font-bold text-emerald-300 bg-emerald-950 border border-emerald-500/40 px-1.5 py-0.5 rounded-md animate-pulse shrink-0">
-                              <Volume2 className="h-3 w-3 animate-bounce text-emerald-400" />
+                            <span
+                              className={`flex items-center gap-1 text-[9px] font-mono font-bold ${theme.badgeText} ${theme.badgeBg} border ${theme.badgeBorder} px-1.5 py-0.5 rounded-md animate-pulse shrink-0`}
+                            >
+                              <Volume2 className="h-3 w-3 animate-bounce" />
                               <span>LIVE</span>
                             </span>
                           ) : isActive ? (
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                            <span className={`h-1.5 w-1.5 rounded-full ${theme.pingBg} animate-ping shrink-0`} />
                           ) : null}
                         </div>
                         <p className="text-[10px] text-zinc-500 truncate font-mono mt-0.5">
@@ -899,17 +1017,25 @@ export default function DeepClearStudioPage() {
                       </div>
                     </div>
 
-                    {/* Agent Thinking Process Mini-Card */}
-                    {agentThinking?.role === ag.role && (
-                      <div className="mt-2.5 p-2 rounded-lg bg-[#0C0C0E] border border-sky-500/40 text-[10px] font-mono text-sky-300 animate-in fade-in slide-in-from-top-1 duration-200 shadow-md flex items-start gap-1.5">
-                        <Sparkles className="h-3 w-3 text-sky-400 shrink-0 mt-0.5 animate-spin" />
+                    {/* Agent Thinking Process Mini-Card with Persona Theme */}
+                    {isThinking && (
+                      <div
+                        className={`mt-2.5 p-2 rounded-lg bg-[#0C0C0E] border ${theme.thoughtBorder} text-[10px] font-mono ${theme.thoughtText} animate-in fade-in slide-in-from-top-1 duration-200 shadow-md flex items-start gap-1.5`}
+                      >
+                        <Sparkles className="h-3 w-3 shrink-0 mt-0.5 animate-spin" />
                         <div className="space-y-0.5 min-w-0">
-                          <div className="text-[9px] uppercase tracking-wider text-sky-400 font-bold flex items-center gap-1">
+                          <div
+                            className={`text-[9px] uppercase tracking-wider ${theme.accentText} font-bold flex items-center gap-1`}
+                          >
                             <span>Thinking</span>
                             <span className="inline-flex gap-0.5">
-                              <span className="h-1 w-1 rounded-full bg-sky-400 animate-bounce [animation-delay:-0.3s]" />
-                              <span className="h-1 w-1 rounded-full bg-sky-400 animate-bounce [animation-delay:-0.15s]" />
-                              <span className="h-1 w-1 rounded-full bg-sky-400 animate-bounce" />
+                              <span
+                                className={`h-1 w-1 rounded-full ${theme.pingBg} animate-bounce [animation-delay:-0.3s]`}
+                              />
+                              <span
+                                className={`h-1 w-1 rounded-full ${theme.pingBg} animate-bounce [animation-delay:-0.15s]`}
+                              />
+                              <span className={`h-1 w-1 rounded-full ${theme.pingBg} animate-bounce`} />
                             </span>
                           </div>
                           <p className="text-zinc-300 leading-snug break-words italic">
@@ -957,10 +1083,22 @@ export default function DeepClearStudioPage() {
         {/* MIDDLE COLUMN: Main Google Gemini Chat Feed (The Biggest)  */}
         {/* ========================================================= */}
         <main className="flex-1 flex flex-col h-full bg-[#0C0C0E] relative overflow-hidden">
-          {/* Top Active Loading / Shimmer Progress Bar */}
-          {(isLoading || isGeneratingScene) && (
-            <div className="h-1 w-full bg-zinc-900 overflow-hidden relative shrink-0 z-10">
-              <div className="h-full bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-400 animate-pulse w-full" />
+          {/* Top Active Dynamic Glowing Gradient Bar per Agent */}
+          {(isLoading || isGeneratingScene || speakingAgent || agentThinking) && (
+            <div className="h-1.5 w-full bg-zinc-950 overflow-hidden relative shrink-0 z-10">
+              <div
+                className={`h-full bg-gradient-to-r ${
+                  activeAgent && AGENT_THEMES[activeAgent]
+                    ? AGENT_THEMES[activeAgent].gradient
+                    : "from-sky-500 via-indigo-500 to-emerald-400"
+                } animate-pulse w-full transition-all duration-500`}
+                style={{
+                  boxShadow:
+                    activeAgent && AGENT_THEMES[activeAgent]
+                      ? `0 0 18px ${AGENT_THEMES[activeAgent].glowColor}`
+                      : undefined,
+                }}
+              />
             </div>
           )}
 
@@ -988,9 +1126,15 @@ export default function DeepClearStudioPage() {
                     isUser ? "justify-end" : "justify-start"
                   }`}
                 >
-                  {/* Agent Avatar */}
+                  {/* Agent Avatar with Custom Persona Theme */}
                   {!isUser && (
-                    <div className="h-7 w-7 rounded-lg bg-zinc-900 border border-white/10 flex items-center justify-center shrink-0 mt-0.5 text-zinc-300 font-bold text-xs">
+                    <div
+                      className={`h-7 w-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs transition-colors ${
+                        msg.sender !== "system" && AGENT_THEMES[msg.sender as AgentRole]
+                          ? `${AGENT_THEMES[msg.sender as AgentRole].iconBg} ${AGENT_THEMES[msg.sender as AgentRole].iconBorder}`
+                          : "bg-zinc-900 border-white/10 text-zinc-300"
+                      }`}
+                    >
                       {msg.sender === "director" ? (
                         <Clapperboard className="h-3.5 w-3.5 text-rose-400" />
                       ) : msg.sender === "legal_counsel" ? (
