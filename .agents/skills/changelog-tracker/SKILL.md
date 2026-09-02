@@ -52,3 +52,4 @@ Always follow this structure when updating the changelog:
    - `0.x.y` → bug fixes within a phase
 5. When bumping a version, insert a new `## [vX.Y.Z]` block at the top, below the title.
 6. When logging an error, always note whether it was **resolved** or **unresolved**.
+7. **Major Milestones Only**: Only log significant architectural features, new subsystem capabilities, and major version releases (`v0.1.0`, `v0.2.0`, `v0.3.0`). Do NOT create version entries for trivial micro-edits, minor copy adjustments, or link tweaks.
