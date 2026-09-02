@@ -11,9 +11,9 @@ Fast diagnostic utility for verifying that Gemini and Parallel Search endpoints 
 
 ## When to Use
 
-- When setting up or changing API keys in `.env.local`.
-- When troubleshooting network timeouts or unexpected model responses.
-- Before final hackathon submission to confirm live runtime connectivity.
+- **STRICTLY ON-DEMAND**: Only run when the user explicitly asks to test or ping API credentials.
+- **NEVER run automatically in background** or in build loops to protect free API credits.
+- Before final hackathon submission when user wants to verify live connectivity.
 
 ## Verification Checklist
 

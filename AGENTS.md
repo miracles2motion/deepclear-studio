@@ -16,3 +16,8 @@ You are the lead engineering agent for DeepClear Studio. Adhere to these guideli
 - **Changelog**: When resolving an error or bug, automatically note it in `logs/CHANGELOG.md`.
 - **Task List**: After completing a task in `coreIDEA/TASK_LIST.md`, check off the corresponding item.
 - **Git Sync**: Use `auto-push` to keep GitHub synchronized after milestone completions.
+
+## 4. 💳 Credit Conservation & Strict On-Demand API Policy
+- **Zero Background Polling**: Never run automated background loops or scheduled pings against Gemini or Parallel Search APIs.
+- **On-Demand Only**: Only invoke external APIs when the user explicitly triggers an analysis or test.
+- **Mock/Fixture First for UI**: During frontend and UI component development, utilize lightweight local fixtures so zero API credits are consumed until final verification.
