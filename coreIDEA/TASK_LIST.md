@@ -27,6 +27,6 @@
   - [x] Implement `src/lib/web3.ts` for minting testnet clearance tokens (Base Sepolia / Polygon Amoy).
   - [x] Build `src/lib/pdfGenerator.ts` for 1-click export of publication-ready **Form E&O-2026 Insurance Underwriting Binder** with embedded QR code.
 
-- [ ] **Phase 5: Verification & Cloud Deployment**
-  - [ ] Test end-to-end judge flow: Load preset $\rightarrow$ Live multimodal scan $\rightarrow$ Parallel 4D search $\rightarrow$ Audible debate $\rightarrow$ Script mutation $\rightarrow$ Re-score $\rightarrow$ PDF & On-Chain mint.
-  - [ ] Deploy to production hosting with active SSE streaming and public URL verification.
+- [x] **Phase 5: Verification & Cloud Deployment**
+  - [x] Test end-to-end judge flow: Load screenplay $\rightarrow$ Live Gemini multimodal scan $\rightarrow$ Parallel 4D search $\rightarrow$ Audible debate $\rightarrow$ Script mutation $\rightarrow$ Re-score $\rightarrow$ Form E&O-2026 PDF & Base Sepolia On-Chain mint.
+  - [x] Deploy to production hosting with active SSE streaming and public URL verification (https://deepclear-studio.vercel.app).
