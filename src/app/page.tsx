@@ -60,6 +60,7 @@ export default function DeepClearStudioPage() {
   const [initialExposure, setInitialExposure] = useState(0);
   const [currentExposure, setCurrentExposure] = useState(0);
   const [taxSavings, setTaxSavings] = useState(0);
+  const [taxJurisdiction, setTaxJurisdiction] = useState("Qualified Film Credit (30%)");
   const [entities, setEntities] = useState<ExtractedEntity[]>([]);
   const [clearedEntityIds, setClearedEntityIds] = useState<string[]>([]);
   const [isAudioMuted, setIsAudioMuted] = useState(true); // Default muted to avoid audio obstruction
@@ -213,7 +214,53 @@ export default function DeepClearStudioPage() {
                 setEntities(foundEntities);
                 setInitialExposure(exposure);
                 setCurrentExposure(exposure);
-                setTaxSavings(exposure > 0 ? 42000 : 0);
+
+                // Dynamic State Tax Rebate Calculation
+                const textLower = (
+                  queryText +
+                  " " +
+                  foundEntities.map((e) => e.rawText + " " + e.description).join(" ")
+                ).toLowerCase();
+
+                let jurisdictionName = "Qualified Film Credit (30% QPE)";
+                let rate = 0.30;
+
+                if (
+                  textLower.includes("queens") ||
+                  textLower.includes("new york") ||
+                  textLower.includes("nyc") ||
+                  textLower.includes("brooklyn") ||
+                  textLower.includes("manhattan") ||
+                  textLower.includes("nys")
+                ) {
+                  jurisdictionName = "New York State Film Credit (30% QPE)";
+                  rate = 0.30;
+                } else if (
+                  textLower.includes("georgia") ||
+                  textLower.includes("atlanta") ||
+                  textLower.includes("savannah")
+                ) {
+                  jurisdictionName = "Georgia Entertainment Tax Credit (30%)";
+                  rate = 0.30;
+                } else if (
+                  textLower.includes("new mexico") ||
+                  textLower.includes("albuquerque") ||
+                  textLower.includes("santa fe")
+                ) {
+                  jurisdictionName = "New Mexico Film Credit (35% Tier)";
+                  rate = 0.35;
+                } else if (
+                  textLower.includes("california") ||
+                  textLower.includes("los angeles") ||
+                  textLower.includes("hollywood")
+                ) {
+                  jurisdictionName = "California Film & TV Credit (25%)";
+                  rate = 0.25;
+                }
+
+                setTaxJurisdiction(jurisdictionName);
+                const calculatedTaxRebate = Math.round(exposure * rate);
+                setTaxSavings(calculatedTaxRebate);
 
                 setMessages((prev) => [
                   ...prev,
@@ -933,13 +980,18 @@ export default function DeepClearStudioPage() {
 
             {/* Tax Rebate Card */}
             <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-1">
-              <span className="text-[10px] font-mono text-emerald-400 uppercase">
-                Tax Rebate Unlocked
-              </span>
-              <div className="text-lg font-bold font-mono text-emerald-300">
-                +{formatCurrency(taxSavings)}
+              <div className="flex items-center justify-between text-[10px] font-mono uppercase">
+                <span className="text-emerald-400">Tax Rebate Unlocked</span>
+                <span className="text-zinc-500 font-semibold">
+                  {initialExposure > 0 ? "QUALIFIED" : "IDLE"}
+                </span>
               </div>
-              <div className="text-[10px] text-zinc-500 font-mono">Georgia 30% Uplift</div>
+              <div className="text-lg font-bold font-mono text-emerald-300">
+                {initialExposure > 0 ? `+${formatCurrency(taxSavings)}` : "$0"}
+              </div>
+              <div className="text-[10px] text-zinc-500 font-mono truncate">
+                {initialExposure > 0 ? taxJurisdiction : "Awaiting Script Ingestion"}
+              </div>
             </div>
 
             {/* Dynamic Clearance & Distribution Risk Card */}
