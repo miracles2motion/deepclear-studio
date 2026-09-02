@@ -25,6 +25,7 @@ import {
   VolumeX,
   Radio,
   Image as ImageIcon,
+  Zap,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -47,7 +48,7 @@ export default function DeepClearStudioPage() {
       timestamp: "Just now",
       type: "text",
       content:
-        "Hello! I am DeepClear Studio, your autonomous film clearance and E&O underwriting co-pilot.\n\nPaste a screenplay scene below, upload a `.fountain` or `.md` script, or type a command to begin clearance analysis.",
+        "Welcome to DeepClear Studio. I am your autonomous film clearance and E&O underwriting co-pilot.\n\nPaste a screenplay scene below, upload a `.fountain` or `.md` script, or type a command to begin clearance analysis.",
     },
   ]);
 
@@ -59,11 +60,10 @@ export default function DeepClearStudioPage() {
   const [taxSavings, setTaxSavings] = useState(0);
   const [entities, setEntities] = useState<ExtractedEntity[]>([]);
   const [clearedEntityIds, setClearedEntityIds] = useState<string[]>([]);
-  const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const [isAudioMuted, setIsAudioMuted] = useState(true); // Default muted to avoid audio obstruction
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
-  const chatBottomRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
 
@@ -73,23 +73,26 @@ export default function DeepClearStudioPage() {
     }
   }, []);
 
-  // Auto-scroll to bottom of chat
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
-
-  const speakText = (text: string, speaker: "director" | "legal_counsel") => {
+  // Sequential, non-obstructing voice synthesis
+  const speakText = (shortSummary: string, speaker: "director" | "legal_counsel" | "bond_officer") => {
     if (isAudioMuted || !synthRef.current) return;
     try {
+      // Cancel any ongoing speech so agents never talk over each other
       synthRef.current.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
+
+      const utterance = new SpeechSynthesisUtterance(shortSummary);
+
       if (speaker === "director") {
-        utterance.pitch = 1.15;
+        utterance.pitch = 1.25;
         utterance.rate = 1.05;
+      } else if (speaker === "legal_counsel") {
+        utterance.pitch = 0.85;
+        utterance.rate = 0.95;
       } else {
-        utterance.pitch = 0.9;
+        utterance.pitch = 1.0;
         utterance.rate = 1.0;
       }
+
       synthRef.current.speak(utterance);
     } catch {
       // Audio fallback
@@ -210,9 +213,9 @@ export default function DeepClearStudioPage() {
                     type: "text",
                     content:
                       foundEntities.length > 0
-                        ? `Underwriting analysis complete. Identified ${foundEntities.length} statutory liabilities totaling ${formatCurrency(
+                        ? `Underwriting analysis complete. Identified ${foundEntities.length} liabilities totaling ${formatCurrency(
                             exposure
-                          )}. Click "Negotiate" on any item to initiate a dialectic debate and defuse the hazard.`
+                          )}. Click "Negotiate" below to begin dialectic compromise.`
                         : "Clearance scan complete. No actionable trademark, copyright, or municipal liabilities detected.",
                   },
                 ]);
@@ -252,8 +255,8 @@ export default function DeepClearStudioPage() {
     const counselCompromise = `Compromise proposed: Substitute "${entity.rawText}" with "${compromiseText}". This preserves your dramatic tone while reducing liability to $0.`;
     const directorAccept = `Agreed. If the art department can match the aesthetic on "${compromiseText}", we have a deal. Script mutated.`;
 
-    // 1. Counsel Opening
-    speakText(counselArg, "legal_counsel");
+    // 1. Counsel Opening (short punchy audio)
+    speakText(`Trademark hazard on ${entity.rawText}. Statutory exposure ${formatCurrency(entity.originalExposure)}.`, "legal_counsel");
     setMessages((prev) => [
       ...prev,
       {
@@ -269,7 +272,7 @@ export default function DeepClearStudioPage() {
     // 2. Director Counter
     setTimeout(() => {
       setActiveAgent("director");
-      speakText(directorArg, "director");
+      speakText("This prop is vital for character authenticity and Fair Use!", "director");
       setMessages((prev) => [
         ...prev,
         {
@@ -286,7 +289,7 @@ export default function DeepClearStudioPage() {
     // 3. Counsel Compromise
     setTimeout(() => {
       setActiveAgent("legal_counsel");
-      speakText(counselCompromise, "legal_counsel");
+      speakText(`Compromise: substitute with ${compromiseText}.`, "legal_counsel");
       setMessages((prev) => [
         ...prev,
         {
@@ -303,7 +306,7 @@ export default function DeepClearStudioPage() {
     // 4. Director Accept & Mutation
     setTimeout(() => {
       setActiveAgent("director");
-      speakText(directorAccept, "director");
+      speakText("Agreed. Script mutated to cleared alternative.", "director");
       setClearedEntityIds((prev) => [...prev, entity.id]);
       setCurrentExposure((prev) => Math.max(0, prev - entity.originalExposure));
 
@@ -369,6 +372,9 @@ export default function DeepClearStudioPage() {
     setUploadedFileName(null);
   };
 
+  const pendingHazards = entities.filter(
+    (e) => !clearedEntityIds.includes(e.id) && e.status !== "cleared"
+  );
   const isCleared = initialExposure > 0 && currentExposure === 0;
 
   return (
@@ -462,7 +468,7 @@ export default function DeepClearStudioPage() {
               ) : (
                 <>
                   <Volume2 className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-                  <span className="text-zinc-200">Voice Active</span>
+                  <span className="text-zinc-200 font-semibold">Voice On</span>
                 </>
               )}
             </button>
@@ -627,17 +633,35 @@ export default function DeepClearStudioPage() {
                 </span>
               </div>
             )}
-
-            <div ref={chatBottomRef} />
           </div>
 
           {/* ========================================================= */}
           {/* FLOATING GOOGLE GEMINI-STYLE PROMPT BAR AT BOTTOM         */}
           {/* ========================================================= */}
-          <div className="w-full max-w-3xl mx-auto px-4 pb-4 pt-2 shrink-0">
+          <div className="w-full max-w-3xl mx-auto px-4 pb-4 pt-1 shrink-0 space-y-2">
+            {/* PINNED QUICK ACTION BAR FOR PENDING HAZARDS (Fixes scrolling up) */}
+            {pendingHazards.length > 0 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+                <span className="text-zinc-500 font-mono text-[10px] shrink-0 font-semibold uppercase">
+                  Pending Hazards:
+                </span>
+                {pendingHazards.map((h) => (
+                  <button
+                    key={h.id}
+                    onClick={() => handleStartDebate(h)}
+                    disabled={isLoading}
+                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-amber-500/30 transition-all shadow-sm"
+                  >
+                    <Zap className="h-3 w-3 text-amber-400" />
+                    <span>Negotiate {h.rawText}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Clean Prompt Starters (when empty) */}
             {messages.length === 1 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3 text-xs font-medium">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-medium">
                 <button
                   onClick={() =>
                     handleSendMessage(
