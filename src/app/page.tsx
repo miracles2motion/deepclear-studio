@@ -117,31 +117,7 @@ export default function DeepClearStudioPage() {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Sequential, non-obstructing voice synthesis
-  const speakText = (shortSummary: string, speaker: "director" | "legal_counsel" | "bond_officer") => {
-    if (isAudioMuted || !synthRef.current) return;
-    try {
-      // Cancel any ongoing speech so agents never talk over each other
-      synthRef.current.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(shortSummary);
-
-      if (speaker === "director") {
-        utterance.pitch = 1.25;
-        utterance.rate = 1.05;
-      } else if (speaker === "legal_counsel") {
-        utterance.pitch = 0.85;
-        utterance.rate = 0.95;
-      } else {
-        utterance.pitch = 1.0;
-        utterance.rate = 1.0;
-      }
-
-      synthRef.current.speak(utterance);
-    } catch {
-      // Audio fallback
-    }
-  };
 
   // 5 Agents Definition
   const agents: Array<{
@@ -288,10 +264,60 @@ export default function DeepClearStudioPage() {
 
   const [agentTypingStatus, setAgentTypingStatus] = useState<string | null>(null);
 
+  // Promise-based sequential voice synthesis that waits for speech to 100% finish
+  const speakTextAsync = (
+    shortSummary: string,
+    speaker: "director" | "legal_counsel" | "bond_officer"
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      if (
+        isAudioMuted ||
+        !synthRef.current ||
+        typeof window === "undefined" ||
+        !("speechSynthesis" in window)
+      ) {
+        resolve();
+        return;
+      }
+
+      try {
+        const utterance = new SpeechSynthesisUtterance(shortSummary);
+
+        if (speaker === "director") {
+          utterance.pitch = 1.25;
+          utterance.rate = 1.05;
+        } else if (speaker === "legal_counsel") {
+          utterance.pitch = 0.85;
+          utterance.rate = 0.95;
+        } else {
+          utterance.pitch = 1.0;
+          utterance.rate = 1.0;
+        }
+
+        // Safety fallback timer so it never hangs if browser audio suspends
+        const timeout = setTimeout(() => resolve(), 8000);
+
+        utterance.onend = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
+
+        utterance.onerror = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
+
+        synthRef.current.speak(utterance);
+      } catch {
+        resolve();
+      }
+    });
+  };
+
   // Helper for paced async delays
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  // Handle Negotiate / Dialectic Debate with realistic, paced agent turn-taking
+  // Handle Negotiate / Dialectic Debate with guaranteed sequential voice playback
   const handleStartDebate = async (entity: ExtractedEntity) => {
     setIsLoading(true);
 
@@ -311,7 +337,6 @@ export default function DeepClearStudioPage() {
     await sleep(1500);
 
     setAgentTypingStatus(null);
-    speakText(`Trademark hazard on ${entity.rawText}. Statutory exposure ${formatCurrency(entity.originalExposure)}.`, "legal_counsel");
     setMessages((prev) => [
       ...prev,
       {
@@ -324,8 +349,12 @@ export default function DeepClearStudioPage() {
       },
     ]);
 
-    // Give user 3.5 seconds to comfortably read Legal Counsel's argument
-    await sleep(3500);
+    // Speak counsel line completely before continuing
+    await speakTextAsync(
+      `Trademark hazard on ${entity.rawText}. Statutory exposure ${formatCurrency(entity.originalExposure)}.`,
+      "legal_counsel"
+    );
+    await sleep(1500); // 1.5s natural pause after speaking
 
     // -------------------------------------------------------------
     // Step 2: The Director steps in to defend artistic intent
@@ -335,7 +364,6 @@ export default function DeepClearStudioPage() {
     await sleep(1500);
 
     setAgentTypingStatus(null);
-    speakText("This prop is vital for character authenticity and Fair Use!", "director");
     setMessages((prev) => [
       ...prev,
       {
@@ -348,8 +376,12 @@ export default function DeepClearStudioPage() {
       },
     ]);
 
-    // Give user 3.5 seconds to read The Director's counter-argument
-    await sleep(3500);
+    // Speak director line completely before continuing
+    await speakTextAsync(
+      "This prop is vital for character authenticity and Fair Use!",
+      "director"
+    );
+    await sleep(1500); // 1.5s natural pause after speaking
 
     // -------------------------------------------------------------
     // Step 3: Legal Counsel proposes negotiated compromise
@@ -359,7 +391,6 @@ export default function DeepClearStudioPage() {
     await sleep(1500);
 
     setAgentTypingStatus(null);
-    speakText(`Compromise: substitute with ${compromiseText}.`, "legal_counsel");
     setMessages((prev) => [
       ...prev,
       {
@@ -372,8 +403,9 @@ export default function DeepClearStudioPage() {
       },
     ]);
 
-    // Give user 3.5 seconds to read the proposed compromise
-    await sleep(3500);
+    // Speak compromise line completely before continuing
+    await speakTextAsync(`Compromise: substitute with ${compromiseText}.`, "legal_counsel");
+    await sleep(1500); // 1.5s natural pause after speaking
 
     // -------------------------------------------------------------
     // Step 4: The Director accepts the compromise
@@ -383,7 +415,6 @@ export default function DeepClearStudioPage() {
     await sleep(1200);
 
     setAgentTypingStatus(null);
-    speakText("Agreed. Script mutated to cleared alternative.", "director");
     setMessages((prev) => [
       ...prev,
       {
@@ -396,7 +427,9 @@ export default function DeepClearStudioPage() {
       },
     ]);
 
-    await sleep(1500);
+    // Speak director acceptance completely before continuing
+    await speakTextAsync("Agreed. Script mutated to cleared alternative.", "director");
+    await sleep(1000);
 
     // -------------------------------------------------------------
     // Step 5: Script Supervisor mutates the script & Bond Officer clears risk
