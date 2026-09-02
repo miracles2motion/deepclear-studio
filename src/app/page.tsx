@@ -29,6 +29,7 @@ import {
   Film,
   Copy,
   Check,
+  CornerDownRight,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -40,6 +41,10 @@ interface ChatMessage {
   content?: string;
   entities?: ExtractedEntity[];
   debateTurn?: DebateTurn;
+  replyTo?: {
+    senderName: string;
+    snippet: string;
+  };
 }
 
 export default function DeepClearStudioPage() {
@@ -426,6 +431,10 @@ export default function DeepClearStudioPage() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
         content: counselArg,
+        replyTo: {
+          senderName: "Script Supervisor",
+          snippet: `Identified ${entity.category.toUpperCase()} risk: "${entity.rawText}"`,
+        },
       },
     ]);
 
@@ -450,6 +459,10 @@ export default function DeepClearStudioPage() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
         content: directorArg,
+        replyTo: {
+          senderName: "Studio Legal Counsel",
+          snippet: counselArg.length > 55 ? counselArg.slice(0, 52) + "..." : counselArg,
+        },
       },
     ]);
 
@@ -474,6 +487,10 @@ export default function DeepClearStudioPage() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
         content: counselCompromise,
+        replyTo: {
+          senderName: "The Director",
+          snippet: directorArg.length > 55 ? directorArg.slice(0, 52) + "..." : directorArg,
+        },
       },
     ]);
 
@@ -498,6 +515,10 @@ export default function DeepClearStudioPage() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
         content: directorAccept,
+        replyTo: {
+          senderName: "Studio Legal Counsel",
+          snippet: counselCompromise.length > 55 ? counselCompromise.slice(0, 52) + "..." : counselCompromise,
+        },
       },
     ]);
 
@@ -535,6 +556,10 @@ export default function DeepClearStudioPage() {
           content: `✍️ Script Mutated: "${entity.rawText}" ➔ "${compromiseText}". Statutory liability reduced by ${formatCurrency(
             entity.originalExposure
           )}.`,
+          replyTo: {
+            senderName: "The Director",
+            snippet: directorAccept.length > 55 ? directorAccept.slice(0, 52) + "..." : directorAccept,
+          },
         },
       ];
 
@@ -775,6 +800,18 @@ export default function DeepClearStudioPage() {
                             : "bg-[#141416] border border-white/[0.08] text-zinc-200 rounded-tl-sm shadow-sm"
                         }`}
                       >
+                        {/* Quoted Direct Reply Banner */}
+                        {msg.replyTo && (
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/90 border border-white/[0.06] border-l-2 border-l-sky-400 text-[11px] font-mono text-zinc-400 mb-2 max-w-full truncate">
+                            <CornerDownRight className="h-3 w-3 text-sky-400 shrink-0" />
+                            <span className="font-semibold text-zinc-300 shrink-0">
+                              @{msg.replyTo.senderName}:
+                            </span>
+                            <span className="truncate italic text-zinc-400">
+                              "{msg.replyTo.snippet}"
+                            </span>
+                          </div>
+                        )}
                         {msg.content}
                       </div>
                     )}
