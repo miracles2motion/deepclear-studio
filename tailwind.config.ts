@@ -9,43 +9,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#050811",
+        background: "#0C0C0E",
         surface: {
-          DEFAULT: "#0B1224",
-          subtle: "#0F1A30",
-          elevated: "#152342",
-          glass: "rgba(11, 18, 36, 0.75)",
+          DEFAULT: "#121214",
+          subtle: "#18181B",
+          elevated: "#222226",
           border: "rgba(255, 255, 255, 0.08)",
+          hover: "#27272A",
         },
-        film: {
-          hazard: "#F43F5E",
-          cleared: "#10B981",
-          parallel: "#06B6D4",
-          director: "#F59E0B",
-          counsel: "#38BDF8",
-          bond: "#8B5CF6",
-          script: "#34D399",
-          location: "#FB923C",
+        accent: {
+          DEFAULT: "#3B82F6",
+          hover: "#2563EB",
+          emerald: "#10B981",
+          rose: "#F43F5E",
+          amber: "#F59E0B",
+          indigo: "#6366F1",
         },
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "sans-serif"],
+        sans: ["var(--font-inter)", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
         mono: ["var(--font-roboto-mono)", "monospace"],
-      },
-      animation: {
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "glow-hazard": "glowHazard 2s infinite alternate",
-        "glow-cleared": "glowCleared 2s infinite alternate",
-      },
-      keyframes: {
-        glowHazard: {
-          "0%": { boxShadow: "0 0 5px rgba(244, 63, 94, 0.2)" },
-          "100%": { boxShadow: "0 0 20px rgba(244, 63, 94, 0.6)" },
-        },
-        glowCleared: {
-          "0%": { boxShadow: "0 0 5px rgba(16, 185, 129, 0.2)" },
-          "100%": { boxShadow: "0 0 20px rgba(16, 185, 129, 0.6)" },
-        },
       },
     },
   },

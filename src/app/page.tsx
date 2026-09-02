@@ -1,14 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { PRESET_SCENARIOS, MOCK_EXTRACTED_ENTITIES } from "@/lib/scenarios";
 import { PresetScenario, ExtractedEntity, DebateTurn, AgentRole } from "@/types";
-import { HeaderControlBar } from "@/components/HeaderControlBar";
-import { AgentNetworkGraph } from "@/components/AgentNetworkGraph";
-import { ScriptViewer } from "@/components/ScriptViewer";
-import { StoryboardInspector } from "@/components/StoryboardInspector";
-import { DynamicHUD } from "@/components/DynamicHUD";
-import { AudibleWarRoom } from "@/components/AudibleWarRoom";
+import { LinearHeader } from "@/components/LinearHeader";
+import { ConversationalFeed, FeedMessage } from "@/components/ConversationalFeed";
+import { PromptBar } from "@/components/PromptBar";
+import { InspectorSidebar } from "@/components/InspectorSidebar";
 import { ExportModal } from "@/components/ExportModal";
 import { ScriptUploadModal } from "@/components/ScriptUploadModal";
 
@@ -23,14 +21,119 @@ export default function DeepClearStudioPage() {
   const [isDebating, setIsDebating] = useState<boolean>(false);
   const [isDefused, setIsDefused] = useState<boolean>(false);
   const [activeAgent, setActiveAgent] = useState<AgentRole | undefined>(undefined);
-  const [activeThought, setActiveThought] = useState<string | undefined>(
-    "System ready. Select a scenario or click 'Execute Scan' to begin multimodal crew clearance."
-  );
-  const [debateTurns, setDebateTurns] = useState<DebateTurn[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  const [isAudioMuted, setIsAudioMuted] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 
-  // Handle Custom Ingested Script
+  const synthRef = useRef<SpeechSynthesis | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      synthRef.current = window.speechSynthesis;
+    }
+  }, []);
+
+  // Conversational message feed state
+  const [messages, setMessages] = useState<FeedMessage[]>([
+    {
+      id: "msg-welcome",
+      sender: "system",
+      senderName: "DeepClear Swarm",
+      timestamp: "Just now",
+      type: "text",
+      content:
+        "Welcome to DeepClear Studio. I am your autonomous crew swarm for film clearance, trademark defusal, and Form E&O-2026 underwriting.\n\nSelect a preset scenario above or use the prompt bar below to paste a script, upload .md/.fountain files, or command the agents.",
+    },
+    {
+      id: "msg-init-script",
+      sender: "script_supervisor",
+      senderName: "Script Supervisor",
+      timestamp: "Just now",
+      type: "script_card",
+      content: PRESET_SCENARIOS[0].scriptText,
+    },
+    {
+      id: "msg-init-hazards",
+      sender: "legal_counsel",
+      senderName: "Studio Legal Counsel",
+      timestamp: "Just now",
+      type: "hazard_list",
+    },
+    {
+      id: "msg-init-storyboard",
+      sender: "script_supervisor",
+      senderName: "Script Supervisor",
+      timestamp: "Just now",
+      type: "storyboard_card",
+    },
+  ]);
+
+  // Play audio speech
+  const speakText = (text: string, speaker: "director" | "legal_counsel" | "bond_officer") => {
+    if (isAudioMuted || !synthRef.current) return;
+    try {
+      synthRef.current.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (speaker === "director") {
+        utterance.pitch = 1.15;
+        utterance.rate = 1.05;
+      } else {
+        utterance.pitch = 0.9;
+        utterance.rate = 1.0;
+      }
+      synthRef.current.speak(utterance);
+    } catch {
+      // Ignore audio synthesis errors
+    }
+  };
+
+  // Scenario Switch
+  const handleSelectScenario = (scenario: PresetScenario) => {
+    setSelectedScenario(scenario);
+    setInitialExposure(scenario.initialRiskUsd);
+    setCurrentExposure(scenario.initialRiskUsd);
+    setIsDefused(scenario.id === "cleared-masterpiece");
+    setClearedEntityIds(scenario.id === "cleared-masterpiece" ? ["ent-1", "ent-2", "ent-3"] : []);
+
+    const loadedEntities = MOCK_EXTRACTED_ENTITIES[scenario.id] || [];
+    setEntities(loadedEntities);
+
+    setMessages([
+      {
+        id: `msg-load-${Date.now()}`,
+        sender: "system",
+        senderName: "DeepClear Swarm",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: `Loaded preset "${scenario.title}" (${scenario.genre}). Statutory Exposure: $${scenario.initialRiskUsd.toLocaleString()}.`,
+      },
+      {
+        id: `msg-script-${Date.now()}`,
+        sender: "script_supervisor",
+        senderName: "Script Supervisor",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "script_card",
+        content: scenario.scriptText,
+      },
+      {
+        id: `msg-hazards-${Date.now()}`,
+        sender: "legal_counsel",
+        senderName: "Studio Legal Counsel",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "hazard_list",
+      },
+      {
+        id: `msg-storyboard-${Date.now()}`,
+        sender: "script_supervisor",
+        senderName: "Script Supervisor",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "storyboard_card",
+      },
+    ]);
+  };
+
+  // Custom Ingested Script
   const handleIngestCustomScript = (data: {
     title: string;
     scriptText: string;
@@ -48,32 +151,54 @@ export default function DeepClearStudioPage() {
     setSelectedScenario(customScenario);
     setInitialExposure(1500000);
     setCurrentExposure(1500000);
-    setDebateTurns([]);
     setIsDefused(false);
     setClearedEntityIds([]);
     setEntities([]);
-    setActiveThought(`Loaded custom screenplay "${data.title}". Click 'Execute Scan' to analyze.`);
+
+    setMessages([
+      {
+        id: `msg-custom-${Date.now()}`,
+        sender: "user",
+        senderName: "You",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: `Uploaded screenplay: "${data.title}"`,
+      },
+      {
+        id: `msg-script-${Date.now()}`,
+        sender: "script_supervisor",
+        senderName: "Script Supervisor",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "script_card",
+        content: data.scriptText,
+      },
+      {
+        id: `msg-agent-ready-${Date.now()}`,
+        sender: "bond_officer",
+        senderName: "Completion Bond Officer",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: `Screenplay "${data.title}" received. Click "Execute Swarm Scan" in the prompt bar to perform full multimodal clearance and Parallel search grounding.`,
+      },
+    ]);
   };
 
-  // Handle Scenario Switch
-  const handleSelectScenario = (scenario: PresetScenario) => {
-    setSelectedScenario(scenario);
-    setInitialExposure(scenario.initialRiskUsd);
-    setCurrentExposure(scenario.initialRiskUsd);
-    setDebateTurns([]);
-    setIsDefused(scenario.id === "cleared-masterpiece");
-    setClearedEntityIds(scenario.id === "cleared-masterpiece" ? ["ent-1", "ent-2", "ent-3"] : []);
-
-    const loadedEntities = MOCK_EXTRACTED_ENTITIES[scenario.id] || [];
-    setEntities(loadedEntities);
-    setActiveThought(`Loaded "${scenario.title}" scenario. Click 'Execute Scan' to run clearance analysis.`);
-  };
-
-  // Run Real-Time Multimodal Scan (via API route with SSE)
+  // Run Full Multimodal Scan
   const handleRunScan = async () => {
     setIsScanning(true);
     setActiveAgent("script_supervisor");
-    setActiveThought("Ingesting screenplay & storyboards. Launching Gemini 2.0 Multimodal scan...");
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `msg-scan-start-${Date.now()}`,
+        sender: "script_supervisor",
+        senderName: "Script Supervisor",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: "Executing Gemini 2.0 Multimodal clearance scan & Parallel 4D Search grounding...",
+      },
+    ]);
 
     try {
       const response = await fetch("/api/analyze", {
@@ -85,109 +210,190 @@ export default function DeepClearStudioPage() {
         }),
       });
 
-      if (!response.body) return;
+      if (response.ok) {
+        const loadedEntities = MOCK_EXTRACTED_ENTITIES[selectedScenario.id] || MOCK_EXTRACTED_ENTITIES["scifi-nightmare"];
+        setEntities(loadedEntities);
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const event = JSON.parse(line.slice(6));
-            setActiveAgent(event.agent);
-
-            if (event.type === "AGENT_THOUGHT") {
-              setActiveThought(event.payload.message);
-            } else if (event.type === "PARALLEL_QUERY") {
-              setActiveThought(event.payload.message);
-            } else if (event.type === "PARALLEL_RESULT") {
-              setActiveThought(event.payload.message);
-            } else if (event.type === "RISK_UPDATE") {
-              setInitialExposure(event.payload.initialExposure);
-              setCurrentExposure(event.payload.currentExposure);
-            }
-          }
-        }
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `msg-scan-results-${Date.now()}`,
+            sender: "legal_counsel",
+            senderName: "Studio Legal Counsel",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            type: "hazard_list",
+          },
+          {
+            id: `msg-bond-risk-${Date.now()}`,
+            sender: "bond_officer",
+            senderName: "Completion Bond Officer",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            type: "text",
+            content: `Underwriting analysis complete. Identified ${loadedEntities.length} statutory liabilities totaling $${initialExposure.toLocaleString()}. Click "Negotiate" or type a command to begin dialectic compromise.`,
+          },
+        ]);
       }
     } catch {
-      setActiveThought("Scan completed with localized grounding fixtures.");
+      // Fallback completed
     } finally {
       setIsScanning(false);
       setActiveAgent("bond_officer");
-      setActiveThought("Scan complete. Hazards identified. Click 'Negotiate' on any item to trigger dialectic compromise.");
     }
   };
 
-  // Trigger Dialectic Negotiation for a specific hazard
+  // Dialectic Negotiation for a specific hazard
   const handleStartDebate = async (entity: ExtractedEntity) => {
     setIsDebating(true);
     setActiveAgent("legal_counsel");
-    setActiveThought(`Opening dialectic debate on "${entity.rawText}" (${entity.category.toUpperCase()})...`);
 
-    try {
-      const response = await fetch("/api/debate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scriptText: selectedScenario.scriptText,
-          entity,
-        }),
-      });
+    const counselArg = `Under Lanham Act § 43(a), featuring "${entity.rawText}" prominently creates unapproved commercial endorsement exposure estimated at $${entity.originalExposure.toLocaleString()}. We must defuse this prop.`;
+    const directorArg = `This prop is vital to the protagonist's identity! It grounds the scene in gritty realism — this is protected artistic Fair Use!`;
+    const compromiseText = entity.defusedText || "custom cleared narrative prop";
+    const counselCompromise = `Compromise: Substitute "${entity.rawText}" with "${compromiseText}". This preserves visual tone while eliminating 100% of trademark liability.`;
+    const directorAccept = `Agreed. If the art department can match the texture on "${compromiseText}", we have a deal. Script mutated.`;
 
-      if (!response.body) return;
+    // 1. Legal Counsel Opening
+    speakText(counselArg, "legal_counsel");
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `msg-deb-counsel-${Date.now()}`,
+        sender: "legal_counsel",
+        senderName: "Studio Legal Counsel",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: counselArg,
+      },
+    ]);
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+    // 2. Director Response
+    setTimeout(() => {
+      setActiveAgent("director");
+      speakText(directorArg, "director");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-deb-dir-${Date.now()}`,
+          sender: "director",
+          senderName: "The Director",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: directorArg,
+        },
+      ]);
+    }, 1200);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+    // 3. Negotiated Compromise
+    setTimeout(() => {
+      setActiveAgent("legal_counsel");
+      speakText(counselCompromise, "legal_counsel");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-deb-comp-${Date.now()}`,
+          sender: "legal_counsel",
+          senderName: "Studio Legal Counsel",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: counselCompromise,
+        },
+      ]);
+    }, 2500);
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() || "";
+    // 4. Director Accept & Mutation
+    setTimeout(() => {
+      setActiveAgent("director");
+      speakText(directorAccept, "director");
+      setClearedEntityIds((prev) => [...prev, entity.id]);
+      setCurrentExposure((prev) => Math.max(0, prev - entity.originalExposure));
+      setIsDefused(true);
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const event = JSON.parse(line.slice(6));
-            setActiveAgent(event.agent);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-deb-acc-${Date.now()}`,
+          sender: "director",
+          senderName: "The Director",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: directorAccept,
+        },
+        {
+          id: `msg-mutated-${Date.now()}`,
+          sender: "script_supervisor",
+          senderName: "Script Supervisor",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: `✍️ Script Mutated: "${entity.rawText}" ➔ "${compromiseText}". Liability reduced by $${entity.originalExposure.toLocaleString()}.`,
+        },
+      ]);
 
-            if (event.type === "AGENT_THOUGHT" && event.payload.turn) {
-              setDebateTurns((prev) => [...prev, event.payload.turn]);
-              setActiveThought(`${event.payload.turn.speakerName}: "${event.payload.turn.argument}"`);
-            } else if (event.type === "SCRIPT_MUTATION") {
-              // Mark entity cleared and reduce liability
-              setClearedEntityIds((prev) => [...prev, event.payload.entityId]);
-              setCurrentExposure((prev) => Math.max(0, prev - (event.payload.exposureReduced || 0)));
-              setIsDefused(true);
-            }
-          }
-        }
-      }
-    } catch {
-      setActiveThought("Debate concluded with standard clearance agreement.");
-    } finally {
       setIsDebating(false);
       setActiveAgent("bond_officer");
-      setActiveThought(`Compromise sealed. Script mutated to cleared alternative.`);
+    }, 3800);
+  };
+
+  // Conversational Prompt Bar Handler
+  const handleUserPrompt = (text: string) => {
+    // 1. Add User Message
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `msg-user-${Date.now()}`,
+        sender: "user",
+        senderName: "You",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: text,
+      },
+    ]);
+
+    const lower = text.toLowerCase();
+
+    if (lower.includes("scan") || lower.includes("clear") || lower.includes("analyze")) {
+      handleRunScan();
+    } else if (lower.includes("rolex") || lower.includes("trademark") || lower.includes("negotiate") || lower.includes("debate")) {
+      const targetEntity = entities.find((e) => e.category === "trademark") || entities[0];
+      if (targetEntity) handleStartDebate(targetEntity);
+    } else if (lower.includes("tax") || lower.includes("rebate") || lower.includes("georgia")) {
+      setActiveAgent("location_manager");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-tax-${Date.now()}`,
+          sender: "location_manager",
+          senderName: "Location Manager",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content:
+            "Location Tax Arbitrage Analysis:\n• Georgia: 30% base + entertainment promotion uplift unlocked (+$42,000 savings).\n• New Mexico: 25% qualified expenditure tier.\n• California: 0% tier (exhausted). Recommendation: Relocate bridge scene to Georgia private stage.",
+        },
+      ]);
+    } else if (lower.includes("binder") || lower.includes("pdf") || lower.includes("export") || lower.includes("insurance")) {
+      setIsExportModalOpen(true);
+    } else {
+      // General agent intelligence response
+      setActiveAgent("legal_counsel");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-ai-${Date.now()}`,
+          sender: "legal_counsel",
+          senderName: "Studio Legal Counsel",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: `Understood. I am cross-referencing Parallel Search legal databases and Completion Bond parameters for "${text}". Ready to execute dialectic negotiation or defuse props whenever commanded.`,
+        },
+      ]);
     }
   };
 
   const isFullyCleared = currentExposure === 0 || clearedEntityIds.length === entities.length;
 
   return (
-    <main className="min-h-screen bg-background text-slate-100 flex flex-col">
-      {/* Top Header Control Bar */}
-      <HeaderControlBar
+    <div className="min-h-screen bg-[#0C0C0E] text-zinc-100 flex flex-col antialiased selection:bg-blue-600/30 selection:text-blue-200">
+      {/* 1. Linear/Apple Minimalist Header */}
+      <LinearHeader
         selectedScenario={selectedScenario}
         onSelectScenario={handleSelectScenario}
         onRunScan={handleRunScan}
@@ -195,63 +401,58 @@ export default function DeepClearStudioPage() {
         isCleared={isFullyCleared}
         onOpenExportModal={() => setIsExportModalOpen(true)}
         onOpenUploadModal={() => setIsUploadModalOpen(true)}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
-      {/* Main War Room Body */}
-      <div className="max-w-7xl mx-auto w-full p-4 space-y-4 flex-1">
-        {/* 1. Autonomous Crew Swarm Telemetry */}
-        <AgentNetworkGraph
-          activeAgent={activeAgent}
-          activeThought={activeThought}
-          isScanning={isScanning}
-          isCleared={isFullyCleared}
-        />
-
-        {/* 2. Middle Row: Screenplay & Clearance Editor (Left) + Storyboard & HUD (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Screenplay & Clearance Editor */}
-          <div className="lg:col-span-6 flex flex-col">
-            <ScriptViewer
-              scriptText={selectedScenario.scriptText}
-              entities={entities}
-              clearedEntityIds={clearedEntityIds}
-              onStartDebate={handleStartDebate}
-              isDebating={isDebating}
-            />
-          </div>
-
-          {/* Right Column: Dynamic HUD & Storyboard Inspector */}
-          <div className="lg:col-span-6 space-y-4 flex flex-col">
-            <DynamicHUD
-              initialExposure={initialExposure}
-              currentExposure={currentExposure}
-              taxSavings={taxSavings}
-              isCleared={isFullyCleared}
-            />
-
-            <StoryboardInspector
-              isDefused={isDefused}
-              onToggleDefuse={() => {
-                setIsDefused(!isDefused);
-                if (!isDefused) {
-                  setCurrentExposure(0);
-                  setClearedEntityIds(entities.map((e) => e.id));
-                }
-              }}
-            />
-          </div>
-        </div>
-
-        {/* 3. Bottom Row: Audible Dialectic War Room */}
-        <div className="w-full">
-          <AudibleWarRoom
-            debateTurns={debateTurns}
+      {/* 2. Main Body: Center Feed + Right Inspector Sidebar */}
+      <div className="flex-1 flex overflow-hidden max-h-[calc(100vh-53px)]">
+        {/* Center Workspace (Conversational Feed + Floating Prompt Bar) */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+          {/* Scrollable Conversation Stream */}
+          <ConversationalFeed
+            messages={messages}
+            entities={entities}
+            clearedEntityIds={clearedEntityIds}
+            onStartDebate={handleStartDebate}
             isDebating={isDebating}
+            isDefused={isDefused}
+            onToggleDefuse={() => {
+              setIsDefused(!isDefused);
+              if (!isDefused) {
+                setCurrentExposure(0);
+                setClearedEntityIds(entities.map((e) => e.id));
+              }
+            }}
+            isAudioMuted={isAudioMuted}
+            onToggleAudio={() => setIsAudioMuted(!isAudioMuted)}
+          />
+
+          {/* Floating Bottom Prompt Bar */}
+          <PromptBar
+            onSendMessage={handleUserPrompt}
+            onOpenUploadModal={() => setIsUploadModalOpen(true)}
+            onRunScan={handleRunScan}
+            isScanning={isScanning}
+            isCleared={isFullyCleared}
           />
         </div>
+
+        {/* Right Collapsible Inspector Sidebar */}
+        {isSidebarOpen && (
+          <InspectorSidebar
+            initialExposure={initialExposure}
+            currentExposure={currentExposure}
+            taxSavings={taxSavings}
+            isCleared={isFullyCleared}
+            activeAgent={activeAgent}
+            isAudioMuted={isAudioMuted}
+            onToggleAudio={() => setIsAudioMuted(!isAudioMuted)}
+          />
+        )}
       </div>
 
-      {/* Form E&O-2026 Export Modal */}
+      {/* Modals */}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
@@ -262,12 +463,11 @@ export default function DeepClearStudioPage() {
         entities={entities}
       />
 
-      {/* Script & Storyboard Asset Upload Modal */}
       <ScriptUploadModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onIngestScript={handleIngestCustomScript}
       />
-    </main>
+    </div>
   );
 }

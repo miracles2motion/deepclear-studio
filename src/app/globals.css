@@ -3,65 +3,63 @@
 @tailwind utilities;
 
 :root {
-  --background: #050811;
-  --foreground: #F8FAFC;
+  --background: #0C0C0E;
+  --foreground: #F4F4F5;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
+  letter-spacing: -0.01em;
 }
 
-/* Custom Film Lab Scrollbar */
+/* Minimalist Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B1224;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Glassmorphism panel styling */
-.glass-panel {
-  background: rgba(11, 18, 36, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* Linear-style clean card */
+.linear-card {
+  background: #121214;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
 }
 
-.glass-panel-glow {
-  background: rgba(11, 18, 36, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  box-shadow: 0 0 25px rgba(56, 189, 248, 0.08);
+.linear-card-hover:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: #151518;
 }
 
-/* Dynamic Strike-Through & Mutation Animation */
-.script-strike {
-  position: relative;
-  color: #F43F5E;
+/* Script Mutation Diff Styling */
+.diff-red {
+  color: #FB7185;
   text-decoration: line-through;
   text-decoration-color: #F43F5E;
-  text-decoration-thickness: 2px;
+  background: rgba(244, 63, 94, 0.1);
+  padding: 0 4px;
+  border-radius: 3px;
 }
 
-.script-cleared {
-  color: #10B981;
-  background: rgba(16, 185, 129, 0.1);
+.diff-green {
+  color: #34D399;
+  background: rgba(16, 185, 129, 0.12);
   padding: 0 4px;
-  border-radius: 2px;
-  border-bottom: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 3px;
+  font-weight: 600;
 }
