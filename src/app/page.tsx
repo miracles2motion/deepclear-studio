@@ -637,7 +637,7 @@ export default function DeepClearStudioPage() {
                       <div
                         className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
                           isUser
-                            ? "bg-zinc-100 text-zinc-950 font-medium rounded-tr-sm shadow-sm"
+                            ? "bg-[#1C1C20] border border-white/[0.1] text-zinc-100 rounded-tr-sm shadow-sm"
                             : "bg-[#141416] border border-white/[0.08] text-zinc-200 rounded-tl-sm shadow-sm"
                         }`}
                       >
