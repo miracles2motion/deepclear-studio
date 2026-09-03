@@ -475,6 +475,8 @@ export default function DeepClearStudioPage() {
       ]);
     } finally {
       setIsLoading(false);
+      setAgentThinking(null);
+      setAgentTypingStatus(null);
       setActiveAgent("bond_officer");
     }
   };
@@ -625,39 +627,45 @@ export default function DeepClearStudioPage() {
       thought: `Evaluating statutory clearance, Lanham Act § 43(a) trademark exposure, and artistic Fair Use for "${entity.rawText}"...`,
     });
 
-    // 1. Fetch dynamic, context-specific debate dialogue generated live by Gemini
-    let counselArg = `Under Lanham Act § 43(a), featuring "${entity.rawText}" prominently without a license creates estimated liability of ${formatCurrency(
-      entity.originalExposure
-    )}. We must defuse this asset.`;
-    let directorArg = `This item is crucial for character authenticity and atmosphere! It is protected artistic Fair Use!`;
-    const compromiseText = entity.defusedText || "custom cleared narrative prop";
-    let counselCompromise = `Compromise proposed: Substitute "${entity.rawText}" with "${compromiseText}". This preserves your dramatic tone while reducing liability to $0.`;
-    let directorAccept = `Agreed. If the art department can match the aesthetic on "${compromiseText}", we have a deal. Script mutated.`;
-
     try {
-      // Find the last screenplay script text from messages
-      const scriptMessage = messages.find((m) => m.type === "script" || m.sender === "user");
-      const currentScript = scriptMessage?.content || "";
+      // 1. Fetch dynamic, context-specific debate dialogue generated live by Gemini
+      let counselArg = `Under Lanham Act § 43(a), featuring "${entity.rawText}" prominently without a license creates estimated liability of ${formatCurrency(
+        entity.originalExposure
+      )}. We must defuse this asset.`;
+      let directorArg = `This item is crucial for character authenticity and atmosphere! It is protected artistic Fair Use!`;
+      const compromiseText = entity.defusedText || "custom cleared narrative prop";
+      let counselCompromise = `Compromise proposed: Substitute "${entity.rawText}" with "${compromiseText}". This preserves your dramatic tone while reducing liability to $0.`;
+      let directorAccept = `Agreed. If the art department can match the aesthetic on "${compromiseText}", we have a deal. Script mutated.`;
 
-      const debateRes = await fetch("/api/debate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scriptText: currentScript,
-          entity,
-        }),
-      });
+      try {
+        // Find the last screenplay script text from messages
+        const scriptMessage = messages.find((m) => m.type === "script" || m.sender === "user");
+        const currentScript = scriptMessage?.content || "";
 
-      if (debateRes.ok) {
-        const dynamicTurns = await debateRes.json();
-        if (dynamicTurns.counselObjection) counselArg = dynamicTurns.counselObjection;
-        if (dynamicTurns.directorDefense) directorArg = dynamicTurns.directorDefense;
-        if (dynamicTurns.counselCompromise) counselCompromise = dynamicTurns.counselCompromise;
-        if (dynamicTurns.directorAcceptance) directorAccept = dynamicTurns.directorAcceptance;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+        const debateRes = await fetch("/api/debate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scriptText: currentScript,
+            entity,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (debateRes.ok) {
+          const dynamicTurns = await debateRes.json();
+          if (dynamicTurns.counselObjection) counselArg = dynamicTurns.counselObjection;
+          if (dynamicTurns.directorDefense) directorArg = dynamicTurns.directorDefense;
+          if (dynamicTurns.counselCompromise) counselCompromise = dynamicTurns.counselCompromise;
+          if (dynamicTurns.directorAcceptance) directorAccept = dynamicTurns.directorAcceptance;
+        }
+      } catch {
+        // Fallback to contextual defaults if network or API times out
       }
-    } catch {
-      // Fallback to contextual defaults if network drops
-    }
 
     // Unique IDs for deterministic reply tagging and scroll targets
     const now = Date.now();
@@ -860,13 +868,22 @@ export default function DeepClearStudioPage() {
 
       return nextMsgs;
     });
-
-    setIsLoading(false);
-    setActiveAgent("bond_officer");
+    } catch (err) {
+      console.error("Debate orchestration error:", err);
+    } finally {
+      setIsLoading(false);
+      setAgentThinking(null);
+      setAgentTypingStatus(null);
+      setActiveAgent("bond_officer");
+    }
   };
 
   // Handle User Marking an Item as Pre-Licensed or Permitted
   const handleMarkAsLicensed = (entity: ExtractedEntity) => {
+    setIsLoading(false);
+    setAgentThinking(null);
+    setAgentTypingStatus(null);
+
     const newLicensedIds = [...licensedEntityIds, entity.id];
     setLicensedEntityIds(newLicensedIds);
 
