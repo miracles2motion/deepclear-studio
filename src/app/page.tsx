@@ -32,6 +32,8 @@ import {
   CornerDownRight,
   ChevronLeft,
   ChevronRight,
+  User,
+  MessageSquare,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -80,6 +82,28 @@ export default function DeepClearStudioPage() {
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [productionTitle, setProductionTitle] = useState<string>("Indie Motion Picture");
   const [isCopied, setIsCopied] = useState(false);
+  const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+
+  const handleCopyMessage = (msg: ChatMessage) => {
+    let textToCopy = msg.content || "";
+    if (msg.type === "hazards" && msg.entities) {
+      textToCopy =
+        `Identified Scene Liabilities (${msg.entities.length}):\n` +
+        msg.entities
+          .map(
+            (e, idx) =>
+              `${idx + 1}. [${e.category.toUpperCase()}] ${e.rawText} - Exposure: ${formatCurrency(
+                e.originalExposure
+              )} - ${e.description}`
+          )
+          .join("\n");
+    }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(textToCopy);
+      setCopiedMsgId(msg.id);
+      setTimeout(() => setCopiedMsgId(null), 1800);
+    }
+  };
 
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1202,89 +1226,114 @@ export default function DeepClearStudioPage() {
             </button>
           </div>
 
-          {/* Scrollable Message Feed */}
-          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-5 max-w-3xl mx-auto w-full">
-            {messages.map((msg) => {
-              const isUser = msg.sender === "user";
+            {/* Scrollable Message Feed */}
+            <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-5 max-w-3xl mx-auto w-full">
+              {messages.map((msg) => {
+                const isUser = msg.sender === "user";
+                const replyCount = messages.filter((m) => m.replyTo?.messageId === msg.id).length;
 
-              return (
-                <div
-                  key={msg.id}
-                  id={msg.id}
-                  className={`flex gap-3.5 items-start transition-all duration-300 p-1 rounded-2xl ${
-                    isUser ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {/* Agent Avatar with Custom Persona Theme */}
-                  {!isUser && (
-                    <div
-                      className={`h-7 w-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs transition-colors ${
-                        msg.sender !== "system" && AGENT_THEMES[msg.sender as AgentRole]
-                          ? `${AGENT_THEMES[msg.sender as AgentRole].iconBg} ${AGENT_THEMES[msg.sender as AgentRole].iconBorder}`
-                          : "bg-zinc-900 border-white/10 text-zinc-300"
-                      }`}
-                    >
-                      {msg.sender === "director" ? (
-                        <Clapperboard className="h-3.5 w-3.5 text-rose-400" />
-                      ) : msg.sender === "legal_counsel" ? (
-                        <Scale className="h-3.5 w-3.5 text-sky-400" />
-                      ) : msg.sender === "script_supervisor" ? (
-                        <Eye className="h-3.5 w-3.5 text-emerald-400" />
-                      ) : msg.sender === "location_manager" ? (
-                        <MapPin className="h-3.5 w-3.5 text-amber-400" />
-                      ) : (
-                        <ShieldAlert className="h-3.5 w-3.5 text-indigo-400" />
-                      )}
-                    </div>
-                  )}
-
-                  {/* Message Bubble / Card */}
+                return (
                   <div
-                    className={`space-y-1.5 max-w-[88%] ${
-                      isUser ? "ml-auto" : ""
-                    }`}
+                    key={msg.id}
+                    id={msg.id}
+                    className="flex gap-3.5 items-start transition-all duration-300 p-1 rounded-2xl justify-start group"
                   >
-                    <div
-                      className={`text-[10px] text-zinc-500 font-mono flex items-center gap-1.5 ${
-                        isUser ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      <span className={isUser ? "text-zinc-400 font-semibold" : ""}>
-                        {msg.senderName}
-                      </span>
-                      <span>•</span>
-                      <span>{msg.timestamp}</span>
-                    </div>
-
-                    {/* Standard Text */}
-                    {msg.type === "text" && (
+                    {/* Avatar (User or Agent) */}
+                    {isUser ? (
+                      <div className="h-7 w-7 rounded-lg border border-indigo-500/30 bg-indigo-950/40 text-indigo-300 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs shadow-sm">
+                        <User className="h-3.5 w-3.5 text-indigo-300" />
+                      </div>
+                    ) : (
                       <div
-                        className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap text-left ${
-                          isUser
-                            ? "bg-[#1C1C22] border border-white/[0.12] text-zinc-100 rounded-tr-sm shadow-md font-sans"
-                            : "bg-[#141416] border border-white/[0.08] text-zinc-200 rounded-tl-sm shadow-sm"
+                        className={`h-7 w-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs transition-colors ${
+                          msg.sender !== "system" && AGENT_THEMES[msg.sender as AgentRole]
+                            ? `${AGENT_THEMES[msg.sender as AgentRole].iconBg} ${AGENT_THEMES[msg.sender as AgentRole].iconBorder}`
+                            : "bg-zinc-900 border-white/10 text-zinc-300"
                         }`}
                       >
-                        {/* Quoted Direct Reply Banner (Click to jump & highlight) */}
-                        {msg.replyTo && (
-                          <button
-                            type="button"
-                            onClick={() => handleScrollToMessage(msg.replyTo?.messageId)}
-                            className="w-full flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-white/[0.06] border-l-2 border-l-sky-400 text-[11px] font-mono text-zinc-400 mb-2 max-w-full truncate text-left transition-all hover:border-l-sky-300 active:scale-[0.99] cursor-pointer group shadow-sm"
-                            title={msg.replyTo.messageId ? "Click to jump to replied message" : undefined}
-                          >
-                            <CornerDownRight className="h-3 w-3 text-sky-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                            <span className="font-semibold text-zinc-300 shrink-0">
-                              @{msg.replyTo.senderName}:
-                            </span>
-                            <span className="truncate italic text-zinc-400 group-hover:text-zinc-200">
-                              "{msg.replyTo.snippet}"
-                            </span>
-                          </button>
+                        {msg.sender === "director" ? (
+                          <Clapperboard className="h-3.5 w-3.5 text-rose-400" />
+                        ) : msg.sender === "legal_counsel" ? (
+                          <Scale className="h-3.5 w-3.5 text-sky-400" />
+                        ) : msg.sender === "script_supervisor" ? (
+                          <Eye className="h-3.5 w-3.5 text-emerald-400" />
+                        ) : msg.sender === "location_manager" ? (
+                          <MapPin className="h-3.5 w-3.5 text-amber-400" />
+                        ) : (
+                          <ShieldAlert className="h-3.5 w-3.5 text-indigo-400" />
                         )}
-                        {msg.content}
                       </div>
                     )}
+
+                    {/* Message Bubble / Card */}
+                    <div className="space-y-1.5 flex-1 min-w-0 max-w-[92%]">
+                      {/* Header Row: Sender, Timestamp, Reply Count Badge, Copy Button */}
+                      <div className="flex items-center justify-between gap-2 text-[10px] text-zinc-500 font-mono pb-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`font-semibold ${isUser ? "text-indigo-400" : "text-zinc-300"}`}>
+                            {msg.senderName}
+                          </span>
+                          <span>•</span>
+                          <span>{msg.timestamp}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {/* Reply Count Indicator */}
+                          {replyCount > 0 && (
+                            <div
+                              className="flex items-center gap-1 text-[10px] font-mono text-sky-400 bg-sky-950/50 border border-sky-500/30 px-2 py-0.5 rounded-full shadow-sm"
+                              title={`${replyCount} ${replyCount === 1 ? "reply" : "replies"} in thread`}
+                            >
+                              <MessageSquare className="h-2.5 w-2.5 text-sky-400" />
+                              <span>{replyCount} {replyCount === 1 ? "reply" : "replies"}</span>
+                            </div>
+                          )}
+
+                          {/* Copy Action */}
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMessage(msg)}
+                            className="flex items-center gap-1 text-zinc-500 hover:text-zinc-200 px-1.5 py-0.5 rounded hover:bg-white/[0.06] transition-all"
+                            title="Copy message content"
+                          >
+                            {copiedMsgId === msg.id ? (
+                              <>
+                                <Check className="h-3 w-3 text-emerald-400" />
+                                <span className="text-[9px] text-emerald-400 font-mono">Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3" />
+                                <span className="text-[9px] text-zinc-500 hover:text-zinc-300 hidden sm:inline">Copy</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Standard Text: User & Agent share matching sleek Obsidian card */}
+                      {msg.type === "text" && (
+                        <div className="p-3.5 rounded-2xl bg-[#141416] border border-white/[0.08] text-zinc-200 rounded-tl-sm shadow-sm text-xs sm:text-sm leading-relaxed whitespace-pre-wrap text-left font-sans">
+                          {/* Quoted Direct Reply Banner (Click to jump & highlight) */}
+                          {msg.replyTo && (
+                            <button
+                              type="button"
+                              onClick={() => handleScrollToMessage(msg.replyTo?.messageId)}
+                              className="w-full flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-white/[0.06] border-l-2 border-l-sky-400 text-[11px] font-mono text-zinc-400 mb-2 max-w-full truncate text-left transition-all hover:border-l-sky-300 active:scale-[0.99] cursor-pointer group shadow-sm"
+                              title={msg.replyTo.messageId ? "Click to jump to replied message" : undefined}
+                            >
+                              <CornerDownRight className="h-3 w-3 text-sky-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                              <span className="font-semibold text-zinc-300 shrink-0">
+                                @{msg.replyTo.senderName}:
+                              </span>
+                              <span className="truncate italic text-zinc-400 group-hover:text-zinc-200">
+                                "{msg.replyTo.snippet}"
+                              </span>
+                            </button>
+                          )}
+                          {msg.content}
+                        </div>
+                      )}
 
                     {/* Detected Hazards List Card */}
                     {msg.type === "hazards" && msg.entities && (
