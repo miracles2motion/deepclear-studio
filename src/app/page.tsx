@@ -34,6 +34,8 @@ import {
   ChevronRight,
   User,
   MessageSquare,
+  Users,
+  BarChart3,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -83,6 +85,7 @@ export default function DeepClearStudioPage() {
   const [productionTitle, setProductionTitle] = useState<string>("Indie Motion Picture");
   const [isCopied, setIsCopied] = useState(false);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<"chat" | "crew" | "risk">("chat");
 
   const handleCopyMessage = (msg: ChatMessage) => {
     let textToCopy = msg.content || "";
@@ -1034,12 +1037,81 @@ export default function DeepClearStudioPage() {
         className="hidden"
       />
 
+      {/* Mobile Top Navigation Header with 3-Way View Switcher */}
+      <header className="h-14 border-b border-white/[0.08] bg-[#0E0E12] px-3 flex items-center justify-between md:hidden shrink-0 z-20 shadow-md">
+        <div className="flex items-center gap-2">
+          <img
+            src="/favicon.png"
+            alt="DeepClear Studio"
+            className="h-6 w-6 rounded-md object-cover border border-white/10 shadow-sm"
+          />
+          <span className="font-semibold text-xs text-zinc-100 tracking-tight">
+            DeepClear
+          </span>
+        </div>
+
+        {/* 3-Way Segmented Navigation (Chat / Crew / Risk) */}
+        <div className="flex items-center bg-zinc-900/90 border border-white/[0.08] rounded-xl p-1 text-[11px] font-mono">
+          <button
+            type="button"
+            onClick={() => setMobileTab("chat")}
+            className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+              mobileTab === "chat"
+                ? "bg-zinc-800 text-zinc-100 font-semibold shadow-sm"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <MessageSquare className="h-3 w-3 text-sky-400" />
+            <span>Chat</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMobileTab("crew")}
+            className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+              mobileTab === "crew"
+                ? "bg-zinc-800 text-zinc-100 font-semibold shadow-sm"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <Users className="h-3 w-3 text-indigo-400" />
+            <span>Crew</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMobileTab("risk")}
+            className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 ${
+              mobileTab === "risk"
+                ? "bg-zinc-800 text-zinc-100 font-semibold shadow-sm"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <BarChart3 className="h-3 w-3 text-emerald-400" />
+            <span>Risk</span>
+          </button>
+        </div>
+
+        {/* Export Binder Action */}
+        <button
+          onClick={() => setIsExportModalOpen(true)}
+          className="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold shadow-sm transition-all flex items-center gap-1"
+        >
+          <Download className="h-3 w-3" />
+          <span className="hidden xs:inline">Export</span>
+        </button>
+      </header>
+
       {/* 3-Column Layout */}
       <div className="flex-1 flex w-full h-full overflow-hidden">
         {/* ========================================================= */}
         {/* LEFT COLUMN: 5-Agent Crew Swarm (260px) */}
         {/* ========================================================= */}
-        <aside className="w-64 border-r border-white/[0.06] bg-[#101012] flex flex-col justify-between p-3.5 shrink-0 hidden md:flex">
+        <aside
+          className={`w-64 lg:w-72 border-r border-white/[0.06] bg-[#101012] flex-col justify-between p-3.5 shrink-0 overflow-y-auto ${
+            mobileTab === "crew" ? "flex w-full h-full" : "hidden md:flex"
+          }`}
+        >
           <div className="space-y-4">
             {/* Logo & New Chat */}
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
@@ -1195,7 +1267,11 @@ export default function DeepClearStudioPage() {
         {/* ========================================================= */}
         {/* MIDDLE COLUMN: Main Google Gemini Chat Feed (The Biggest)  */}
         {/* ========================================================= */}
-        <main className="flex-1 flex flex-col h-full bg-[#0C0C0E] relative overflow-hidden">
+        <main
+          className={`flex-1 flex-col h-full bg-[#0A0A0D] bg-[radial-gradient(ellipse_75%_75%_at_50%_-10%,rgba(56,189,248,0.05),rgba(0,0,0,0))] relative overflow-hidden ${
+            mobileTab === "chat" ? "flex" : "hidden md:flex"
+          }`}
+        >
           {/* Top Active Dynamic Glowing Gradient Bar per Agent */}
           {(isLoading || isGeneratingScene || speakingAgent || agentThinking) && (
             <div className="h-1.5 w-full bg-zinc-950 overflow-hidden relative shrink-0 z-10">
@@ -1215,19 +1291,8 @@ export default function DeepClearStudioPage() {
             </div>
           )}
 
-          {/* Top Bar for Mobile / Compact Navigation */}
-          <div className="h-12 border-b border-white/[0.06] px-4 flex items-center justify-between md:hidden shrink-0">
-            <div className="font-semibold text-xs text-zinc-200">DeepClear Studio</div>
-            <button
-              onClick={() => setIsExportModalOpen(true)}
-              className="px-2.5 py-1 rounded bg-zinc-800 text-xs text-zinc-300 font-mono"
-            >
-              Export Binder
-            </button>
-          </div>
-
-            {/* Scrollable Message Feed */}
-            <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-5 max-w-3xl mx-auto w-full">
+          {/* Scrollable Message Feed */}
+          <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-7 max-w-3xl mx-auto w-full">
               {messages.map((msg) => {
                 const isUser = msg.sender === "user";
                 const replyCount = messages.filter((m) => m.replyTo?.messageId === msg.id).length;
@@ -1808,7 +1873,11 @@ export default function DeepClearStudioPage() {
         {/* ========================================================= */}
         {/* RIGHT COLUMN: Underwriting & E&O Clearance HUD (300px)    */}
         {/* ========================================================= */}
-        <aside className="w-72 border-l border-white/[0.06] bg-[#101012] p-4 flex flex-col justify-between shrink-0 hidden lg:flex">
+        <aside
+          className={`w-72 xl:w-80 border-l border-white/[0.06] bg-[#101012] p-4 flex-col justify-between shrink-0 overflow-y-auto ${
+            mobileTab === "risk" ? "flex w-full h-full" : "hidden lg:flex"
+          }`}
+        >
           <div className="space-y-4">
             <div className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold border-b border-white/[0.06] pb-2">
               E&O Underwriting Status
