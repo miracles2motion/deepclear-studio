@@ -4,7 +4,7 @@ import { ClearanceReport } from "@/types";
 
 const styles = StyleSheet.create({
   page: {
-    padding: 32,
+    padding: 28,
     fontSize: 8,
     fontFamily: "Helvetica",
     backgroundColor: "#FFFFFF",
@@ -14,7 +14,8 @@ const styles = StyleSheet.create({
   headerContainer: {
     backgroundColor: "#0F172A",
     borderRadius: 6,
-    padding: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     marginBottom: 14,
   },
   headerTopRow: {
@@ -24,7 +25,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: "Helvetica-Bold",
     color: "#FFFFFF",
     letterSpacing: 0.5,
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   summaryTitle: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontFamily: "Helvetica-Bold",
     color: "#0F172A",
     marginBottom: 8,
@@ -78,19 +79,26 @@ const styles = StyleSheet.create({
   summaryGrid: {
     display: "flex",
     flexDirection: "row",
-    gap: 16,
+    alignItems: "stretch",
   },
   summaryCol: {
     flex: 1,
     display: "flex",
     flexDirection: "column",
-    gap: 6,
+    gap: 5,
+    paddingHorizontal: 4,
+  },
+  summaryDivider: {
+    width: 1,
+    backgroundColor: "#E2E8F0",
+    marginHorizontal: 10,
   },
   summaryRow: {
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingVertical: 2.5,
   },
   label: {
     fontSize: 7.5,
@@ -125,14 +133,9 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     backgroundColor: "#0F172A",
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 6,
     alignItems: "center",
-  },
-  headerCell: {
-    fontSize: 7,
-    fontFamily: "Helvetica-Bold",
-    color: "#FFFFFF",
   },
   tableRow: {
     display: "flex",
@@ -140,27 +143,48 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: "#E2E8F0",
     paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     alignItems: "center",
+    minHeight: 28,
+  },
+
+  // Cell Layouts with Dedicated Padding
+  cellBox: {
+    paddingHorizontal: 4,
+    display: "flex",
+    justifyContent: "center",
+  },
+  headerText: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: "#FFFFFF",
+    letterSpacing: 0.3,
   },
   cellText: {
     fontSize: 7,
     color: "#1E293B",
+    lineHeight: 1.3,
   },
   cellTextBold: {
     fontSize: 7,
     fontFamily: "Helvetica-Bold",
     color: "#0F172A",
+    lineHeight: 1.3,
+  },
+  cellTextMuted: {
+    fontSize: 6.5,
+    color: "#64748B",
+    lineHeight: 1.25,
   },
 
-  // Column Widths (Proportional Flex)
+  // Balanced Column Widths (Sum = 100%)
   colNum: { width: "5%" },
-  colScene: { width: "7%" },
-  colCat: { width: "15%" },
-  colHazard: { width: "24%" },
-  colSub: { width: "27%" },
-  colExp: { width: "11%", textAlign: "right" },
-  colStatus: { width: "11%", alignItems: "flex-end" },
+  colScene: { width: "9%" },
+  colCat: { width: "14%" },
+  colHazard: { width: "23%" },
+  colSub: { width: "26%" },
+  colExp: { width: "11%" },
+  colStatus: { width: "12%" },
 
   // Status Badges
   badgeLicensed: {
@@ -170,10 +194,11 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     paddingVertical: 2,
     paddingHorizontal: 4,
+    alignSelf: "flex-end",
   },
   badgeLicensedText: {
     color: "#0369A1",
-    fontSize: 6.5,
+    fontSize: 6,
     fontFamily: "Helvetica-Bold",
   },
   badgeMutated: {
@@ -183,10 +208,11 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     paddingVertical: 2,
     paddingHorizontal: 4,
+    alignSelf: "flex-end",
   },
   badgeMutatedText: {
     color: "#15803D",
-    fontSize: 6.5,
+    fontSize: 6,
     fontFamily: "Helvetica-Bold",
   },
   badgeHazard: {
@@ -196,10 +222,11 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     paddingVertical: 2,
     paddingHorizontal: 4,
+    alignSelf: "flex-end",
   },
   badgeHazardText: {
     color: "#BE123C",
-    fontSize: 6.5,
+    fontSize: 6,
     fontFamily: "Helvetica-Bold",
   },
 
@@ -228,6 +255,7 @@ const styles = StyleSheet.create({
     fontSize: 6.5,
     color: "#64748B",
     marginTop: 4,
+    lineHeight: 1.3,
     fontStyle: "italic",
   },
 });
@@ -281,7 +309,7 @@ export const FormEOBinderDocument: React.FC<FormEOBinderProps> = ({ report }) =>
           </View>
         </View>
 
-        {/* 2. Executive Risk & Underwriting Summary Card */}
+        {/* 2. Executive Risk & Underwriting Summary Card (Balanced 2 Columns + Divider) */}
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>EXECUTIVE RISK & UNDERWRITING SUMMARY</Text>
 
@@ -309,6 +337,9 @@ export const FormEOBinderDocument: React.FC<FormEOBinderProps> = ({ report }) =>
                 </Text>
               </View>
             </View>
+
+            {/* Vertical Divider Line */}
+            <View style={styles.summaryDivider} />
 
             {/* Right Column */}
             <View style={styles.summaryCol}>
@@ -342,21 +373,37 @@ export const FormEOBinderDocument: React.FC<FormEOBinderProps> = ({ report }) =>
         <View style={styles.tableContainer}>
           {/* Table Header */}
           <View style={styles.tableHeader}>
-            <Text style={[styles.headerCell, styles.colNum]}>#</Text>
-            <Text style={[styles.headerCell, styles.colScene]}>Scene</Text>
-            <Text style={[styles.headerCell, styles.colCat]}>Category</Text>
-            <Text style={[styles.headerCell, styles.colHazard]}>Identified Asset / Hazard</Text>
-            <Text style={[styles.headerCell, styles.colSub]}>Adjudicated Substitution</Text>
-            <Text style={[styles.headerCell, styles.colExp]}>Exposure</Text>
-            <Text style={[styles.headerCell, styles.colStatus]}>Status</Text>
+            <View style={[styles.cellBox, styles.colNum]}>
+              <Text style={styles.headerText}>#</Text>
+            </View>
+            <View style={[styles.cellBox, styles.colScene]}>
+              <Text style={styles.headerText}>Scene</Text>
+            </View>
+            <View style={[styles.cellBox, styles.colCat]}>
+              <Text style={styles.headerText}>Category</Text>
+            </View>
+            <View style={[styles.cellBox, styles.colHazard]}>
+              <Text style={styles.headerText}>Identified Asset / Hazard</Text>
+            </View>
+            <View style={[styles.cellBox, styles.colSub]}>
+              <Text style={styles.headerText}>Adjudicated Substitution / License</Text>
+            </View>
+            <View style={[styles.cellBox, styles.colExp, { alignItems: "flex-end" }]}>
+              <Text style={styles.headerText}>Exposure</Text>
+            </View>
+            <View style={[styles.cellBox, styles.colStatus, { alignItems: "flex-end" }]}>
+              <Text style={styles.headerText}>Status</Text>
+            </View>
           </View>
 
           {/* Table Rows */}
           {report.entities.length === 0 ? (
             <View style={styles.tableRow}>
-              <Text style={[styles.cellText, { width: "100%", textAlign: "center" }]}>
-                No statutory liabilities detected. Screenplay fully compliant.
-              </Text>
+              <View style={[styles.cellBox, { width: "100%", alignItems: "center" }]}>
+                <Text style={styles.cellTextMuted}>
+                  No statutory liabilities detected. Screenplay is fully compliant.
+                </Text>
+              </View>
             </View>
           ) : (
             report.entities.map((ent, idx) => {
@@ -382,17 +429,50 @@ export const FormEOBinderDocument: React.FC<FormEOBinderProps> = ({ report }) =>
                     { backgroundColor: idx % 2 === 1 ? "#F8FAFC" : "#FFFFFF" },
                   ]}
                 >
-                  <Text style={[styles.cellText, styles.colNum]}>{idx + 1}</Text>
-                  <Text style={[styles.cellText, styles.colScene]}>Sc. {ent.sceneNumber}</Text>
-                  <Text style={[styles.cellTextBold, styles.colCat]}>
-                    {ent.category.toUpperCase()}
-                  </Text>
-                  <Text style={[styles.cellTextBold, styles.colHazard]}>{ent.rawText}</Text>
-                  <Text style={[styles.cellText, styles.colSub]}>{subText}</Text>
-                  <Text style={[styles.cellTextBold, styles.colExp]}>
-                    {isResolved ? `$${ent.originalExposure.toLocaleString()} -> $0` : `$${ent.originalExposure.toLocaleString()}`}
-                  </Text>
-                  <View style={styles.colStatus}>
+                  {/* Col 1: # */}
+                  <View style={[styles.cellBox, styles.colNum]}>
+                    <Text style={styles.cellText}>{idx + 1}</Text>
+                  </View>
+
+                  {/* Col 2: Scene */}
+                  <View style={[styles.cellBox, styles.colScene]}>
+                    <Text style={styles.cellText}>Sc. {ent.sceneNumber}</Text>
+                  </View>
+
+                  {/* Col 3: Category */}
+                  <View style={[styles.cellBox, styles.colCat]}>
+                    <Text style={styles.cellTextBold}>{ent.category.toUpperCase()}</Text>
+                  </View>
+
+                  {/* Col 4: Identified Asset / Hazard */}
+                  <View style={[styles.cellBox, styles.colHazard]}>
+                    <Text style={styles.cellTextBold}>{ent.rawText}</Text>
+                    {ent.description && (
+                      <Text style={styles.cellTextMuted}>{ent.description}</Text>
+                    )}
+                  </View>
+
+                  {/* Col 5: Substitution / License */}
+                  <View style={[styles.cellBox, styles.colSub]}>
+                    <Text style={styles.cellText}>{subText}</Text>
+                  </View>
+
+                  {/* Col 6: Exposure */}
+                  <View style={[styles.cellBox, styles.colExp, { alignItems: "flex-end" }]}>
+                    <Text style={styles.cellTextBold}>
+                      {isResolved
+                        ? `$0`
+                        : `$${ent.originalExposure.toLocaleString()}`}
+                    </Text>
+                    {isResolved && (
+                      <Text style={styles.cellTextMuted}>
+                        was ${ent.originalExposure.toLocaleString()}
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* Col 7: Status Badge */}
+                  <View style={[styles.cellBox, styles.colStatus, { alignItems: "flex-end" }]}>
                     {isLicensed ? (
                       <View style={styles.badgeLicensed}>
                         <Text style={styles.badgeLicensedText}>LICENSED</Text>
