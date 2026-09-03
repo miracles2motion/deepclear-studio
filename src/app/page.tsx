@@ -364,7 +364,20 @@ export default function DeepClearStudioPage() {
               const event = JSON.parse(line.slice(6));
               setActiveAgent(event.agent);
 
+              if (event.type === "AGENT_THOUGHT" || event.type === "PARALLEL_QUERY") {
+                const thoughtMsg = (event.payload?.message as string) || "";
+                if (thoughtMsg) {
+                  setAgentThinking({
+                    role: event.agent,
+                    thought: thoughtMsg,
+                  });
+                  setAgentTypingStatus(thoughtMsg);
+                }
+              }
+
               if (event.type === "CLEARANCE_COMPLETE") {
+                setAgentThinking(null);
+                setAgentTypingStatus(null);
                 const foundEntities: ExtractedEntity[] = event.payload.entities || [];
                 const exposure = event.payload.totalExposure || 0;
 
@@ -509,6 +522,7 @@ export default function DeepClearStudioPage() {
   };
 
   // Promise-based sequential voice synthesis with unique voice casting per agent
+  // Enforces strict non-interference: cancels prior audio & condenses lines to punchy 6-7 word statements
   const speakTextAsync = (
     shortSummary: string,
     speaker: "director" | "legal_counsel" | "script_supervisor" | "bond_officer"
@@ -525,7 +539,15 @@ export default function DeepClearStudioPage() {
       }
 
       try {
-        const utterance = new SpeechSynthesisUtterance(shortSummary);
+        // Cancel any pending or active utterances so agents never talk over each other
+        synthRef.current.cancel();
+
+        // Strict Short Speech Policy: Condense to max 7 words so voice finishes cleanly in ~1.2-1.5s
+        const clean = shortSummary.replace(/[#*`_\[\]()]/g, "").trim();
+        const words = clean.split(/\s+/);
+        const punchyText = words.length > 7 ? words.slice(0, 7).join(" ") + "." : clean;
+
+        const utterance = new SpeechSynthesisUtterance(punchyText);
 
         // Assign dedicated voice actor profile
         const assignedVoice = getAgentVoice(speaker);
@@ -538,20 +560,20 @@ export default function DeepClearStudioPage() {
           utterance.rate = 1.05;
         } else if (speaker === "legal_counsel") {
           utterance.pitch = 1.1;
-          utterance.rate = 0.98;
+          utterance.rate = 1.02;
         } else if (speaker === "script_supervisor") {
           utterance.pitch = 1.15;
-          utterance.rate = 1.0;
+          utterance.rate = 1.05;
         } else {
-          utterance.pitch = 0.8;
-          utterance.rate = 0.92;
+          utterance.pitch = 0.85;
+          utterance.rate = 0.96;
         }
 
-        // Safety fallback timer so it never hangs if browser audio suspends
+        // Fast safety fallback timer so it never hangs and yields to the next agent promptly
         const timeout = setTimeout(() => {
           setSpeakingAgent(null);
           resolve();
-        }, 8000);
+        }, 3200);
 
         utterance.onstart = () => {
           setSpeakingAgent(speaker);
@@ -674,10 +696,10 @@ export default function DeepClearStudioPage() {
 
     // Straight to the point: punchy 1-sentence executive summary
     await speakTextAsync(
-      `${entity.category.toUpperCase()} hazard on ${entity.rawText}. Exposure ${formatCurrency(entity.originalExposure)}.`,
+      `${entity.category.toUpperCase()} hazard on ${entity.rawText}.`,
       "legal_counsel"
     );
-    await sleep(800);
+    await sleep(600);
 
     // -------------------------------------------------------------
     // Step 2: The Director steps in to defend artistic intent
@@ -899,7 +921,8 @@ export default function DeepClearStudioPage() {
       return nextMsgs;
     });
 
-    speakTextAsync(`License on file for ${entity.rawText}. Exposure cleared.`, "bond_officer");
+    setActiveAgent("bond_officer");
+    speakTextAsync(`License on file for ${entity.rawText}.`, "bond_officer");
   };
 
   // Handle File Upload (.md, .fountain, .txt)
