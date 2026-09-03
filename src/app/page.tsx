@@ -30,6 +30,8 @@ import {
   Copy,
   Check,
   CornerDownRight,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -82,6 +84,14 @@ export default function DeepClearStudioPage() {
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+  const hazardScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollHazards = (direction: "left" | "right") => {
+    if (hazardScrollRef.current) {
+      const offset = direction === "left" ? -360 : 360;
+      hazardScrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -1503,58 +1513,101 @@ export default function DeepClearStudioPage() {
             {pendingHazards.length > 0 && (
               <div className="space-y-1.5 pb-1">
                 <div className="flex items-center justify-between px-1 text-[10px] font-mono">
-                  <div className="flex items-center gap-1.5 text-zinc-400 font-semibold uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5 text-zinc-300 font-semibold uppercase tracking-wider">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
                     <span>Action Required ({pendingHazards.length} Pending):</span>
                   </div>
-                  <span className="text-zinc-500 text-[10px]">Scroll horizontally →</span>
+                  {/* Left & Right Scroll Controls */}
+                  <div className="flex items-center gap-1.5 text-zinc-400">
+                    <span className="text-[10px] text-zinc-500 hidden sm:inline">Use mouse wheel or arrows →</span>
+                    <button
+                      type="button"
+                      onClick={() => scrollHazards("left")}
+                      className="p-1 rounded-md bg-zinc-850 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 transition-all shadow-sm"
+                      title="Scroll left"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scrollHazards("right")}
+                      className="p-1 rounded-md bg-zinc-850 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 transition-all shadow-sm"
+                      title="Scroll right"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar">
+                {/* Horizontal Scroll Track with Mouse Wheel Support */}
+                <div
+                  ref={hazardScrollRef}
+                  onWheel={(e) => {
+                    if (e.deltaY !== 0) {
+                      e.currentTarget.scrollLeft += e.deltaY;
+                    }
+                  }}
+                  className="flex items-stretch gap-3 overflow-x-auto pb-2 pt-0.5 scroll-smooth scrollbar-thin scrollbar-thumb-zinc-700/80 hover:scrollbar-thumb-zinc-500 scrollbar-track-zinc-900/60"
+                >
                   {pendingHazards.map((h) => (
                     <div
                       key={h.id}
-                      className="shrink-0 flex items-center gap-3 p-2 rounded-xl bg-[#141418] hover:bg-[#18181D] border border-white/[0.09] hover:border-white/20 transition-all shadow-md group"
+                      className="w-[310px] sm:w-[350px] shrink-0 p-3 rounded-2xl bg-[#141418] hover:bg-[#18181D] border border-white/[0.09] hover:border-white/20 transition-all shadow-lg flex flex-col justify-between space-y-2.5 group"
                     >
-                      {/* Asset Category & Name */}
-                      <div className="space-y-0.5 min-w-0 pr-1">
+                      {/* Top Row: Category & Exposure */}
+                      <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] pb-2">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-800/90 text-amber-300 border border-amber-500/20 font-semibold">
+                          <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-amber-950/80 text-amber-300 border border-amber-500/30 font-bold">
                             {h.category}
                           </span>
-                          <span className="text-[10px] font-mono font-semibold text-rose-400">
-                            {formatCurrency(h.originalExposure)}
+                          <span className="text-[10px] font-mono text-zinc-400">
+                            Sc. {h.sceneNumber}
                           </span>
                         </div>
-                        <p
-                          className="text-xs font-semibold text-zinc-100 truncate max-w-[140px]"
+                        <span className="text-xs font-mono font-bold text-rose-400">
+                          {formatCurrency(h.originalExposure)}
+                        </span>
+                      </div>
+
+                      {/* Middle: Full Asset Title & Statutory Description */}
+                      <div className="space-y-1 min-w-0">
+                        <h4
+                          className="text-xs font-bold text-zinc-100 truncate"
                           title={h.rawText}
                         >
                           {h.rawText}
+                        </h4>
+                        <p
+                          className="text-[11px] text-zinc-400 leading-snug line-clamp-2"
+                          title={h.description}
+                        >
+                          {h.description}
                         </p>
                       </div>
 
-                      {/* Action Buttons: Licensed & Negotiate */}
-                      <div className="flex items-center gap-1.5 shrink-0 border-l border-white/10 pl-2.5">
+                      {/* Bottom Row: Dual Action Buttons */}
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/[0.06]">
                         {/* Licensed Button */}
                         <button
+                          type="button"
                           onClick={() => handleMarkAsLicensed(h)}
                           disabled={isLoading}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400/50 text-[11px] font-mono font-medium transition-all active:scale-95 shadow-sm disabled:opacity-50"
-                          title={`Mark "${h.rawText}" as licensed with release/permit on file`}
+                          className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40 hover:border-emerald-400/60 text-xs font-mono font-medium transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                          title={`Mark "${h.rawText}" as licensed (written release on file)`}
                         >
-                          <CheckCircle className="h-3 w-3 text-emerald-400" />
+                          <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
                           <span>Licensed</span>
                         </button>
 
                         {/* Negotiate Button */}
                         <button
+                          type="button"
                           onClick={() => handleStartDebate(h)}
                           disabled={isLoading}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-white/10 hover:border-white/20 text-[11px] font-medium transition-all active:scale-95 shadow-sm disabled:opacity-50"
-                          title={`Debate and mutate "${h.rawText}" into a cleared narrative prop`}
+                          className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-white/10 hover:border-white/20 text-xs font-semibold transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                          title={`Negotiate legal compromise for "${h.rawText}"`}
                         >
-                          <Zap className="h-3 w-3 text-amber-400" />
+                          <Zap className="h-3.5 w-3.5 text-amber-400" />
                           <span>Negotiate</span>
                         </button>
                       </div>
