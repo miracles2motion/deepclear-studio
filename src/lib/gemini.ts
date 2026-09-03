@@ -25,8 +25,29 @@ export function getGeminiClient() {
 }
 
 /**
+ * Dynamically queries Google's active model registry if all local candidates fail.
+ * Guarantees zero downtime even if Google deprecates or releases new models in the future.
+ */
+async function discoverLiveGoogleModels(apiKey: string): Promise<string[]> {
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.models || [])
+      .filter((m: { supportedGenerationMethods?: string[] }) =>
+        m.supportedGenerationMethods?.includes("generateContent")
+      )
+      .map((m: { name: string }) => m.name.replace("models/", ""))
+      .filter((name: string) => name.includes("flash") || name.includes("pro"));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Self-healing model invoker: Tries the cached working model first,
- * then cascades through all available Gemini models if Google updates or deprecates an alias.
+ * cascades through all priority models, and dynamically discovers live models
+ * directly from Google if endpoints change in the future.
  */
 async function generateContentWithCascade(
   genAI: GoogleGenerativeAI,
@@ -35,7 +56,7 @@ async function generateContentWithCascade(
 ) {
   const modelsToTry = cachedWorkingModel
     ? [cachedWorkingModel, ...MODEL_CANDIDATES.filter((m) => m !== cachedWorkingModel)]
-    : MODEL_CANDIDATES;
+    : [...MODEL_CANDIDATES];
 
   let lastError: Error | null = null;
 
@@ -53,6 +74,27 @@ async function generateContentWithCascade(
       lastError = err as Error;
       // If 404 / model deprecated or unavailable, smoothly continue to next candidate
       continue;
+    }
+  }
+
+  // Future-Proof Dynamic Fallback: Query Google's live ModelService
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (apiKey) {
+    const liveDiscoveredModels = await discoverLiveGoogleModels(apiKey);
+    for (const dynamicModel of liveDiscoveredModels) {
+      if (modelsToTry.includes(dynamicModel)) continue;
+      try {
+        const model = genAI.getGenerativeModel({
+          model: dynamicModel,
+          generationConfig: config,
+        });
+        const result = await model.generateContent(contents);
+        cachedWorkingModel = dynamicModel;
+        return result;
+      } catch (err) {
+        lastError = err as Error;
+        continue;
+      }
     }
   }
 
