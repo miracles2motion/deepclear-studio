@@ -17,6 +17,7 @@ interface ExportModalProps {
   taxJurisdiction?: string;
   entities: ExtractedEntity[];
   clearedEntityIds?: string[];
+  licensedEntityIds?: string[];
   finalScriptText?: string;
   uploadedFileName?: string | null;
   onUpdateTitle?: (title: string) => void;
@@ -32,6 +33,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   taxJurisdiction,
   entities,
   clearedEntityIds = [],
+  licensedEntityIds = [],
   finalScriptText,
   uploadedFileName,
   onUpdateTitle,
@@ -68,6 +70,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       taxJurisdiction: taxJurisdiction || "Qualified Film Credit",
       entities,
       clearedEntityIds,
+      licensedEntityIds,
       debateTurns: [],
       merkleRootHash: merkleHash,
       onChainTxHash: mintResult?.txHash,

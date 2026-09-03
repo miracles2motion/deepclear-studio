@@ -89,12 +89,28 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   doc.setTextColor(225, 29, 72);
   doc.text(`$${report.initialExposureUsd.toLocaleString()}`, col1X + 115, summaryY + 54);
 
+  const licensedEntityIds = report.licensedEntityIds || [];
+
+  const licensedCount = report.entities.filter(
+    (e) => licensedEntityIds.includes(e.id) || e.status === "licensed"
+  ).length;
+
+  const mutatedCount = report.entities.filter(
+    (e) =>
+      !(licensedEntityIds.includes(e.id) || e.status === "licensed") &&
+      (clearedEntityIds.includes(e.id) || e.status === "cleared" || isFullyCleared)
+  ).length;
+
   doc.setFont("helvetica", "normal");
   doc.setTextColor(71, 85, 105);
   doc.text("Hazards Cleared:", col2X, summaryY + 54);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(isFullyCleared ? 16 : 71, isFullyCleared ? 185 : 85, isFullyCleared ? 129 : 105);
-  doc.text(`${clearedCount} of ${report.entities.length} Items Cleared`, col2X + 90, summaryY + 54);
+  const clearedSummaryText =
+    licensedCount > 0
+      ? `${clearedCount} of ${report.entities.length} Cleared (${licensedCount} Licensed, ${mutatedCount} Mutated)`
+      : `${clearedCount} of ${report.entities.length} Items Cleared`;
+  doc.text(clearedSummaryText, col2X + 90, summaryY + 54, { maxWidth: 175 });
 
   // Row 3
   doc.setFont("helvetica", "normal");
@@ -131,21 +147,38 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
 
   // 3. Itemized Hazard Clearance Table
   const tableData = report.entities.map((ent, idx) => {
-    const isEntityCleared =
-      clearedEntityIds.includes(ent.id) || ent.status === "cleared" || isFullyCleared;
+    const isLicensed =
+      licensedEntityIds.includes(ent.id) || ent.status === "licensed";
+
+    const isMutated =
+      !isLicensed &&
+      (clearedEntityIds.includes(ent.id) || ent.status === "cleared" || isFullyCleared);
+
+    const isEntityResolved = isLicensed || isMutated || isFullyCleared;
+
+    let legalSubstitutionText = "Pending Crew Negotiation";
+    let statusText = "HAZARD";
+
+    if (isLicensed) {
+      legalSubstitutionText = "Licensed (Release On File • Retained in Screenplay)";
+      statusText = "LICENSED";
+    } else if (isMutated) {
+      legalSubstitutionText = ent.defusedText || "Cleared Narrative Prop";
+      statusText = "MUTATED";
+    }
+
+    const exposureText = isEntityResolved
+      ? `$${ent.originalExposure.toLocaleString()} -> $0`
+      : `$${ent.originalExposure.toLocaleString()}`;
 
     return [
       `#${idx + 1}`,
       `Sc. ${ent.sceneNumber}`,
       ent.category.toUpperCase(),
       ent.rawText,
-      isEntityCleared
-        ? ent.defusedText || "Cleared narrative prop"
-        : "Pending Crew Negotiation",
-      isEntityCleared
-        ? `$${ent.originalExposure.toLocaleString()} -> $0`
-        : `$${ent.originalExposure.toLocaleString()}`,
-      isEntityCleared ? "CLEARED" : "HAZARD",
+      legalSubstitutionText,
+      exposureText,
+      statusText,
     ];
   });
 
@@ -205,12 +238,15 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
       6: { cellWidth: 60, halign: "center", fontStyle: "bold" },
     },
     didParseCell: (data) => {
-      // Highlight status column green if CLEARED, red if HAZARD
+      // Differentiate LICENSED (Cyan), MUTATED (Emerald), HAZARD (Rose)
       if (data.section === "body" && data.column.index === 6) {
-        if (data.cell.raw === "CLEARED") {
-          data.cell.styles.textColor = [16, 185, 129];
+        const raw = String(data.cell.raw);
+        if (raw === "LICENSED") {
+          data.cell.styles.textColor = [14, 116, 144]; // Deep Cyan
+        } else if (raw === "MUTATED" || raw === "CLEARED") {
+          data.cell.styles.textColor = [16, 149, 102]; // Emerald Green
         } else {
-          data.cell.styles.textColor = [225, 29, 72];
+          data.cell.styles.textColor = [225, 29, 72]; // Rose Red
         }
       }
     },

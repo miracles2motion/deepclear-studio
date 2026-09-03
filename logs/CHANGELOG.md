@@ -14,6 +14,7 @@ This changelog records major releases, architectural features, and critical mile
 - **Dynamic & Editable Production Title**: Auto-detects titles from uploaded `.fountain`/`.md` files, scene sluglines, or live AI generation, and provides an inline editable title input in the Export Modal.
 - **Dual Clearance Action Workflow**: Added `[ 📜 Licensed ]` (indemnity release on file) alongside `[ Negotiate ]` (dialectic script mutation) for real-world studio flexibility.
 - **Universal Multi-Format Downloads**: 1-click downloads for `.fountain`, `.md`, and `.txt` in both the final script chat card and the Export Modal.
+- **Form E&O-2026 PDF Licensed Prop Distinction**: Resolved PDF binder reporting so licensed items are explicitly documented as `"Licensed (Release On File • Retained in Screenplay)"` with bold cyan `LICENSED` status badges rather than erroneously reporting them as substituted/mutated narrative props.
 - **Future-Proof Self-Healing API Discovery**: Added automatic fallback to Google's live `/v1beta/models` endpoint to discover active models on the fly with zero code updates.
 
 ---

@@ -20,6 +20,7 @@ export type ClearanceStatus =
   | "debating"
   | "cleared"
   | "mitigated"
+  | "licensed"
   | "rejected";
 
 export interface BoundingBox {
@@ -84,6 +85,7 @@ export interface ClearanceReport {
   taxJurisdiction?: string;
   entities: ExtractedEntity[];
   clearedEntityIds?: string[];
+  licensedEntityIds?: string[];
   debateTurns: DebateTurn[];
   merkleRootHash: string;
   onChainTxHash?: string;

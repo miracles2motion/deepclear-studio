@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { AgentRole, ExtractedEntity, DebateTurn } from "@/types";
+import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { ExportModal } from "@/components/ExportModal";
 import {
@@ -72,6 +72,7 @@ export default function DeepClearStudioPage() {
   const [taxJurisdiction, setTaxJurisdiction] = useState("Qualified Film Credit (30%)");
   const [entities, setEntities] = useState<ExtractedEntity[]>([]);
   const [clearedEntityIds, setClearedEntityIds] = useState<string[]>([]);
+  const [licensedEntityIds, setLicensedEntityIds] = useState<string[]>([]);
   const [isAudioMuted, setIsAudioMuted] = useState(false); // Unmuted by default
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
@@ -834,8 +835,25 @@ export default function DeepClearStudioPage() {
 
   // Handle User Marking an Item as Pre-Licensed or Permitted
   const handleMarkAsLicensed = (entity: ExtractedEntity) => {
+    const newLicensedIds = [...licensedEntityIds, entity.id];
+    setLicensedEntityIds(newLicensedIds);
+
     const newClearedIds = [...clearedEntityIds, entity.id];
     setClearedEntityIds(newClearedIds);
+
+    setEntities((prev) =>
+      prev.map((e) =>
+        e.id === entity.id
+          ? {
+              ...e,
+              status: "licensed" as ClearanceStatus,
+              clearedExposure: 0,
+              defusedText: `${entity.rawText} (Licensed Release On File)`,
+            }
+          : e
+      )
+    );
+
     const newExposure = Math.max(0, currentExposure - entity.originalExposure);
     setCurrentExposure(newExposure);
 
@@ -909,6 +927,7 @@ export default function DeepClearStudioPage() {
     ]);
     setEntities([]);
     setClearedEntityIds([]);
+    setLicensedEntityIds([]);
     setInitialExposure(0);
     setCurrentExposure(0);
     setTaxSavings(0);
@@ -1691,6 +1710,7 @@ export default function DeepClearStudioPage() {
         taxJurisdiction={taxJurisdiction}
         entities={entities}
         clearedEntityIds={clearedEntityIds}
+        licensedEntityIds={licensedEntityIds}
         finalScriptText={currentScriptText}
         uploadedFileName={uploadedFileName}
       />
