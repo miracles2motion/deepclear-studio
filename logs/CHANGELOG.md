@@ -4,6 +4,20 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.4.0] — 2026-09-03
+### 🎭 Agent Persona Theming, Live Thinking Traces & Multi-Voice Engine
+- **Real-Time Agent Thinking Mini-Cards**: Added dynamic reasoning cards inside left-sidebar agent cards (`✨ THINKING • • •`) displaying internal legal reasoning (e.g. *Rogers v. Grimaldi* tests, Lanham Act § 43(a) exposure, and prop substitution feasibility) before each dialectic turn.
+- **Unique Signature Agent Themes & Ambient Gradients**:
+  - Distinct signature palettes, active borders, speaker indicators, and top glowing ambient gradient bars for all 5 agents (Director: Rose/Crimson, Legal Counsel: Sky/Cyan, Script Supervisor: Emerald/Mint, Location Manager: Amber/Gold, Bond Officer: Indigo/Violet).
+- **Multi-Voice Persona Speech Synthesis**: Configured browser Web Speech API with tailored pitch and rate profiles per agent; added animated `[ 🔊 LIVE ]` speaker badge on the active card; unmuted by default.
+- **Interactive Quoted Reply Threading**: Messages now feature `@Agent: "quote"` banners; clicking smoothly scrolls to and highlights the target message with an active glowing ring.
+- **Dynamic & Editable Production Title**: Auto-detects titles from uploaded `.fountain`/`.md` files, scene sluglines, or live AI generation, and provides an inline editable title input in the Export Modal.
+- **Dual Clearance Action Workflow**: Added `[ 📜 Licensed ]` (indemnity release on file) alongside `[ Negotiate ]` (dialectic script mutation) for real-world studio flexibility.
+- **Universal Multi-Format Downloads**: 1-click downloads for `.fountain`, `.md`, and `.txt` in both the final script chat card and the Export Modal.
+- **Future-Proof Self-Healing API Discovery**: Added automatic fallback to Google's live `/v1beta/models` endpoint to discover active models on the fly with zero code updates.
+
+---
+
 ## [v0.3.1] — 2026-09-03
 ### 🔧 Gemini API Model Cascade & Resilience Update
 - **Google Generative AI Model Migration**: Replaced retired/deprecated legacy models (`gemini-pro`, `gemini-1.5-flash`, `gemini-2.0-flash`) with verified active models (`gemini-flash-latest`, `gemini-3.5-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview`, `gemini-pro-latest`).
