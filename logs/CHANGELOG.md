@@ -4,6 +4,13 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.3.1] — 2026-09-03
+### 🔧 Gemini API Model Cascade & Resilience Update
+- **Google Generative AI Model Migration**: Replaced retired/deprecated legacy models (`gemini-pro`, `gemini-1.5-flash`, `gemini-2.0-flash`) with verified active models (`gemini-flash-latest`, `gemini-3.5-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview`, `gemini-pro-latest`).
+- **Self-Healing Failover**: Added zero-downtime cascade to automatically switch models if a specific endpoint experiences a transient 503 high-demand spike.
+
+---
+
 ## [v0.3.0] — 2026-09-02
 ### ⚡ Direct Live API Engine & On-Demand AI Generation
 - **Direct Live API Integration**: Connected 100% direct live Google Cloud Gemini 2.0 Flash (`@google/genai`) and Parallel Search API (`https://api.parallel.ai/v1/search`) with explicit error handling and zero fallbacks.
