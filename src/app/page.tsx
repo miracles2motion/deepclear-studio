@@ -128,6 +128,8 @@ export default function DeepClearStudioPage() {
         handleSendMessage(data.sceneText);
       }
     } catch (err) {
+      setAgentThinking(null);
+      setAgentTypingStatus(null);
       setMessages((prev) => [
         ...prev,
         {
