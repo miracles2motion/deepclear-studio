@@ -92,6 +92,10 @@ export default function DeepClearStudioPage() {
   const handleGenerateGeminiScene = async () => {
     setIsGeneratingScene(true);
     setActiveAgent("script_supervisor");
+    setAgentThinking({
+      role: "script_supervisor",
+      thought: "Synthesizing dynamic screenplay scene with real-world location & legal liabilities...",
+    });
 
     try {
       const res = await fetch("/api/generate-scene", {
@@ -303,6 +307,10 @@ export default function DeepClearStudioPage() {
     setInput("");
     setIsLoading(true);
     setActiveAgent("script_supervisor");
+    setAgentThinking({
+      role: "script_supervisor",
+      thought: "Scanning screenplay formatting, parsing scene sluglines, and detecting brand liabilities with Multimodal Vision...",
+    });
 
     // Auto-detect production title if specified or from setting header
     const titleMatch = queryText.match(/^Title:\s*(.+)$/im);
@@ -579,6 +587,10 @@ export default function DeepClearStudioPage() {
     setIsLoading(true);
     setActiveAgent("legal_counsel");
     setAgentTypingStatus(`Legal Counsel & Director are evaluating "${entity.rawText}" (${entity.category.toUpperCase()})...`);
+    setAgentThinking({
+      role: "legal_counsel",
+      thought: `Evaluating statutory clearance, Lanham Act § 43(a) trademark exposure, and artistic Fair Use for "${entity.rawText}"...`,
+    });
 
     // 1. Fetch dynamic, context-specific debate dialogue generated live by Gemini
     let counselArg = `Under Lanham Act § 43(a), featuring "${entity.rawText}" prominently without a license creates estimated liability of ${formatCurrency(
@@ -633,7 +645,6 @@ export default function DeepClearStudioPage() {
     await sleep(1800);
 
     setAgentTypingStatus(null);
-    setAgentThinking(null);
     setMessages((prev) => [
       ...prev,
       {
@@ -655,7 +666,7 @@ export default function DeepClearStudioPage() {
       `${entity.category.toUpperCase()} hazard on ${entity.rawText}. Exposure ${formatCurrency(entity.originalExposure)}.`,
       "legal_counsel"
     );
-    await sleep(1000);
+    await sleep(800);
 
     // -------------------------------------------------------------
     // Step 2: The Director steps in to defend artistic intent
@@ -669,7 +680,6 @@ export default function DeepClearStudioPage() {
     await sleep(1800);
 
     setAgentTypingStatus(null);
-    setAgentThinking(null);
     setMessages((prev) => [
       ...prev,
       {
@@ -689,7 +699,7 @@ export default function DeepClearStudioPage() {
 
     // Straight to the point: punchy 1-sentence director defense
     await speakTextAsync("This prop is vital for dramatic character authenticity.", "director");
-    await sleep(1000);
+    await sleep(800);
 
     // -------------------------------------------------------------
     // Step 3: Legal Counsel proposes negotiated compromise
@@ -703,7 +713,6 @@ export default function DeepClearStudioPage() {
     await sleep(1800);
 
     setAgentTypingStatus(null);
-    setAgentThinking(null);
     setMessages((prev) => [
       ...prev,
       {
@@ -723,7 +732,7 @@ export default function DeepClearStudioPage() {
 
     // Straight to the point: punchy 1-sentence compromise
     await speakTextAsync(`Compromise: substitute with ${compromiseText}.`, "legal_counsel");
-    await sleep(1000);
+    await sleep(800);
 
     // -------------------------------------------------------------
     // Step 4: The Director accepts the compromise
@@ -737,7 +746,6 @@ export default function DeepClearStudioPage() {
     await sleep(1800);
 
     setAgentTypingStatus(null);
-    setAgentThinking(null);
     setMessages((prev) => [
       ...prev,
       {
