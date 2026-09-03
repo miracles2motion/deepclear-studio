@@ -15,6 +15,7 @@ This changelog records major releases, architectural features, and critical mile
 - **Dual Clearance Action Workflow**: Added `[ 📜 Licensed ]` (indemnity release on file) alongside `[ Negotiate ]` (dialectic script mutation) for real-world studio flexibility.
 - **Universal Multi-Format Downloads**: 1-click downloads for `.fountain`, `.md`, and `.txt` in both the final script chat card and the Export Modal.
 - **Form E&O-2026 PDF Licensed Prop Distinction**: Resolved PDF binder reporting so licensed items are explicitly documented as `"Licensed (Release On File • Retained in Screenplay)"` with bold cyan `LICENSED` status badges rather than erroneously reporting them as substituted/mutated narrative props.
+- **Modern Flexbox PDF Engine (@react-pdf/renderer)**: Upgraded Form E&O-2026 PDF generation from manual coordinate offsets to a modern declarative React Flexbox engine, guaranteeing zero text overlapping, auto-wrapping columns, crisp vector typography, and Apple/Linear design aesthetics with graceful jsPDF fallback.
 - **Future-Proof Self-Healing API Discovery**: Added automatic fallback to Google's live `/v1beta/models` endpoint to discover active models on the fly with zero code updates.
 
 ---

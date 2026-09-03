@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import { ClearanceReport, ExtractedEntity } from "@/types";
-import { generateEOBinderPDF } from "@/lib/pdfGenerator";
+import { exportModernEOBinderPDF } from "@/lib/reactPdfExporter";
 import { generateClearanceMerkleHash, mintClearancePassportTestnet } from "@/lib/web3";
-import { X, ShieldCheck, Download, ExternalLink, CheckCircle2, Lock, Film, Copy, Check, Edit3 } from "lucide-react";
+import { X, ShieldCheck, Download, ExternalLink, CheckCircle2, Lock, Film, Copy, Check, Edit3, Loader2 } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface ExportModalProps {
@@ -40,6 +40,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 }) => {
   const [activeTitle, setActiveTitle] = useState(productionTitle);
   const [isMinting, setIsMinting] = useState(false);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [mintResult, setMintResult] = useState<{
     txHash: string;
@@ -58,8 +59,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const isFullyCleared = currentExposure === 0 && initialExposure > 0;
   const merkleHash = generateClearanceMerkleHash(currentTitle, entities, new Date().toISOString());
 
-  // Download Form E&O-2026 PDF (Single file only)
-  const handleDownloadPDF = () => {
+  // Download Form E&O-2026 PDF using modern @react-pdf/renderer Flexbox engine
+  const handleDownloadPDF = async () => {
+    setIsExportingPDF(true);
     const report: ClearanceReport = {
       id: `CERT-EO-${Date.now().toString().slice(-6)}`,
       productionTitle: currentTitle,
@@ -78,13 +80,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       eandOPolicyStatus: currentExposure === 0 ? "APPROVED" : "PENDING_REMEDY",
     };
 
-    const doc = generateEOBinderPDF(report);
-    doc.save(`Form_EO_2026_${currentTitle.replace(/\s+/g, "_")}.pdf`);
-
     try {
-      confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
-    } catch {
-      // Fallback
+      await exportModernEOBinderPDF(report);
+      try {
+        confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
+      } catch {
+        // Fallback
+      }
+    } finally {
+      setIsExportingPDF(false);
     }
   };
 
@@ -210,10 +214,17 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {/* Primary Action: Download Form E&O-2026 PDF (Single File) */}
           <button
             onClick={handleDownloadPDF}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs shadow-md transition-all"
+            disabled={isExportingPDF}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs shadow-md transition-all disabled:opacity-60"
           >
-            <Download className="h-4 w-4" />
-            <span>Download Form E&O-2026 Binder (.PDF)</span>
+            {isExportingPDF ? (
+              <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span>
+              {isExportingPDF ? "Generating Flexbox Binder..." : "Download Form E&O-2026 Binder (.PDF)"}
+            </span>
           </button>
 
           {/* Screenplay Options */}
