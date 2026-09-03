@@ -935,7 +935,11 @@ export default function DeepClearStudioPage() {
   };
 
   const pendingHazards = entities.filter(
-    (e) => !clearedEntityIds.includes(e.id) && e.status !== "cleared"
+    (e) =>
+      !clearedEntityIds.includes(e.id) &&
+      !licensedEntityIds.includes(e.id) &&
+      e.status !== "cleared" &&
+      e.status !== "licensed"
   );
   const isCleared = initialExposure > 0 && currentExposure === 0;
 
@@ -1495,23 +1499,68 @@ export default function DeepClearStudioPage() {
           {/* FLOATING GOOGLE GEMINI-STYLE PROMPT BAR AT BOTTOM         */}
           {/* ========================================================= */}
           <div className="w-full max-w-3xl mx-auto px-4 pb-4 pt-1 shrink-0 space-y-2">
-            {/* PINNED QUICK ACTION BAR FOR PENDING HAZARDS */}
+            {/* PINNED HORIZONTAL QUICK ACTION BAR FOR PENDING HAZARDS */}
             {pendingHazards.length > 0 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-                <span className="text-zinc-500 font-mono text-[10px] shrink-0 font-semibold uppercase">
-                  Pending Hazards:
-                </span>
-                {pendingHazards.map((h) => (
-                  <button
-                    key={h.id}
-                    onClick={() => handleStartDebate(h)}
-                    disabled={isLoading}
-                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-amber-500/30 transition-all shadow-sm"
-                  >
-                    <Zap className="h-3 w-3 text-amber-400" />
-                    <span>Negotiate {h.rawText}</span>
-                  </button>
-                ))}
+              <div className="space-y-1.5 pb-1">
+                <div className="flex items-center justify-between px-1 text-[10px] font-mono">
+                  <div className="flex items-center gap-1.5 text-zinc-400 font-semibold uppercase tracking-wider">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    <span>Action Required ({pendingHazards.length} Pending):</span>
+                  </div>
+                  <span className="text-zinc-500 text-[10px]">Scroll horizontally →</span>
+                </div>
+
+                <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar">
+                  {pendingHazards.map((h) => (
+                    <div
+                      key={h.id}
+                      className="shrink-0 flex items-center gap-3 p-2 rounded-xl bg-[#141418] hover:bg-[#18181D] border border-white/[0.09] hover:border-white/20 transition-all shadow-md group"
+                    >
+                      {/* Asset Category & Name */}
+                      <div className="space-y-0.5 min-w-0 pr-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-800/90 text-amber-300 border border-amber-500/20 font-semibold">
+                            {h.category}
+                          </span>
+                          <span className="text-[10px] font-mono font-semibold text-rose-400">
+                            {formatCurrency(h.originalExposure)}
+                          </span>
+                        </div>
+                        <p
+                          className="text-xs font-semibold text-zinc-100 truncate max-w-[140px]"
+                          title={h.rawText}
+                        >
+                          {h.rawText}
+                        </p>
+                      </div>
+
+                      {/* Action Buttons: Licensed & Negotiate */}
+                      <div className="flex items-center gap-1.5 shrink-0 border-l border-white/10 pl-2.5">
+                        {/* Licensed Button */}
+                        <button
+                          onClick={() => handleMarkAsLicensed(h)}
+                          disabled={isLoading}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400/50 text-[11px] font-mono font-medium transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                          title={`Mark "${h.rawText}" as licensed with release/permit on file`}
+                        >
+                          <CheckCircle className="h-3 w-3 text-emerald-400" />
+                          <span>Licensed</span>
+                        </button>
+
+                        {/* Negotiate Button */}
+                        <button
+                          onClick={() => handleStartDebate(h)}
+                          disabled={isLoading}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-white/10 hover:border-white/20 text-[11px] font-medium transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                          title={`Debate and mutate "${h.rawText}" into a cleared narrative prop`}
+                        >
+                          <Zap className="h-3 w-3 text-amber-400" />
+                          <span>Negotiate</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
