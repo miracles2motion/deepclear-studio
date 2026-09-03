@@ -96,8 +96,16 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // 4. Bond Officer Risk Calculation
+          // 4. Bond Officer Risk Calculation & Underwriting Thought
           const totalExposure = entities.reduce((sum, e) => sum + (e.originalExposure || 0), 0);
+          sendEvent({
+            type: "AGENT_THOUGHT",
+            agent: "bond_officer",
+            payload: {
+              message: `Underwriting completion bond: evaluating ${entities.length} detected liabilities totaling $${totalExposure.toLocaleString()}...`,
+            },
+          });
+
           sendEvent({
             type: "RISK_UPDATE",
             agent: "bond_officer",

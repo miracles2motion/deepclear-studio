@@ -119,13 +119,17 @@ export default function DeepClearStudioPage() {
       }
 
       if (data.sceneText) {
+        setIsGeneratingScene(false);
+        setAgentThinking(null);
+        setAgentTypingStatus(null);
+
         const firstLine = data.sceneText.split("\n").find((l: string) => l.trim().length > 0) || "";
         const match = firstLine.match(/^(?:EXT\.|INT\.)\s+([^-–—]+)/i);
         if (match && match[1]) {
           setProductionTitle(match[1].trim().replace(/\b\w/g, (c: string) => c.toUpperCase()) + " Feature");
         }
         // Pass the generated scene directly into the live swarm analyzer
-        handleSendMessage(data.sceneText);
+        await handleSendMessage(data.sceneText);
       }
     } catch (err) {
       setAgentThinking(null);
