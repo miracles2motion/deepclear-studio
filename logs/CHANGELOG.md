@@ -4,6 +4,23 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.6.0] — 2026-09-04
+### ⚡ Autonomous Swarm Clearance Engine ("Auto-Pilot Mode") & Producer Dispute Controls
+- **Default Autonomous Clearance Mode**: DeepClear Studio now defaults to **Auto-Pilot Mode** on boot, enabling 1-click autonomous triage and clearance across all identified script hazards while preserving manual control when preferred.
+- **Left Sidebar Mode Switcher**: Added an obsidian glassmorphic segmented control `[ ⚡ Auto-Pilot | 👤 Manual ]` directly above the 5-agent crew roster in the Left Sidebar for instant mode switching.
+- **Intelligent Decision Triage Routing (`src/lib/autoSwarm.ts`)**:
+  - *Municipal Locations / Permits*: Automatically routes to **Auto-License** (`handleMarkAsLicensed`) to preserve authentic script sluglines and safeguard state filming tax rebates (e.g. Georgia 30%).
+  - *Consumer Trademarks / Incidental Props*: Automatically routes to **Auto-Mutate** (`handleStartDebate`) to trigger runtime Parallel Search USPTO validation and defuse brand dilution.
+- **Strict Credit Conservation & Rate-Limit Defense**:
+  - *Sequential Safe Pacing*: Executes hazard clearance sequentially (1 hazard at a time with a 1.5s paced reading delay) to prevent concurrent burst spikes against Gemini and Parallel Search API quotas.
+  - *In-Memory Query Deduplication*: Caches verified trademark queries (`getCachedParallelQuery` / `setCachedParallelQuery`) so recurring props across scenes consume 0 redundant search credits.
+- **Human-in-the-Loop Dispute & Appeal Engine**:
+  - Added an interactive **Cleared Assets Ledger** in the Right Column HUD with instant `[ Dispute ]` controls.
+  - Disputing any cleared asset instantly rolls back safe-harbor status, restores statutory exposure to the underwriting ledger, and posts a high-priority appeal notice into the chat feed.
+- **1-Click Swarm Runner**: Added `[ ⚡ Auto-Clear All (N) ]` in the Action Required bar with real-time animated countdown (`Clearing X/Y...`) and spinner indicators.
+
+---
+
 ## [v0.5.0] — 2026-09-04
 ### 🏛️ 5-Agent War Room, Runtime Parallel Search Verification & Safe-Harbor Passport
 - **True 5-Agent Dialectic War Room**: Transformed the debate from a canned 2-person exchange into an authentic 5-agent studio war room. Legal Counsel, The Director, Location / Art Department Manager, Completion Bond Officer, and Script Supervisor now actively converse, challenge assumptions, and negotiate solutions.

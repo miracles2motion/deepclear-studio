@@ -52,16 +52,17 @@ We built 3 curated 1-click test presets directly above the prompt bar in the liv
 ┌──────────────────────────┬──────────────────────────────────────────────┬───────────────────────────┐
 │     LEFT COLUMN (260px)  │           MIDDLE COLUMN (WORKSPACE)          │    RIGHT COLUMN (300px)   │
 │                          │                                              │                           │
-│  🤖 5-Agent Crew Swarm   │  💬 Google Gemini Chat & Clearance Feed      │  📑 E&O Underwriting HUD  │
-│  • Completion Bond Off.  │     • Real-time SSE streaming stream         │     • Statutory Exposure  │
-│  • Script Supervisor     │     • Live Parallel Search citation chips    │     • Georgia 30% Tax     │
-│  • Studio Legal Counsel  │     • 5-Agent War Room dialectic debate      │     • Distribution Risk   │
-│  • Location Manager      │     • Script mutation diffs & licenses       │     • Export Form E&O PDF │
-│  • The Director          │                                              │                           │
-│                          │  ⚡ Quick Presets [Cyber Heist] [Gothic]    │                           │
-│  🎙️ Multi-Voice Speech   │  ⌨️ Floating Prompt Bar                      │                           │
-│     (Sequential audio)   │     • ✨ "Generate Scene with Gemini"        │                           │
-│                          │     • 📎 Attach .md, .fountain, .txt files   │                           │
+│  ⚡ [Auto-Pilot|Manual]  │  💬 Google Gemini Chat & Clearance Feed      │  📑 E&O Underwriting HUD  │
+│                          │     • Real-time SSE streaming stream         │     • Statutory Exposure  │
+│  🤖 5-Agent Crew Swarm   │     • Live Parallel Search citation chips    │     • Georgia 30% Tax     │
+│  • Completion Bond Off.  │     • 5-Agent War Room dialectic debate      │     • Distribution Risk   │
+│  • Script Supervisor     │     • Script mutation diffs & licenses       │     • Cleared Assets Ledger│
+│  • Studio Legal Counsel  │                                              │       (Dispute Controls)  │
+│  • Location Manager      │  ⚡ Action Required: [Auto-Clear All (N)]   │     • Export Form E&O PDF │
+│  • The Director          │  ⚡ Quick Presets [Cyber Heist] [Gothic]    │                           │
+│                          │  ⌨️ Floating Prompt Bar                      │                           │
+│  🎙️ Multi-Voice Speech   │     • ✨ "Generate Scene with Gemini"        │                           │
+│     (Sequential audio)   │     • 📎 Attach .md, .fountain, .txt files   │                           │
 └──────────────────────────┴──────────────────────────────────────────────┴───────────────────────────┘
 ```
 
@@ -149,6 +150,18 @@ A major pain point in production clearance is re-flagging: when a cleared script
 - Generates an executive **Form E&O-2026 Motion Picture Insurance Binder** formatted with high-grade typography.
 - Itemizes every hazard, statutory legal code, resolution method, Parallel Search verification status, and remaining exposure.
 - Includes actuarial formulas for Georgia 30% tax incentive eligibility and completion bond release.
+
+### 6. Autonomous Swarm Clearance Engine ("Auto-Pilot Mode") & Producer Dispute Controls
+- **Auto-Pilot by Default**: DeepClear Studio boots in **Auto-Pilot Mode**, equipped with an obsidian mode switcher `[ ⚡ Auto-Pilot | 👤 Manual ]` in the Left Sidebar for instant preference switching.
+- **Intelligent Autonomous Triage**:
+  - *Municipal Locations / Permits*: Automatically routes to **Auto-License** to safeguard state filming incentives (e.g. 30% tax rebates) and avoid altering narrative geography.
+  - *Consumer Trademarks / Props*: Automatically routes to **Auto-Mutate** with live Parallel Search USPTO checks to defuse infringement.
+- **Strict Credit Conservation & Rate-Limit Defense**:
+  - *Sequential Pacing*: Processes hazards 1-by-1 with 1.5s reading delays to prevent 429 quota spikes against Gemini & Parallel Search APIs.
+  - *In-Memory Deduplication*: Caches verified trademark lookups to ensure repeating props incur 0 redundant API queries.
+- **Human-in-the-Loop Dispute & Appeal**:
+  - All resolved items populate the **Cleared Assets Ledger** in the Right Column HUD with individual `[ Dispute ]` buttons.
+  - Disputing an asset rolls back safe-harbor immunity, restores statutory liability to the ledger, and alerts the crew in chat for human review.
 
 ---
 

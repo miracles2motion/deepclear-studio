@@ -169,3 +169,15 @@ export interface DeepClearSessionData {
   }>;
   passportData?: ClearancePassportData | null;
 }
+
+export type ClearanceMode = "auto" | "manual";
+
+export interface AutoClearanceStep {
+  hazardId: string;
+  entityName: string;
+  decision: "licensed" | "mutated";
+  reasoning: string;
+  parallelVerified: boolean;
+  exposureSaved: number;
+  disputed?: boolean;
+}

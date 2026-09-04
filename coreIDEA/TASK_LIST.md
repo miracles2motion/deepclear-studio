@@ -38,3 +38,11 @@
   - [x] Tamper-Evident Clearance Passport (`src/lib/passport.ts`): Embeds YAML frontmatter metadata into exported scripts.
   - [x] Safe-Harbor Re-upload: Automatic passport extraction eliminating false-positive re-flagging loops.
   - [x] 1-Click Judge Presets: Added Cyber Heist, Southern Gothic, and Cleared Masterpiece scenario chips.
+
+- [x] **Phase 7: Autonomous Swarm Clearance Engine (Auto-Pilot Mode) & Producer Dispute Controls**
+  - [x] Implement `src/lib/autoSwarm.ts` autonomous triage routing (License vs Mutate) and rate-limit safe pacing delays.
+  - [x] Implement in-memory Parallel Search deduplication cache (`getCachedParallelQuery`, `setCachedParallelQuery`).
+  - [x] Set Auto-Pilot as the default clearance mode with Left Sidebar segmented mode toggle `[ ⚡ Auto-Pilot | 👤 Manual ]`.
+  - [x] Build `[ ⚡ Auto-Clear All (N) ]` queue runner in Action Required header with live sequential progress feedback.
+  - [x] Implement Human-in-the-Loop Cleared Assets Ledger with 1-click `[ Dispute ]` rollback and chat audit notification.
+  - [x] Verify zero TypeScript errors (`npx tsc --noEmit`) and successful production bundle build (`npm run build`).

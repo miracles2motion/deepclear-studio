@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation, DeepClearSessionData } from "@/types";
+import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation, DeepClearSessionData, ClearanceMode } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { ExportModal } from "@/components/ExportModal";
 import { extractClearancePassport } from "@/lib/passport";
+import { determineHazardResolutionRoute, delayPace } from "@/lib/autoSwarm";
 import {
   Sparkles,
   Paperclip,
@@ -92,6 +93,10 @@ export default function DeepClearStudioPage() {
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<"chat" | "crew" | "risk">("chat");
   const [isHazardsMinimized, setIsHazardsMinimized] = useState(false);
+  const [clearanceMode, setClearanceMode] = useState<ClearanceMode>("auto");
+  const [isAutoClearing, setIsAutoClearing] = useState(false);
+  const [autoProgress, setAutoProgress] = useState<{ current: number; total: number; entityName?: string } | null>(null);
+  const [disputedEntityIds, setDisputedEntityIds] = useState<string[]>([]);
 
   const handleCopyMessage = (msg: ChatMessage) => {
     let textToCopy = msg.content || "";
@@ -1154,6 +1159,107 @@ Clearance secured. We have safe harbor.`,
     speakTextAsync(`License on file for ${entity.rawText}.`, "bond_officer");
   };
 
+  // Autonomous Swarm Clearance Loop (Auto-Pilot)
+  const handleRunAutoClearance = async () => {
+    if (isAutoClearing || pendingHazards.length === 0) return;
+
+    setIsAutoClearing(true);
+    const hazardsQueue = [...pendingHazards];
+
+    // Announce Auto-Pilot run in chat
+    const startNotice: ChatMessage = {
+      id: `auto-pilot-start-${Date.now()}`,
+      sender: "system",
+      senderName: "DeepClear Swarm",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      type: "text",
+      content: `⚡ **Autonomous Swarm Clearance Initiated**\n• Queue: **${hazardsQueue.length} pending liabilities**\n• Pacing: **1.5s rate-limit defense**\n• Strategy: Intelligent triage (Tax permits → Licensed; Brands → USPTO Mutated).`,
+    };
+    setMessages((prev) => [...prev, startNotice]);
+
+    for (let i = 0; i < hazardsQueue.length; i++) {
+      const h = hazardsQueue[i];
+      setAutoProgress({
+        current: i + 1,
+        total: hazardsQueue.length,
+        entityName: h.rawText,
+      });
+
+      const decision = determineHazardResolutionRoute(h);
+
+      if (decision.route === "license") {
+        await handleMarkAsLicensed(h);
+      } else {
+        await handleStartDebate(h);
+      }
+
+      if (i < hazardsQueue.length - 1) {
+        await delayPace(1500); // 1.5s pacing to prevent rate limits
+      }
+    }
+
+    setIsAutoClearing(false);
+    setAutoProgress(null);
+
+    // Final celebration notice
+    const finishNotice: ChatMessage = {
+      id: `auto-pilot-done-${Date.now()}`,
+      sender: "bond_officer",
+      senderName: "Completion Bond Officer",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      type: "text",
+      content: `🛡️ **Auto-Pilot Clearance Complete**: All ${hazardsQueue.length} hazards autonomously resolved with **$0.00 statutory exposure**. Safe-Harbor Underwriting Binder certified for distribution.`,
+    };
+    setMessages((prev) => [...prev, finishNotice]);
+
+    if (typeof window !== "undefined") {
+      import("canvas-confetti").then((confettiModule) => {
+        confettiModule.default({
+          particleCount: 50,
+          spread: 70,
+          origin: { y: 0.7 },
+        });
+      });
+    }
+  };
+
+  // Producer Dispute & Appeal Handler
+  const handleDisputeEntity = (entity: ExtractedEntity) => {
+    // Remove from cleared and licensed lists
+    setClearedEntityIds((prev) => prev.filter((id) => id !== entity.id));
+    setLicensedEntityIds((prev) => prev.filter((id) => id !== entity.id));
+    setDisputedEntityIds((prev) => (prev.includes(entity.id) ? prev : [...prev, entity.id]));
+
+    // Restore exposure
+    setCurrentExposure((prev) => prev + entity.originalExposure);
+
+    // Update entity status back to under_review
+    setEntities((prev) =>
+      prev.map((e) =>
+        e.id === entity.id
+          ? {
+              ...e,
+              status: "under_review" as ClearanceStatus,
+              clearedExposure: e.originalExposure,
+            }
+          : e
+      )
+    );
+
+    // Add in-chat notice
+    const disputeNotice: ChatMessage = {
+      id: `dispute-${Date.now()}`,
+      sender: "director",
+      senderName: "The Director",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      type: "text",
+      content: `↩️ **Producer Appeal Registered for "${entity.rawText}"**\nClearance decision re-opened for creative review. Exposure restored by ${formatCurrency(
+        entity.originalExposure
+      )}. You can negotiate an alternative prop or assign a custom licensing agreement.`,
+    };
+    setMessages((prev) => [...prev, disputeNotice]);
+  };
+
   // Export complete chat history and underwriting state to JSON
   const handleExportSession = () => {
     try {
@@ -1506,11 +1612,53 @@ Clearance secured. We have safe harbor.`,
               </div>
             </div>
 
-            {/* 5-Agent Swarm Roster */}
-            <div className="space-y-1">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 px-2 mb-2 font-semibold">
+            {/* 5-Agent Swarm Roster & Operating Mode */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-semibold">
+                  Operating Mode
+                </span>
+                <span className="text-[9px] font-mono text-indigo-400 font-medium">
+                  {clearanceMode === "auto" ? "⚡ Auto-Pilot Active" : "👤 Manual Active"}
+                </span>
+              </div>
+
+              {/* Clearance Mode Switcher: Auto-Pilot (Default) vs. Manual */}
+              <div className="bg-zinc-900/90 border border-white/[0.08] rounded-xl p-1 text-[11px] font-mono flex items-center gap-1 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setClearanceMode("auto")}
+                  className={`flex-1 py-1 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs ${
+                    clearanceMode === "auto"
+                      ? "bg-indigo-600 text-white font-semibold shadow-md ring-1 ring-indigo-400/40"
+                      : "text-zinc-400 hover:text-zinc-200"
+                  }`}
+                  title="Auto-Pilot Swarm (Default): Autonomous multi-agent resolution with rate-limit pacing"
+                >
+                  <Zap className="h-3 w-3 text-amber-300" />
+                  <span>Auto-Pilot</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setClearanceMode("manual")}
+                  className={`flex-1 py-1 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs ${
+                    clearanceMode === "manual"
+                      ? "bg-zinc-800 text-zinc-100 font-semibold shadow-md ring-1 ring-white/10"
+                      : "text-zinc-400 hover:text-zinc-200"
+                  }`}
+                  title="Manual Mode: You click Licensed or Negotiate on each hazard"
+                >
+                  <User className="h-3 w-3 text-zinc-300" />
+                  <span>Manual</span>
+                </button>
+              </div>
+
+              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 px-1 pt-1 font-semibold">
                 Autonomous Crew Swarm
               </div>
+            </div>
+
+            <div className="space-y-1">
 
               {agents.map((ag) => {
                 const isActive = activeAgent === ag.role;
@@ -2055,8 +2203,36 @@ Clearance secured. We have safe harbor.`,
                     </span>
                   </div>
 
-                  {/* Controls: Scroll & Minimize */}
-                  <div className="flex items-center gap-1 text-zinc-400">
+                  {/* Controls: Auto-Clear + Scroll & Minimize */}
+                  <div className="flex items-center gap-1.5 text-zinc-400">
+                    {clearanceMode === "auto" && (
+                      <button
+                        type="button"
+                        onClick={handleRunAutoClearance}
+                        disabled={isAutoClearing || isLoading}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all shadow-md flex items-center gap-1.5 active:scale-95 disabled:opacity-50 ${
+                          isAutoClearing
+                            ? "bg-indigo-950 text-indigo-300 border border-indigo-500/50 animate-pulse"
+                            : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20 border border-indigo-400/40"
+                        }`}
+                        title="Autonomously resolve all pending liabilities sequentially with rate-limit pacing"
+                      >
+                        {isAutoClearing ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin text-indigo-300" />
+                            <span>
+                              Clearing {autoProgress?.current || 1}/{autoProgress?.total || pendingHazards.length}...
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="h-3 w-3 text-amber-300" />
+                            <span>Auto-Clear All ({pendingHazards.length})</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
                     {!isHazardsMinimized && (
                       <>
                         <button
@@ -2378,6 +2554,46 @@ Clearance secured. We have safe harbor.`,
                 </div>
               );
             })()}
+
+            {/* Cleared Assets Ledger & Producer Dispute Controls */}
+            {clearedEntityIds.length > 0 && (
+              <div className="bg-[#141418] border border-white/[0.08] rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between text-[10px] font-mono uppercase text-zinc-400">
+                  <span>Cleared Assets ({clearedEntityIds.length})</span>
+                  <span className="text-emerald-400 font-semibold">Protected</span>
+                </div>
+                <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-700">
+                  {entities
+                    .filter((e) => clearedEntityIds.includes(e.id))
+                    .map((e) => {
+                      const isLic = licensedEntityIds.includes(e.id);
+                      return (
+                        <div
+                          key={e.id}
+                          className="p-2 rounded-lg bg-zinc-900/80 border border-white/5 flex items-center justify-between text-[11px] font-mono group"
+                        >
+                          <div className="truncate min-w-0 pr-1.5">
+                            <span className="text-zinc-200 font-semibold block truncate">
+                              {e.rawText}
+                            </span>
+                            <span className="text-[9px] text-zinc-500 block truncate">
+                              {isLic ? "Licensed (Permit / Release)" : `Mutated: ${e.defusedText || "Clean Prop"}`}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDisputeEntity(e)}
+                            className="shrink-0 px-1.5 py-0.5 rounded bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/30 text-amber-300 text-[9px] transition-all"
+                            title="Dispute / Re-open this clearance decision"
+                          >
+                            Dispute
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Export Binder Action */}
