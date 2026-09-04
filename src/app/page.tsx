@@ -35,6 +35,8 @@ import {
   CornerDownRight,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   User,
   MessageSquare,
   Users,
@@ -89,6 +91,8 @@ export default function DeepClearStudioPage() {
   const [isCopied, setIsCopied] = useState(false);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<"chat" | "crew" | "risk">("chat");
+  const [isHazardsMinimized, setIsHazardsMinimized] = useState(false);
+  const [showPresets, setShowPresets] = useState(false);
 
   const handleCopyMessage = (msg: ChatMessage) => {
     let textToCopy = msg.content || "";
@@ -2039,109 +2043,134 @@ Clearance secured. We have safe harbor.`,
           <div className="w-full max-w-3xl mx-auto px-4 pb-4 pt-1 shrink-0 space-y-2">
             {/* PINNED HORIZONTAL QUICK ACTION BAR FOR PENDING HAZARDS */}
             {pendingHazards.length > 0 && (
-              <div className="space-y-1.5 pb-1">
+              <div className="space-y-1 pb-0.5">
                 <div className="flex items-center justify-between px-1 text-[10px] font-mono">
                   <div className="flex items-center gap-1.5 text-zinc-300 font-semibold uppercase tracking-wider">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    <span>Action Required ({pendingHazards.length} Pending):</span>
+                    <span>
+                      Action Required ({pendingHazards.length} Pending
+                      {isHazardsMinimized
+                        ? ` • ${formatCurrency(pendingHazards.reduce((acc, h) => acc + h.originalExposure, 0))}`
+                        : ""}
+                      ):
+                    </span>
                   </div>
-                  {/* Left & Right Scroll Controls */}
-                  <div className="flex items-center gap-1.5 text-zinc-400">
-                    <span className="text-[10px] text-zinc-500 hidden sm:inline">Use mouse wheel or arrows →</span>
+
+                  {/* Controls: Scroll & Minimize */}
+                  <div className="flex items-center gap-1 text-zinc-400">
+                    {!isHazardsMinimized && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => scrollHazards("left")}
+                          className="p-1 rounded-md bg-zinc-850 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 transition-all shadow-sm"
+                          title="Scroll left"
+                        >
+                          <ChevronLeft className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => scrollHazards("right")}
+                          className="p-1 rounded-md bg-zinc-850 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 transition-all shadow-sm"
+                          title="Scroll right"
+                        >
+                          <ChevronRight className="h-3 w-3" />
+                        </button>
+                      </>
+                    )}
                     <button
                       type="button"
-                      onClick={() => scrollHazards("left")}
-                      className="p-1 rounded-md bg-zinc-850 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 transition-all shadow-sm"
-                      title="Scroll left"
+                      onClick={() => setIsHazardsMinimized(!isHazardsMinimized)}
+                      className="px-2 py-0.5 rounded-md bg-zinc-850 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-white/10 text-[10px] transition-all flex items-center gap-1 font-mono"
+                      title={isHazardsMinimized ? "Expand action items" : "Collapse action items"}
                     >
-                      <ChevronLeft className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => scrollHazards("right")}
-                      className="p-1 rounded-md bg-zinc-850 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 transition-all shadow-sm"
-                      title="Scroll right"
-                    >
-                      <ChevronRight className="h-3.5 w-3.5" />
+                      <span>{isHazardsMinimized ? "Expand" : "Minimize"}</span>
+                      <ChevronDown
+                        className={`h-3 w-3 transition-transform ${
+                          isHazardsMinimized ? "" : "rotate-180"
+                        }`}
+                      />
                     </button>
                   </div>
                 </div>
 
-                {/* Horizontal Scroll Track with Mouse Wheel Support */}
-                <div
-                  ref={hazardScrollRef}
-                  onWheel={(e) => {
-                    if (e.deltaY !== 0) {
-                      e.currentTarget.scrollLeft += e.deltaY;
-                    }
-                  }}
-                  className="flex items-stretch gap-3 overflow-x-auto pb-2 pt-0.5 scroll-smooth scrollbar-thin scrollbar-thumb-zinc-700/80 hover:scrollbar-thumb-zinc-500 scrollbar-track-zinc-900/60"
-                >
-                  {pendingHazards.map((h) => (
-                    <div
-                      key={h.id}
-                      className="w-[310px] sm:w-[350px] shrink-0 p-3 rounded-2xl bg-[#141418] hover:bg-[#18181D] border border-white/[0.09] hover:border-white/20 transition-all shadow-lg flex flex-col justify-between space-y-2.5 group"
-                    >
-                      {/* Top Row: Category & Exposure */}
-                      <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] pb-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-amber-950/80 text-amber-300 border border-amber-500/30 font-bold">
-                            {h.category}
-                          </span>
-                          <span className="text-[10px] font-mono text-zinc-400">
-                            Sc. {h.sceneNumber}
+                {/* Streamlined Horizontal Scroll Track */}
+                {!isHazardsMinimized && (
+                  <div
+                    ref={hazardScrollRef}
+                    onWheel={(e) => {
+                      if (e.deltaY !== 0) {
+                        e.currentTarget.scrollLeft += e.deltaY;
+                      }
+                    }}
+                    className="flex items-stretch gap-2.5 overflow-x-auto pb-1.5 pt-0.5 scroll-smooth scrollbar-thin scrollbar-thumb-zinc-700/80 hover:scrollbar-thumb-zinc-500 scrollbar-track-zinc-900/60"
+                  >
+                    {pendingHazards.map((h) => (
+                      <div
+                        key={h.id}
+                        className="w-[260px] sm:w-[285px] shrink-0 p-2.5 rounded-xl bg-[#141418] hover:bg-[#18181D] border border-white/[0.09] hover:border-white/20 transition-all shadow-md flex flex-col justify-between space-y-1.5 group"
+                      >
+                        {/* Top Row: Category & Exposure */}
+                        <div className="flex items-center justify-between gap-1.5 border-b border-white/[0.06] pb-1">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-500/30 font-bold">
+                              {h.category}
+                            </span>
+                            <span className="text-[10px] font-mono text-zinc-400">
+                              Sc. {h.sceneNumber}
+                            </span>
+                          </div>
+                          <span className="text-xs font-mono font-bold text-rose-400">
+                            {formatCurrency(h.originalExposure)}
                           </span>
                         </div>
-                        <span className="text-xs font-mono font-bold text-rose-400">
-                          {formatCurrency(h.originalExposure)}
-                        </span>
-                      </div>
 
-                      {/* Middle: Full Asset Title & Statutory Description */}
-                      <div className="space-y-1 min-w-0">
-                        <h4
-                          className="text-xs font-bold text-zinc-100 truncate"
-                          title={h.rawText}
-                        >
-                          {h.rawText}
-                        </h4>
-                        <p
-                          className="text-[11px] text-zinc-400 leading-snug line-clamp-2"
-                          title={h.description}
-                        >
-                          {h.description}
-                        </p>
-                      </div>
+                        {/* Middle: Full Asset Title & Statutory Description */}
+                        <div className="space-y-0.5 min-w-0">
+                          <h4
+                            className="text-xs font-bold text-zinc-100 truncate"
+                            title={h.rawText}
+                          >
+                            {h.rawText}
+                          </h4>
+                          <p
+                            className="text-[10px] text-zinc-400 leading-tight line-clamp-1"
+                            title={h.description}
+                          >
+                            {h.description}
+                          </p>
+                        </div>
 
-                      {/* Bottom Row: Dual Action Buttons */}
-                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/[0.06]">
-                        {/* Licensed Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleMarkAsLicensed(h)}
-                          disabled={isLoading}
-                          className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40 hover:border-emerald-400/60 text-xs font-mono font-medium transition-all active:scale-95 shadow-sm disabled:opacity-50"
-                          title={`Mark "${h.rawText}" as licensed (written release on file)`}
-                        >
-                          <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                          <span>Licensed</span>
-                        </button>
+                        {/* Bottom Row: Dual Action Buttons */}
+                        <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-white/[0.06]">
+                          {/* Licensed Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleMarkAsLicensed(h)}
+                            disabled={isLoading}
+                            className="flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40 hover:border-emerald-400/60 text-[11px] font-mono font-medium transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                            title={`Mark "${h.rawText}" as licensed (written release on file)`}
+                          >
+                            <CheckCircle className="h-3 w-3 text-emerald-400" />
+                            <span>Licensed</span>
+                          </button>
 
-                        {/* Negotiate Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleStartDebate(h)}
-                          disabled={isLoading}
-                          className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-white/10 hover:border-white/20 text-xs font-semibold transition-all active:scale-95 shadow-sm disabled:opacity-50"
-                          title={`Negotiate legal compromise for "${h.rawText}"`}
-                        >
-                          <Zap className="h-3.5 w-3.5 text-amber-400" />
-                          <span>Negotiate</span>
-                        </button>
+                          {/* Negotiate Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleStartDebate(h)}
+                            disabled={isLoading}
+                            className="flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-white/10 hover:border-white/20 text-[11px] font-semibold transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                            title={`Negotiate legal compromise for "${h.rawText}"`}
+                          >
+                            <Zap className="h-3 w-3 text-amber-400" />
+                            <span>Negotiate</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -2190,31 +2219,53 @@ Clearance secured. We have safe harbor.`,
               </div>
             )}
 
-            {/* Quick Test Presets */}
-            <div className="flex items-center gap-1.5 flex-wrap px-1 text-[11px] font-mono">
-              <span className="text-zinc-500 text-[10px] uppercase font-semibold">Judge Presets:</span>
-              {DEMO_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => handleSendMessage(preset.script)}
-                  disabled={isLoading}
-                  className={`px-2.5 py-1 rounded-lg border text-xs font-mono transition-all shadow-sm active:scale-95 flex items-center gap-1 disabled:opacity-50 ${
-                    preset.id === "safe-harbor-demo"
-                      ? "bg-emerald-950/60 hover:bg-emerald-900/80 border-emerald-500/40 text-emerald-300 font-semibold"
-                      : preset.id === "cyber-heist"
-                      ? "bg-sky-950/40 hover:bg-sky-900/60 border-sky-500/30 text-sky-300"
-                      : "bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/30 text-amber-300"
-                  }`}
-                  title={preset.desc}
-                >
-                  <span>{preset.label}</span>
-                </button>
-              ))}
+            {/* Quick Test Presets (Collapsible when active to avoid crowding) */}
+            <div className="space-y-1 px-1">
+              {messages.length > 1 ? (
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <button
+                    type="button"
+                    onClick={() => setShowPresets(!showPresets)}
+                    className="text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1.5 text-[10px]"
+                    title="Toggle quick-launch test presets"
+                  >
+                    <span className="uppercase font-semibold text-zinc-400">Judge Presets:</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-850 text-zinc-400 border border-white/5">
+                      {showPresets ? "Hide" : "3 Quick Demos ▾"}
+                    </span>
+                  </button>
+                </div>
+              ) : null}
+
+              {(messages.length <= 1 || showPresets) && (
+                <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-mono animate-in fade-in duration-200">
+                  {messages.length <= 1 && (
+                    <span className="text-zinc-500 text-[10px] uppercase font-semibold">Judge Presets:</span>
+                  )}
+                  {DEMO_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleSendMessage(preset.script)}
+                      disabled={isLoading}
+                      className={`px-2.5 py-1 rounded-lg border text-xs font-mono transition-all shadow-sm active:scale-95 flex items-center gap-1 disabled:opacity-50 ${
+                        preset.id === "safe-harbor-demo"
+                          ? "bg-emerald-950/60 hover:bg-emerald-900/80 border-emerald-500/40 text-emerald-300 font-semibold"
+                          : preset.id === "cyber-heist"
+                          ? "bg-sky-950/40 hover:bg-sky-900/60 border-sky-500/30 text-sky-300"
+                          : "bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/30 text-amber-300"
+                      }`}
+                      title={preset.desc}
+                    >
+                      <span>{preset.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Prompt Input Box */}
-            <div className="bg-[#141416] border border-white/[0.08] focus-within:border-white/20 rounded-2xl p-2.5 shadow-2xl flex flex-col gap-2 transition-all">
+            <div className="bg-[#141416] border border-white/[0.08] focus-within:border-white/20 rounded-2xl p-2 shadow-2xl flex flex-col gap-1.5 transition-all">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
