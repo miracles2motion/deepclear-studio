@@ -137,3 +137,35 @@ export interface ClearancePassportData {
   timestamp: string;
   assets: ClearedAssetRecord[];
 }
+
+export interface DeepClearSessionData {
+  version: "1.0";
+  type: "deepclear_session";
+  exportedAt: string;
+  productionTitle: string;
+  uploadedFileName: string | null;
+  currentScriptText: string;
+  initialExposure: number;
+  currentExposure: number;
+  taxSavings: number;
+  taxJurisdiction: string;
+  entities: ExtractedEntity[];
+  clearedEntityIds: string[];
+  licensedEntityIds: string[];
+  messages: Array<{
+    id: string;
+    sender: "user" | AgentRole | "system";
+    senderName: string;
+    timestamp: string;
+    type: "text" | "script" | "hazards" | "debate" | "mutation";
+    content?: string;
+    entities?: ExtractedEntity[];
+    debateTurn?: DebateTurn;
+    replyTo?: {
+      messageId?: string;
+      senderName: string;
+      snippet: string;
+    };
+  }>;
+  passportData?: ClearancePassportData | null;
+}

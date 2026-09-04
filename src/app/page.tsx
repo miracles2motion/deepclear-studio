@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation } from "@/types";
+import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation, DeepClearSessionData } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { ExportModal } from "@/components/ExportModal";
 import { extractClearancePassport } from "@/lib/passport";
@@ -11,6 +11,8 @@ import {
   ArrowUp,
   ShieldCheck,
   Download,
+  Upload,
+  FileJson,
   Eye,
   Scale,
   MapPin,
@@ -111,6 +113,7 @@ export default function DeepClearStudioPage() {
 
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const sessionFileInputRef = useRef<HTMLInputElement | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const hazardScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -1148,10 +1151,156 @@ Clearance secured. We have safe harbor.`,
     speakTextAsync(`License on file for ${entity.rawText}.`, "bond_officer");
   };
 
-  // Handle File Upload (.md, .fountain, .txt)
+  // Export complete chat history and underwriting state to JSON
+  const handleExportSession = () => {
+    try {
+      const sessionData: DeepClearSessionData = {
+        version: "1.0",
+        type: "deepclear_session",
+        exportedAt: new Date().toISOString(),
+        productionTitle: productionTitle || "Indie Production",
+        uploadedFileName,
+        currentScriptText,
+        initialExposure,
+        currentExposure,
+        taxSavings,
+        taxJurisdiction,
+        entities,
+        clearedEntityIds,
+        licensedEntityIds,
+        messages,
+      };
+
+      const jsonString = JSON.stringify(sessionData, null, 2);
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const cleanTitle = (productionTitle || "session")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      a.href = url;
+      a.download = `deepclear_session_${cleanTitle}_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      const exportNotice: ChatMessage = {
+        id: `export-notice-${Date.now()}`,
+        sender: "system",
+        senderName: "DeepClear Swarm",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: `💾 **Chat & Session State Exported (.JSON)**\n• File: \`deepclear_session_${cleanTitle}_${new Date().toISOString().slice(0, 10)}.json\`\n• Messages saved: **${messages.length}**\n• Active liabilities tracked: **${entities.length}**\n\nYou can keep this backup or re-upload it anytime to restore your exact progress.`,
+      };
+      setMessages((prev) => [...prev, exportNotice]);
+    } catch (err) {
+      console.error("Failed to export session:", err);
+    }
+  };
+
+  // Restore complete chat history and underwriting state from JSON
+  const handleImportSession = (data: any) => {
+    try {
+      if (!data || (!data.messages && data.type !== "deepclear_session")) {
+        alert("Invalid file: Not a recognized DeepClear session JSON file.");
+        return;
+      }
+
+      if (Array.isArray(data.messages) && data.messages.length > 0) {
+        setMessages(data.messages);
+      }
+      if (typeof data.productionTitle === "string") {
+        setProductionTitle(data.productionTitle);
+      }
+      if (typeof data.currentScriptText === "string") {
+        setCurrentScriptText(data.currentScriptText);
+      }
+      if (typeof data.uploadedFileName === "string") {
+        setUploadedFileName(data.uploadedFileName);
+      }
+      if (typeof data.initialExposure === "number") {
+        setInitialExposure(data.initialExposure);
+      }
+      if (typeof data.currentExposure === "number") {
+        setCurrentExposure(data.currentExposure);
+      }
+      if (typeof data.taxSavings === "number") {
+        setTaxSavings(data.taxSavings);
+      }
+      if (typeof data.taxJurisdiction === "string") {
+        setTaxJurisdiction(data.taxJurisdiction);
+      }
+      if (Array.isArray(data.entities)) {
+        setEntities(data.entities);
+      }
+      if (Array.isArray(data.clearedEntityIds)) {
+        setClearedEntityIds(data.clearedEntityIds);
+      }
+      if (Array.isArray(data.licensedEntityIds)) {
+        setLicensedEntityIds(data.licensedEntityIds);
+      }
+
+      const restoreNotice: ChatMessage = {
+        id: `restored-${Date.now()}`,
+        sender: "system",
+        senderName: "DeepClear Swarm",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: `📥 **Session & Chat History Restored Successfully**\n• Production: **${data.productionTitle || "Imported Project"}**\n• Messages Restored: **${data.messages?.length || 0}**\n• Hazards Tracked: **${data.entities?.length || 0}**\n• Underwriting Exposure: **$${(data.currentExposure || 0).toLocaleString()}**\n\nYou can continue chatting, negotiate new hazards, or generate updated Form E&O binders.`,
+      };
+
+      setMessages((prev) => [...prev, restoreNotice]);
+
+      import("canvas-confetti").then((confettiModule) => {
+        confettiModule.default({
+          particleCount: 40,
+          spread: 50,
+          origin: { y: 0.8 },
+        });
+      });
+    } catch (err) {
+      console.error("Failed to restore session:", err);
+      alert("Error restoring session file.");
+    }
+  };
+
+  const handleSessionFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        handleImportSession(parsed);
+      } catch (err) {
+        alert("Could not parse JSON file. Please ensure it is a valid DeepClear session file.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  // Handle File Upload (.md, .fountain, .txt, or .json session)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.name.toLowerCase().endsWith(".json")) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target?.result as string);
+          handleImportSession(parsed);
+        } catch (err) {
+          alert("Could not parse JSON file. Please ensure it is a valid DeepClear session file.");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+      return;
+    }
 
     setUploadedFileName(file.name);
     const cleanTitle = file.name
@@ -1265,14 +1414,36 @@ Clearance secured. We have safe harbor.`,
           </button>
         </div>
 
-        {/* Export Binder Action */}
-        <button
-          onClick={() => setIsExportModalOpen(true)}
-          className="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold shadow-sm transition-all flex items-center gap-1"
-        >
-          <Download className="h-3 w-3" />
-          <span className="hidden xs:inline">Export</span>
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => sessionFileInputRef.current?.click()}
+            className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 border border-white/10 text-xs transition-all flex items-center gap-1"
+            title="Import Session JSON"
+          >
+            <Upload className="h-3 w-3 text-sky-400" />
+            <span className="hidden sm:inline font-mono">Import</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleExportSession}
+            className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 border border-white/10 text-xs transition-all flex items-center gap-1"
+            title="Export Session JSON"
+          >
+            <FileJson className="h-3 w-3 text-indigo-400" />
+            <span className="hidden sm:inline font-mono">Backup</span>
+          </button>
+
+          {/* Export Binder Action */}
+          <button
+            onClick={() => setIsExportModalOpen(true)}
+            className="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold shadow-sm transition-all flex items-center gap-1"
+          >
+            <Download className="h-3 w-3" />
+            <span className="hidden xs:inline">Export</span>
+          </button>
+        </div>
       </header>
 
       {/* 3-Column Layout */}
@@ -1299,13 +1470,37 @@ Clearance secured. We have safe harbor.`,
                 </span>
               </div>
 
-              <button
-                onClick={handleNewSession}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
-                title="Start New Session"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                {/* Import Session */}
+                <button
+                  type="button"
+                  onClick={() => sessionFileInputRef.current?.click()}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-sky-300 hover:bg-zinc-800 transition-all"
+                  title="Import Chat History & Session (.JSON)"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Export Session */}
+                <button
+                  type="button"
+                  onClick={handleExportSession}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-300 hover:bg-zinc-800 transition-all"
+                  title="Export Chat History & Session (.JSON)"
+                >
+                  <FileJson className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Start New Session */}
+                <button
+                  type="button"
+                  onClick={handleNewSession}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+                  title="Start New Session"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             {/* 5-Agent Swarm Roster */}
@@ -2175,6 +2370,16 @@ Clearance secured. We have safe harbor.`,
         licensedEntityIds={licensedEntityIds}
         finalScriptText={currentScriptText}
         uploadedFileName={uploadedFileName}
+        onExportSession={handleExportSession}
+      />
+
+      {/* Hidden Session File Input for .json chat/state restore */}
+      <input
+        ref={sessionFileInputRef}
+        type="file"
+        accept=".json,application/json"
+        onChange={handleSessionFileChange}
+        className="hidden"
       />
     </div>
   );

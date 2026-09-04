@@ -18,6 +18,7 @@ This changelog records major releases, architectural features, and critical mile
   - `[ 🏛️ Southern Gothic ]`: Tests municipal filming permits and tax rebates (Forsyth Park, Macallan 25).
   - `[ 🛡️ Cleared Masterpiece (Safe Harbor) ]`: Pre-cleared script demonstrating instant $0 risk on re-upload.
 - **Extended Voice Casting**: Added dedicated voice profile for the Location / Art Manager in browser speech synthesis.
+- **Export & Import Chat History & Session State (`DeepClearSessionData`)**: Added 1-click export and import of complete session JSON files. Saves all messages, 5-agent debate turns, citations, screenplay state, and risk metrics. Allows writers and developers to back up their sessions, restore past negotiations, or share debug snapshots directly into chat.
 
 ---
 

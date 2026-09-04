@@ -5,7 +5,7 @@ import { ClearanceReport, ExtractedEntity, ClearancePassportData } from "@/types
 import { exportModernEOBinderPDF } from "@/lib/reactPdfExporter";
 import { generateClearanceMerkleHash, mintClearancePassportTestnet } from "@/lib/web3";
 import { embedClearancePassport } from "@/lib/passport";
-import { X, ShieldCheck, Download, ExternalLink, CheckCircle2, Lock, Film, Copy, Check, Edit3, Loader2 } from "lucide-react";
+import { X, ShieldCheck, Download, ExternalLink, CheckCircle2, Lock, Film, Copy, Check, Edit3, Loader2, FileJson } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface ExportModalProps {
@@ -22,6 +22,7 @@ interface ExportModalProps {
   finalScriptText?: string;
   uploadedFileName?: string | null;
   onUpdateTitle?: (title: string) => void;
+  onExportSession?: () => void;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -38,6 +39,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   finalScriptText,
   uploadedFileName,
   onUpdateTitle,
+  onExportSession,
 }) => {
   const [activeTitle, setActiveTitle] = useState(productionTitle);
   const [isMinting, setIsMinting] = useState(false);
@@ -301,6 +303,29 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   <span>.txt</span>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Export Full Chat History & Session JSON */}
+          {onExportSession && (
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-white/5 space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400">
+                <span className="flex items-center gap-1 text-indigo-300 font-semibold">
+                  <FileJson className="h-3.5 w-3.5 text-indigo-400" />
+                  <span>Session & Chat History Backup:</span>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onExportSession}
+                className="w-full py-2 px-3 rounded-lg bg-indigo-950/40 hover:bg-indigo-900/60 text-indigo-200 hover:text-white border border-indigo-500/30 text-xs font-mono transition-all flex items-center justify-center gap-2 shadow-sm"
+              >
+                <Download className="h-3.5 w-3.5 text-indigo-400" />
+                <span>Export Chat & Session State (.JSON)</span>
+              </button>
+              <p className="text-[10px] text-zinc-500 leading-tight">
+                Exports all 5-agent debate turns, citations, and underwriting state so you can restore your session anytime.
+              </p>
             </div>
           )}
 
