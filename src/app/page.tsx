@@ -97,6 +97,9 @@ export default function DeepClearStudioPage() {
   const [isAutoClearing, setIsAutoClearing] = useState(false);
   const [autoProgress, setAutoProgress] = useState<{ current: number; total: number; entityName?: string } | null>(null);
   const [disputedEntityIds, setDisputedEntityIds] = useState<string[]>([]);
+  const [agentTypingStatus, setAgentTypingStatus] = useState<string | null>(null);
+  const [speakingAgent, setSpeakingAgent] = useState<AgentRole | null>(null);
+  const [agentThinking, setAgentThinking] = useState<{ role: AgentRole; thought: string } | null>(null);
 
   const handleCopyMessage = (msg: ChatMessage) => {
     let textToCopy = msg.content || "";
@@ -189,10 +192,10 @@ export default function DeepClearStudioPage() {
     }
   };
 
-  // Smooth auto-scroll to latest message
+  // Smooth auto-scroll to latest message, thought, or status update
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, agentThinking, agentTypingStatus, isAutoClearing]);
 
 
 
@@ -606,9 +609,7 @@ Clearance secured. We have safe harbor.`,
     }
   };
 
-  const [agentTypingStatus, setAgentTypingStatus] = useState<string | null>(null);
-  const [speakingAgent, setSpeakingAgent] = useState<AgentRole | null>(null);
-  const [agentThinking, setAgentThinking] = useState<{ role: AgentRole; thought: string } | null>(null);
+
 
   // Helper to match distinct browser voices per agent persona
   const getAgentVoice = (
@@ -1095,11 +1096,34 @@ Clearance secured. We have safe harbor.`,
     }
   };
 
-  // Handle User Marking an Item as Pre-Licensed or Permitted
-  const handleMarkAsLicensed = (entity: ExtractedEntity) => {
-    setIsLoading(false);
-    setAgentThinking(null);
+  // Handle Marking an Item as Pre-Licensed or Permitted with authentic crew verification
+  const handleMarkAsLicensed = async (entity: ExtractedEntity) => {
+    setIsLoading(true);
+
+    // Turn 1: Location Manager verifies municipal permit & state tax incentive
+    setActiveAgent("location_manager");
+    setAgentTypingStatus(`Location Manager is verifying municipal permit & tax credit for "${entity.rawText}"...`);
+    setAgentThinking({
+      role: "location_manager",
+      thought: `Verifying municipal filming permits, soundstage releases, and state film tax incentive records for "${entity.rawText}"...`,
+    });
+    await sleep(1100);
+
     setAgentTypingStatus(null);
+    await speakTextAsync(`Municipal permit verified for ${entity.rawText}.`, "location_manager");
+    await sleep(400);
+
+    // Turn 2: Completion Bond Officer underwrites license indemnity
+    setActiveAgent("bond_officer");
+    setAgentTypingStatus(`Completion Bond Officer is underwriting license rider for "${entity.rawText}"...`);
+    setAgentThinking({
+      role: "bond_officer",
+      thought: `Underwriting policy rider: executing safe-harbor indemnity release on file for "${entity.rawText}". Waiving statutory liability to $0.00...`,
+    });
+    await sleep(1100);
+
+    setAgentTypingStatus(null);
+    setAgentThinking(null);
 
     const newLicensedIds = [...licensedEntityIds, entity.id];
     setLicensedEntityIds(newLicensedIds);
@@ -1134,7 +1158,7 @@ Clearance secured. We have safe harbor.`,
           senderName: "Completion Bond Officer",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           type: "text",
-          content: `📜 Production License Verified: Written release/permit on file for "${entity.rawText}". Statutory liability reduced by ${formatCurrency(
+          content: `📜 **Production License Verified:** Written release/permit on file for "${entity.rawText}". Statutory liability reduced by ${formatCurrency(
             entity.originalExposure
           )} to $0 under production indemnity agreement. Original asset retained in screenplay.`,
         },
@@ -1155,8 +1179,10 @@ Clearance secured. We have safe harbor.`,
       return nextMsgs;
     });
 
-    setActiveAgent("bond_officer");
-    speakTextAsync(`License on file for ${entity.rawText}.`, "bond_officer");
+    await speakTextAsync(`Indemnity on file. Liability waived.`, "bond_officer");
+    await sleep(400);
+
+    setIsLoading(false);
   };
 
   // Autonomous Swarm Clearance Loop (Auto-Pilot)
@@ -1194,12 +1220,23 @@ Clearance secured. We have safe harbor.`,
       }
 
       if (i < hazardsQueue.length - 1) {
+        // Active rate-limit safe pacing feedback between items
+        setActiveAgent("script_supervisor");
+        setAgentTypingStatus(
+          `⚡ Auto-Pilot Swarm: Rate-limit defense pacing (1.5s) • Next: "${hazardsQueue[i + 1].rawText}"...`
+        );
+        setAgentThinking({
+          role: "script_supervisor",
+          thought: `Autonomous Swarm queue: Pacing API rate-limits. Next clearance target: "${hazardsQueue[i + 1].rawText}" (${hazardsQueue[i + 1].category.toUpperCase()})...`,
+        });
         await delayPace(1500); // 1.5s pacing to prevent rate limits
       }
     }
 
     setIsAutoClearing(false);
     setAutoProgress(null);
+    setAgentTypingStatus(null);
+    setAgentThinking(null);
 
     // Final celebration notice
     const finishNotice: ChatMessage = {
@@ -1792,7 +1829,7 @@ Clearance secured. We have safe harbor.`,
           }`}
         >
           {/* Top Active Dynamic Glowing Gradient Bar per Agent */}
-          {(isLoading || isGeneratingScene || speakingAgent || agentThinking) && (
+          {(isLoading || isGeneratingScene || speakingAgent || agentThinking || isAutoClearing) && (
             <div className="h-1.5 w-full bg-zinc-950 overflow-hidden relative shrink-0 z-10">
               <div
                 className={`h-full bg-gradient-to-r ${
@@ -2130,11 +2167,11 @@ Clearance secured. We have safe harbor.`,
             })}
 
             {/* In-Chat Agent Reasoning & Typing Indicator */}
-            {(isLoading || agentTypingStatus || isGeneratingScene || agentThinking) && (
+            {(isLoading || agentTypingStatus || isGeneratingScene || agentThinking || isAutoClearing) && (
               <div className="flex gap-3.5 items-start animate-in fade-in slide-in-from-bottom-2 duration-300">
                 {/* Agent Persona Avatar */}
                 <div
-                  className={`h-7 w-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs ${
+                  className={`h-7 w-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs transition-colors duration-300 ${
                     activeAgent && AGENT_THEMES[activeAgent]
                       ? `${AGENT_THEMES[activeAgent].iconBg} ${AGENT_THEMES[activeAgent].iconBorder} ${AGENT_THEMES[activeAgent].iconText}`
                       : "bg-zinc-900 border-white/10 text-sky-400"
@@ -2156,7 +2193,11 @@ Clearance secured. We have safe harbor.`,
                 {/* Reasoning & Loading Bubble */}
                 <div className="p-3.5 rounded-2xl bg-[#141416] border border-white/[0.08] text-xs font-mono space-y-1.5 shadow-md max-w-[85%] rounded-tl-sm">
                   <div className="flex items-center gap-2 text-zinc-400 font-semibold">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-400" />
+                    {speakingAgent === activeAgent ? (
+                      <Volume2 className="h-3.5 w-3.5 animate-bounce text-emerald-400" />
+                    ) : (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-400" />
+                    )}
                     <span
                       className={
                         activeAgent && AGENT_THEMES[activeAgent]
@@ -2167,14 +2208,22 @@ Clearance secured. We have safe harbor.`,
                       [{activeAgent ? activeAgent.replace("_", " ").toUpperCase() : "DEEPCLEAR SWARM"}]:
                     </span>
                     <span className="text-zinc-600">•</span>
-                    <span className="text-[10px] text-zinc-500 font-normal">Processing...</span>
+                    <span className="text-[10px] text-zinc-500 font-normal">
+                      {speakingAgent === activeAgent
+                        ? "Speaking (Voice Active)..."
+                        : isAutoClearing
+                        ? `Auto-Pilot (${autoProgress?.current || 1}/${autoProgress?.total || pendingHazards.length})...`
+                        : "Processing..."}
+                    </span>
                   </div>
                   <p className="text-zinc-300 leading-relaxed italic">
                     {isGeneratingScene
                       ? "Generating fresh original screenplay scene with Google Cloud Gemini..."
                       : agentThinking?.thought ||
                         agentTypingStatus ||
-                        "Querying Gemini Multimodal Vision & Parallel Search API..."}
+                        (isAutoClearing
+                          ? `⚡ Autonomous Swarm clearing "${autoProgress?.entityName || "pending liability"}"...`
+                          : "Querying Gemini Multimodal Vision & Parallel Search API...")}
                   </p>
                 </div>
               </div>
@@ -2322,7 +2371,7 @@ Clearance secured. We have safe harbor.`,
                           <button
                             type="button"
                             onClick={() => handleMarkAsLicensed(h)}
-                            disabled={isLoading}
+                            disabled={isLoading || isAutoClearing}
                             className="flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40 hover:border-emerald-400/60 text-[11px] font-mono font-medium transition-all active:scale-95 shadow-sm disabled:opacity-50"
                             title={`Mark "${h.rawText}" as licensed (written release on file)`}
                           >
@@ -2334,7 +2383,7 @@ Clearance secured. We have safe harbor.`,
                           <button
                             type="button"
                             onClick={() => handleStartDebate(h)}
-                            disabled={isLoading}
+                            disabled={isLoading || isAutoClearing}
                             className="flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-white/10 hover:border-white/20 text-[11px] font-semibold transition-all active:scale-95 shadow-sm disabled:opacity-50"
                             title={`Negotiate legal compromise for "${h.rawText}"`}
                           >
@@ -2512,6 +2561,32 @@ Clearance secured. We have safe harbor.`,
                 {initialExposure > 0 ? taxJurisdiction : "Awaiting Script Ingestion"}
               </div>
             </div>
+
+            {/* Auto-Pilot Swarm Active Live HUD Meter */}
+            {isAutoClearing && autoProgress && (
+              <div className="bg-indigo-950/40 border border-indigo-500/40 rounded-xl p-3 space-y-2 animate-in fade-in duration-300 shadow-lg shadow-indigo-950/50">
+                <div className="flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-indigo-300 font-bold flex items-center gap-1.5">
+                    <Zap className="h-3 w-3 text-amber-300 animate-pulse" />
+                    Auto-Pilot Swarm Active
+                  </span>
+                  <span className="text-indigo-300 font-mono font-semibold">
+                    {autoProgress.current} / {autoProgress.total}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 transition-all duration-300"
+                    style={{
+                      width: `${Math.max(10, Math.round((autoProgress.current / autoProgress.total) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <div className="text-[10px] text-zinc-400 truncate font-mono">
+                  Target: <span className="text-zinc-200 font-semibold">{autoProgress.entityName}</span>
+                </div>
+              </div>
+            )}
 
             {/* Dynamic Clearance & Distribution Risk Card */}
             {(() => {

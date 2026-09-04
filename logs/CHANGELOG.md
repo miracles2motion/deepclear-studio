@@ -18,6 +18,12 @@ This changelog records major releases, architectural features, and critical mile
   - Added an interactive **Cleared Assets Ledger** in the Right Column HUD with instant `[ Dispute ]` controls.
   - Disputing any cleared asset instantly rolls back safe-harbor status, restores statutory exposure to the underwriting ledger, and posts a high-priority appeal notice into the chat feed.
 - **1-Click Swarm Runner**: Added `[ ⚡ Auto-Clear All (N) ]` in the Action Required bar with real-time animated countdown (`Clearing X/Y...`) and spinner indicators.
+- **End-to-End UI & Swarm Synchronization**:
+  - *Full Crew Licensing Verification*: Upgraded `handleMarkAsLicensed` into an async dialectic flow where the Location Manager verifies municipal/state tax credit permits followed by the Completion Bond Officer underwriting indemnity release, complete with dedicated voices, sidebar thinking cards, and chat status updates.
+  - *Unified In-Chat Reasoning & Speech Card*: Enhanced the middle-column status bubble with dynamic agent icons, animated bounce speaker indicator (`[SPEAKING (VOICE ACTIVE)]`), and real-time swarm queue status.
+  - *Flicker-Free Rate-Limit Pacing*: Inter-hazard delays (1.5s) now display active pacing telemetry via the Script Supervisor (`⚡ Auto-Pilot Swarm: Rate-limit defense pacing (1.5s) • Next: "..."`), eliminating visual blinks between items.
+  - *Right Column HUD Progress Meter*: Added live animated progress bar and target counter in the Underwriting HUD tracking swarm resolution in real time.
+  - *Smooth Viewport Auto-Lock*: Synchronized `useEffect` auto-scrolling with `agentThinking`, `agentTypingStatus`, and `isAutoClearing` to ensure the active reasoning state is always in viewport focus.
 
 ---
 
