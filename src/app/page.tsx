@@ -92,7 +92,6 @@ export default function DeepClearStudioPage() {
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<"chat" | "crew" | "risk">("chat");
   const [isHazardsMinimized, setIsHazardsMinimized] = useState(false);
-  const [showPresets, setShowPresets] = useState(false);
 
   const handleCopyMessage = (msg: ChatMessage) => {
     let textToCopy = msg.content || "";
@@ -2219,50 +2218,36 @@ Clearance secured. We have safe harbor.`,
               </div>
             )}
 
-            {/* Quick Test Presets (Collapsible when active to avoid crowding) */}
-            <div className="space-y-1 px-1">
-              {messages.length > 1 ? (
-                <div className="flex items-center justify-between text-[11px] font-mono">
+            {/* Quick Test Presets: Only visible when chat is fresh/empty OR after script is fully cleared */}
+            {(messages.length <= 1 || isCleared) && (
+              <div className="flex items-center gap-1.5 flex-wrap px-1 text-[11px] font-mono animate-in fade-in duration-300">
+                <span
+                  className={`text-[10px] uppercase font-semibold ${
+                    isCleared ? "text-emerald-400" : "text-zinc-500"
+                  }`}
+                >
+                  {isCleared ? "🎉 All Cleared! Test Another Preset:" : "Judge Presets:"}
+                </span>
+                {DEMO_PRESETS.map((preset) => (
                   <button
+                    key={preset.id}
                     type="button"
-                    onClick={() => setShowPresets(!showPresets)}
-                    className="text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1.5 text-[10px]"
-                    title="Toggle quick-launch test presets"
+                    onClick={() => handleSendMessage(preset.script)}
+                    disabled={isLoading}
+                    className={`px-2.5 py-1 rounded-lg border text-xs font-mono transition-all shadow-sm active:scale-95 flex items-center gap-1 disabled:opacity-50 ${
+                      preset.id === "safe-harbor-demo"
+                        ? "bg-emerald-950/60 hover:bg-emerald-900/80 border-emerald-500/40 text-emerald-300 font-semibold"
+                        : preset.id === "cyber-heist"
+                        ? "bg-sky-950/40 hover:bg-sky-900/60 border-sky-500/30 text-sky-300"
+                        : "bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/30 text-amber-300"
+                    }`}
+                    title={preset.desc}
                   >
-                    <span className="uppercase font-semibold text-zinc-400">Judge Presets:</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-850 text-zinc-400 border border-white/5">
-                      {showPresets ? "Hide" : "3 Quick Demos ▾"}
-                    </span>
+                    <span>{preset.label}</span>
                   </button>
-                </div>
-              ) : null}
-
-              {(messages.length <= 1 || showPresets) && (
-                <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-mono animate-in fade-in duration-200">
-                  {messages.length <= 1 && (
-                    <span className="text-zinc-500 text-[10px] uppercase font-semibold">Judge Presets:</span>
-                  )}
-                  {DEMO_PRESETS.map((preset) => (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => handleSendMessage(preset.script)}
-                      disabled={isLoading}
-                      className={`px-2.5 py-1 rounded-lg border text-xs font-mono transition-all shadow-sm active:scale-95 flex items-center gap-1 disabled:opacity-50 ${
-                        preset.id === "safe-harbor-demo"
-                          ? "bg-emerald-950/60 hover:bg-emerald-900/80 border-emerald-500/40 text-emerald-300 font-semibold"
-                          : preset.id === "cyber-heist"
-                          ? "bg-sky-950/40 hover:bg-sky-900/60 border-sky-500/30 text-sky-300"
-                          : "bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/30 text-amber-300"
-                      }`}
-                      title={preset.desc}
-                    >
-                      <span>{preset.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Prompt Input Box */}
             <div className="bg-[#141416] border border-white/[0.08] focus-within:border-white/20 rounded-2xl p-2 shadow-2xl flex flex-col gap-1.5 transition-all">
