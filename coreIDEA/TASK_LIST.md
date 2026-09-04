@@ -30,3 +30,11 @@
 - [x] **Phase 5: Verification & Cloud Deployment**
   - [x] Test end-to-end judge flow: Load screenplay $\rightarrow$ Live Gemini multimodal scan $\rightarrow$ Parallel 4D search $\rightarrow$ Audible debate $\rightarrow$ Script mutation $\rightarrow$ Re-score $\rightarrow$ Form E&O-2026 PDF & Base Sepolia On-Chain mint.
   - [x] Deploy to production hosting with active SSE streaming and public URL verification (https://deepclear-studio.vercel.app).
+
+- [x] **Phase 6: 5-Agent War Room, Parallel Search Live Verification & Clearance Passport**
+  - [x] True 5-Agent War Room: Extended dialectic negotiation to include Legal Counsel, The Director, Location / Art Manager, Completion Bond Officer, and Script Supervisor.
+  - [x] Runtime Parallel Search Verification: Integrated live USPTO and global trademark registry verification during debate before compromises are accepted.
+  - [x] Dual Clearance Modes: Support for both narrative prop mutations and active commercial/sync licenses (17 U.S.C. § 115) with $0 exposure.
+  - [x] Tamper-Evident Clearance Passport (`src/lib/passport.ts`): Embeds YAML frontmatter metadata into exported scripts.
+  - [x] Safe-Harbor Re-upload: Automatic passport extraction eliminating false-positive re-flagging loops.
+  - [x] 1-Click Judge Presets: Added Cyber Heist, Southern Gothic, and Cleared Masterpiece scenario chips.

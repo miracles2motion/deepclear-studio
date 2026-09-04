@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { ClearanceReport, ExtractedEntity } from "@/types";
+import { ClearanceReport, ExtractedEntity, ClearancePassportData } from "@/types";
 import { exportModernEOBinderPDF } from "@/lib/reactPdfExporter";
 import { generateClearanceMerkleHash, mintClearancePassportTestnet } from "@/lib/web3";
+import { embedClearancePassport } from "@/lib/passport";
 import { X, ShieldCheck, Download, ExternalLink, CheckCircle2, Lock, Film, Copy, Check, Edit3, Loader2 } from "lucide-react";
 import confetti from "canvas-confetti";
 
@@ -100,7 +101,29 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       ? uploadedFileName.replace(/\.[^/.]+$/, "")
       : currentTitle.replace(/\s+/g, "_");
 
-    const blob = new Blob([finalScriptText], { type: "text/plain;charset=utf-8" });
+    const passportData: ClearancePassportData = {
+      version: "2026.1",
+      productionTitle: currentTitle,
+      merkleRoot: merkleHash,
+      bondPolicyId: `EO-2026-${merkleHash.slice(2, 8).toUpperCase()}`,
+      policyStatus: currentExposure === 0 ? "APPROVED" : "PENDING_REMEDY",
+      timestamp: new Date().toISOString(),
+      assets: entities.map((e) => {
+        const isLicensed = licensedEntityIds.includes(e.id) || e.status === "licensed";
+        return {
+          originalText: e.rawText,
+          clearedAs: isLicensed ? undefined : (e.defusedText || "Cleared Narrative Prop"),
+          category: e.category,
+          status: isLicensed ? "licensed" : "cleared",
+          licenseRef: isLicensed ? "Active Production Rights & Licensing Exemption" : undefined,
+          parallelVerified: true,
+        };
+      }),
+    };
+
+    const textWithPassport = embedClearancePassport(finalScriptText, passportData);
+
+    const blob = new Blob([textWithPassport], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

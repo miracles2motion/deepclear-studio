@@ -118,3 +118,22 @@ export interface SSEMessage {
   agent: AgentRole;
   payload: Record<string, unknown>;
 }
+
+export interface ClearedAssetRecord {
+  originalText: string;
+  clearedAs?: string;
+  category: string;
+  status: "cleared" | "licensed";
+  licenseRef?: string;
+  parallelVerified: boolean;
+}
+
+export interface ClearancePassportData {
+  version: string;
+  merkleRoot: string;
+  productionTitle: string;
+  policyStatus: "APPROVED" | "PENDING_REMEDY";
+  bondPolicyId: string;
+  timestamp: string;
+  assets: ClearedAssetRecord[];
+}

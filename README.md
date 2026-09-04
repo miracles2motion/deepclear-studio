@@ -1,7 +1,7 @@
 # 🎬 DeepClear Studio
 
-> **Autonomous Multimodal Film Clearance, Crew-Agent Dialectic Negotiation & Form E&O-2026 Underwriting Engine**  
-> *Built for Google Cloud Agentic Cinema Hackathon — Parallel Track ($15,000 Category)*
+> **Autonomous Multimodal Film Clearance, 5-Agent War Room Dialectics & Form E&O-2026 Underwriting Engine**  
+> *Built for Google Cloud Agentic Cinema: The Blockbuster Hackathon — Parallel Track ($15,000 Category)*
 
 [![Live Vercel App](https://img.shields.io/badge/Live%20Demo-deepclear--studio.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://deepclear-studio.vercel.app)
 [![Google Cloud Gemini](https://img.shields.io/badge/Google%20Cloud-Gemini%202.0%20Flash-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://aistudio.google.com)
@@ -14,25 +14,39 @@
 
 ## 🌐 Live Production Demo
 
-👉 **Live Application**: **[https://deepclear-studio.vercel.app](https://deepclear-studio.vercel.app)**
+👉 **Live Application**: **[https://deepclear-studio.vercel.app](https://deepclear-studio.vercel.app)**  
+*(Instant evaluation: launch live presets directly above the prompt bar!)*
 
 ---
 
 ## 🌟 Executive Summary
 
-Before any independent film or studio series can stream on **Netflix, Amazon Prime, Apple TV+**, or premiere at major film festivals (Sundance, Cannes, TIFF), production companies must secure an **Errors & Omissions (E&O) Insurance Policy** and verify a pristine **Chain of Title**.
+Before any independent film or studio series can stream on **Netflix, Amazon Prime, Apple TV+**, or premiere at major film festivals (Sundance, Cannes, TIFF), production companies must secure an **Errors & Omissions (E&O) Insurance Policy** and prove a pristine **Chain of Title**.
 
-Today, this clearance process is governed by entertainment attorneys manually reviewing scripts, storyboards, and call sheets. A single unvetted brand logo, unpermitted drone shot, or background track can trigger injunctions, statutory damage claims under Lanham Act § 43(a), and halt global distribution.
+Today, clearance is governed by entertainment attorneys manually redlining scripts, storyboards, and call sheets over weeks. A single unvetted trademark, unpermitted drone shot, or background song can trigger statutory injunctions under **Lanham Act § 43(a)** or copyright infringement under **17 U.S.C. § 504**, shutting down distribution.
 
-**DeepClear Studio** transforms film clearance into an autonomous, real-time command center:
-1. **Google Cloud Gemini 2.0 Flash** Multimodal script supervisor parsing & dynamic screenplay generation.
-2. **Parallel Search 4D Grounding** querying USPTO trademarks, municipal filming ordinances, and federal case law in real time.
-3. **Dialectic Crew Debates** pitting *The Director* (passionate artistic defense) against *Studio Legal Counsel* (statutory risk mitigation) to negotiate copyright-safe prop mutations.
-4. **Form E&O-2026 PDF Binder** generating cryptographic proof of clearance with Merkle roots & Base Sepolia testnet EVM minting.
+**DeepClear Studio** turns film clearance into an autonomous, real-time command center:
+1. **Google Cloud Gemini 2.0 Flash Multimodal Vision & Parsing**: Detects brand trademarks, music sync cues, personality rights, and municipal permit hazards from scripts and storyboard frames.
+2. **Parallel Search 4D Grounding Engine**: Runs live, runtime verification against the USPTO Principal Trademark Register and legal frameworks before any prop substitution is accepted.
+3. **5-Agent Autonomous War Room**: Script Supervisor, Studio Legal Counsel, Location Manager, The Director, and the Completion Bond Officer engage in realistic, multi-perspective dialectic debate.
+4. **Dual Resolution Tracks**: Defuse hazards via script mutations or verify active production licenses (e.g. sync rights, municipal permits) to reduce statutory exposure to **$0** while preserving artistic intent.
+5. **Clearance Passport & Form E&O-2026**: Embeds machine-readable YAML safe-harbor frontmatter with Merkle roots into exported scripts (`.md`, `.fountain`, `.txt`) so re-uploaded scripts retain clearance immunity.
 
 ---
 
-## 🏗️ 3-Column Multi-Agent Architecture
+## ⚡ Judge's Guided Tour (1-Click Live Evaluation)
+
+We built 3 curated 1-click test presets directly above the prompt bar in the live UI so judges can test every engine feature in seconds:
+
+| Preset Chip | Scenario | Key Testing Highlights |
+| :--- | :--- | :--- |
+| **`[ 🚀 Cyber Heist ]`** | High-Stakes Sci-Fi Action (Tokyo Neon) | Triggers $1.25M exposure (Rolex, Sony Cyberpunk UI, Led Zeppelin). Click **⚡ Start 5-Agent War Room** to watch all 5 crew members negotiate live while **Parallel Search** verifies "ChronoVolt" on USPTO. |
+| **`[ 🏛️ Southern Gothic ]`** | Savannah Period Drama & Drone Aerials | Flags historic estate filming permits and Georgia 30% tax incentive compliance. Click **📜 Verify License / Active Permit** to mark the permit cleared and watch statutory liability drop to $0. |
+| **`[ 🛡️ Cleared Masterpiece ]`** | Pre-Cleared Script with Clearance Passport | Demonstrates the **Clearance Passport safe-harbor system**. Shows verified Merkle seal `0x7a8f...` and exempts pre-cleared assets from false-positive re-flagging. |
+
+---
+
+## 🏗️ 3-Column Studio Architecture
 
 ```
 ┌──────────────────────────┬──────────────────────────────────────────────┬───────────────────────────┐
@@ -41,80 +55,106 @@ Today, this clearance process is governed by entertainment attorneys manually re
 │  🤖 5-Agent Crew Swarm   │  💬 Google Gemini Chat & Clearance Feed      │  📑 E&O Underwriting HUD  │
 │  • Completion Bond Off.  │     • Real-time SSE streaming stream         │     • Statutory Exposure  │
 │  • Script Supervisor     │     • Live Parallel Search citation chips    │     • Georgia 30% Tax     │
-│  • Studio Legal Counsel  │     • Paced Director vs Counsel debates      │     • Distribution Risk   │
-│  • Location Manager      │     • Live script mutation diffs             │     • Export Form E&O PDF │
+│  • Studio Legal Counsel  │     • 5-Agent War Room dialectic debate      │     • Distribution Risk   │
+│  • Location Manager      │     • Script mutation diffs & licenses       │     • Export Form E&O PDF │
 │  • The Director          │                                              │                           │
-│                          │  ⌨️ Floating Prompt Bar                      │                           │
-│  🎙️ Dual-Voice Synthesizer│     • ✨ "Generate Scene with Gemini"        │                           │
-│     (Sequential audio)   │     • 📎 Attach .md, .fountain, .txt files   │                           │
+│                          │  ⚡ Quick Presets [Cyber Heist] [Gothic]    │                           │
+│  🎙️ Multi-Voice Speech   │  ⌨️ Floating Prompt Bar                      │                           │
+│     (Sequential audio)   │     • ✨ "Generate Scene with Gemini"        │                           │
+│                          │     • 📎 Attach .md, .fountain, .txt files   │                           │
 └──────────────────────────┴──────────────────────────────────────────────┴───────────────────────────┘
 ```
 
 ---
 
-## 🤖 5-Agent Autonomous Crew Swarm
+## 🤖 5-Agent Autonomous Crew Swarm & Workflow
 
 ```mermaid
 flowchart TD
-    subgraph Inputs["🎬 Production Inputs"]
-        SC["📄 Screenplay Script (.fountain / .md / text)"]
+    subgraph Inputs["🎬 Production Ingestion"]
+        SC["📄 Screenplay Script (.fountain / .md / .txt)"]
+        CP["🛡️ Clearance Passport Frontmatter (YAML)"]
         GEN["✨ Gemini 2.0 Dynamic Scene Generator"]
     end
 
-    subgraph Swarm["🤖 Autonomous Crew Swarm"]
-        SS["👁️ Script Supervisor<br/><i>Gemini 2.0 Multimodal Vision</i>"]
-        LC["⚖️ Studio Legal Counsel<br/><i>Parallel Search API Grounding</i>"]
-        LM["📍 Location Manager<br/><i>Permits & Georgia 30% Tax Rebate</i>"]
+    subgraph Swarm["🤖 5-Agent Autonomous Crew Swarm"]
+        SS["👁️ Script Supervisor<br/><i>Gemini 2.0 Multimodal Token Scrubber</i>"]
+        LC["⚖️ Studio Legal Counsel<br/><i>Statutory Lanham & Copyright Auditor</i>"]
+        LM["📍 Location Manager<br/><i>Permits & Georgia 30% Tax Incentive</i>"]
         DIR["🎬 The Director<br/><i>Creative Vision & Fair-Use Defender</i>"]
         CBO["👑 Completion Bond Officer<br/><i>Actuarial Underwriting & Risk Calc</i>"]
     end
 
-    subgraph Debate["⚡ Paced Dialectic Conflict"]
-        WAR["🎙️ Sequential Turn-Based Debate<br/><i>Legal Counsel vs The Director</i>"]
-        MUT["✍️ Real-Time Script Mutation<br/><i>Raw Asset ➔ Copyright-Safe Prop</i>"]
+    subgraph ParallelLoop["🔍 Parallel Search Runtime Verification"]
+        PS["⚡ Parallel Search API<br/><i>USPTO Live Trademark Search</i>"]
+        REG["✅ 0 Conflicting Registrations Confirmed"]
     end
 
-    subgraph Outputs["📜 Legal & Cryptographic Deliverables"]
-        PDF["📑 Form E&O-2026 Insurance Binder (jsPDF)"]
-        W3["⛓️ Base Sepolia EVM Clearance Passport"]
-        DIST["🚀 Distribution Clearance Approved"]
+    subgraph Resolution["⚖️ Dual Clearance Paths"]
+        MUT["✍️ Script Mutation Defusal<br/><i>Raw Asset ➔ Verified Clean Prop</i>"]
+        LIC["📜 Production License Exemption<br/><i>Active Sync / Permit ➔ $0 Exposure</i>"]
+    end
+
+    subgraph Deliverables["📜 Legal & Cryptographic Deliverables"]
+        PDF["📑 Form E&O-2026 Motion Picture Underwriting Binder (PDF)"]
+        PASS["🛡️ Clearance Passport Embedded Screenplay (.md / .fountain)"]
+        EVM["⛓️ Merkle Root Seal & EVM Attestation"]
     end
 
     Inputs --> SS
+    CP --> SS
     GEN --> SS
     SS --> LC & LM
     LC & LM --> DIR
-    DIR <-->|Paced 3.5s Delays| LC
-    DIR & LC --> WAR
-    WAR --> MUT
+    DIR --> LC
+    LC --> PS
+    PS --> REG
+    REG --> MUT
+    DIR --> LIC
     MUT --> CBO
-    CBO --> PDF & W3 & DIST
+    LIC --> CBO
+    CBO --> PDF & PASS & EVM
 ```
 
 ---
 
-## 🚀 Key Features
+## 🚀 Deep-Dive: Core Innovations
 
-### 1. Direct Live Google Cloud AI + Parallel Search Engine
-- **Gemini 2.0 Flash (`@google/genai`)**: Ingests screenplay text and visual assets to detect trademarks, copyright music sync cues, and municipal permit hazards.
-- **Parallel Search API**: Executes real-time web searches against the USPTO Principal Register, municipal filming ordinances (FilmLA), and federal caselaw (*Campbell v. Acuff-Rose*).
-- **On-Demand Scene Generator**: Generates original high-stakes screenplay scenes on the fly with Gemini.
+### 1. 5-Agent War Room Dialectics
+Instead of a canned agreement between two voices, all 5 agents now actively participate in a multi-turn, paced dialectic negotiation:
+- **Studio Legal Counsel** raises specific statutory objections (e.g. Lanham Act § 43(a) trademark dilution).
+- **The Director** passionately defends artistic authenticity, period accuracy, or fair-use doctrine.
+- **Location Manager / Production Specialist** intervenes with pragmatic, production-feasible alternatives.
+- **Parallel Search** conducts a runtime trademark availability search on the proposed replacement.
+- **Completion Bond Officer** calculates the actuarial impact on the production bond and signs off on the resolution.
 
-### 2. Paced Dialectic Crew Negotiation
-- **Zero Audio Obstruction**: Sequential turn-based speech synthesis with distinct pitch and tempo (Legal Counsel: calm analytical tone; Director: energetic passionate tone).
-- **Reasoning Breathing Space**: Paced 3.5-second reading intervals between arguments with live `[Agent is typing...]` indicators.
+### 2. Runtime Parallel Search Grounding (USPTO Registrations)
+When an asset is defused (e.g. replacing *"Rolex Submariner"* with *"ChronoVolt Apex"*), DeepClear Studio calls the **Parallel Search API** live:
+- Executes targeted searches against the **USPTO Principal Register** and trademark registries.
+- Confirms whether the proposed substitute has **0 conflicting trademark registrations**.
+- Renders an interactive **Parallel Search Verification Card** directly inside the chat feed with source query, confidence score, and timestamp.
 
-### 3. Pinned Quick-Action Bar
-- Instant `⚡ Negotiate [Hazard]` action pills pinned above the prompt bar — no manual scrolling required.
+### 3. Dual Clearance Paths: Mutation vs. Active Licensing
+Not every flagged asset needs to be rewritten. Films often hold valid synchronization licenses or municipal permits:
+- **Script Mutation Route**: Rewrites the script with a verified fictitious asset, updating all dialogue and action blocks.
+- **Active Production License Route**: Producers click **"Mark as Licensed"** to record an active license (e.g. 17 U.S.C. § 115 compulsory mechanical license or Georgia Film Office Permit #GA-2026-4412). The script wording remains unaltered while statutory risk drops to **$0.00**.
 
-### 4. Form E&O-2026 Executive PDF Binder
-- Generates official **Form E&O-2026 Motion Picture Underwriting Binder** with executive formatting, itemized hazard resolution tables, Merkle root hash, and Base Sepolia transaction seals.
+### 4. Clearance Passport & Safe-Harbor Re-Upload Engine
+A major pain point in production clearance is re-flagging: when a cleared script is downloaded and re-uploaded, stateless AI models flag the modified names again as liabilities.
+- DeepClear Studio embeds a **`deepclear_passport` YAML frontmatter** into all exported `.md`, `.fountain`, and `.txt` files.
+- Contains the production ID, Merkle root hash, list of defused assets, and registered license exemptions.
+- Upon upload, the parser automatically recognizes the passport, marks safe-harbor assets, and shields them from false-positive re-flagging.
+
+### 5. Form E&O-2026 Motion Picture Underwriting Binder
+- Generates an executive **Form E&O-2026 Motion Picture Insurance Binder** formatted with high-grade typography.
+- Itemizes every hazard, statutory legal code, resolution method, Parallel Search verification status, and remaining exposure.
+- Includes actuarial formulas for Georgia 30% tax incentive eligibility and completion bond release.
 
 ---
 
-## 🛠️ Quickstart & Local Setup
+## 🛠️ Quickstart & Local Development
 
-### 1. Clone & Install
+### 1. Clone & Install Dependencies
 ```bash
 git clone https://github.com/miracles2motion/deepclear-studio.git
 cd deepclear-studio
@@ -122,7 +162,7 @@ npm install
 ```
 
 ### 2. Configure Environment Variables
-Create `.env.local` in the project root:
+Create a `.env.local` file in the project root:
 ```env
 # Google Cloud Gemini API Key (from Google AI Studio)
 GEMINI_API_KEY="your_gemini_api_key_here"
@@ -130,7 +170,7 @@ GEMINI_API_KEY="your_gemini_api_key_here"
 # Parallel Search API Key (from Parallel AI)
 PARALLEL_API_KEY="your_parallel_api_key_here"
 
-# Base Sepolia RPC
+# Optional: Base Sepolia RPC
 NEXT_PUBLIC_RPC_URL="https://sepolia.base.org"
 ```
 
@@ -142,19 +182,19 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
 ---
 
-## ⚖️ Hackathon Track Alignment
+## 🔍 Track Compliance Verification
 
 | Category | DeepClear Studio Implementation | Status |
 | :--- | :--- | :---: |
-| **Track** | Google Cloud Agentic Cinema — Parallel Track ($15,000) | ✅ Complete |
-| **Primary AI** | Google Cloud Gemini 2.0 Flash (`@google/genai`) | ✅ Complete |
-| **Grounding** | Parallel Search API (`https://api.parallel.ai/v1/search`) | ✅ Complete |
-| **UI Design** | 3-Column Apple / Linear Dark Mode with Google Gemini Chat | ✅ Complete |
-| **Deliverables** | Form E&O-2026 PDF Binder + Base Sepolia Merkle Passport | ✅ Complete |
-| **Live URL** | [https://deepclear-studio.vercel.app](https://deepclear-studio.vercel.app) | ✅ Active |
+| **Hackathon Track** | Google Cloud Agentic Cinema — Parallel Track ($15,000 Category) | ✅ Complete |
+| **Primary Multimodal AI** | Google Cloud Gemini 2.0 Flash (`@google/genai`) with self-healing cascade | ✅ Complete |
+| **Grounding Engine** | Parallel Search API (`https://api.parallel.ai/v1/search`) live runtime query | ✅ Complete |
+| **Agent Collaboration** | 5-Agent Autonomous Crew Swarm (Supervisor, Legal, Location, Director, Bond) | ✅ Complete |
+| **Workflow Realism** | Form E&O-2026 Underwriting Binder + Clearance Passport safe-harbor | ✅ Complete |
+| **Production Deployment** | Next.js 14 App Router live on Vercel | ✅ Active |
 
 ---
 
 ## 📜 License
 
-MIT License. Designed & developed for the **Google Cloud Agentic Cinema Hackathon**.
+MIT License. Built with passion for the **Google Cloud Agentic Cinema Hackathon**.

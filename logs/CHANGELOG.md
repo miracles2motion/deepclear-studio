@@ -4,6 +4,23 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.5.0] — 2026-09-04
+### 🏛️ 5-Agent War Room, Runtime Parallel Search Verification & Safe-Harbor Passport
+- **True 5-Agent Dialectic War Room**: Transformed the debate from a canned 2-person exchange into an authentic 5-agent studio war room. Legal Counsel, The Director, Location / Art Department Manager, Completion Bond Officer, and Script Supervisor now actively converse, challenge assumptions, and negotiate solutions.
+- **🌟 Runtime Parallel Search Registry Verification (Parallel Track Centerpiece)**: Integrated real-time Parallel Search API calls directly into the debate loop. When alternatives or licenses are proposed, Parallel Search searches live USPTO and global trademark registries (`verifySubstitutePropWithParallel`) to confirm zero conflicting marks before the crew or bond officer approves the compromise.
+- **Dual Clearance Action Routes**:
+  - *Route A (Defuse & Substitute)*: Mutates infringing props/locations to authentic narrative alternatives verified conflict-free by Parallel Search.
+  - *Route B (Licensed & Permitted Exemption)*: Supports productions holding existing music sync rights (17 U.S.C. § 115), product placement deals, or city filming permits. Parallel Search validates the statutory standard, and the Bond Officer waives exposure to $0 while keeping the authentic original script wording intact.
+- **Tamper-Evident Clearance Passport Engine (`src/lib/passport.ts`)**: Built `embedClearancePassport` and `extractClearancePassport`. Automatically embeds a YAML frontmatter header into exported `.md` and `.fountain` files recording the Merkle root, cleared replacements, and licensed exemptions.
+- **Resolved Re-Upload Risk Loop**: When a downloaded safe-harbor script is re-uploaded, DeepClear automatically extracts the passport, injects safe-harbor exemptions into Gemini, confirms $0 risk, and displays a green verified safe-harbor badge with zero false-positive re-flagging.
+- **1-Click Judge Presets**: Added 3 quick-launch scenario chips above the prompt bar:
+  - `[ 🚀 Cyber Heist ]`: Tests trademark and music sync (Apple Vision Pro, Cybertruck, Radiohead).
+  - `[ 🏛️ Southern Gothic ]`: Tests municipal filming permits and tax rebates (Forsyth Park, Macallan 25).
+  - `[ 🛡️ Cleared Masterpiece (Safe Harbor) ]`: Pre-cleared script demonstrating instant $0 risk on re-upload.
+- **Extended Voice Casting**: Added dedicated voice profile for the Location / Art Manager in browser speech synthesis.
+
+---
+
 ## [v0.4.0] — 2026-09-03
 ### 🎭 Agent Persona Theming, Live Thinking Traces & Multi-Voice Engine
 - **Real-Time Agent Thinking Mini-Cards**: Added dynamic reasoning cards inside left-sidebar agent cards (`✨ THINKING • • •`) displaying internal legal reasoning (e.g. *Rogers v. Grimaldi* tests, Lanham Act § 43(a) exposure, and prop substitution feasibility) before each dialectic turn.

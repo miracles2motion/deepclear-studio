@@ -103,9 +103,24 @@ async function generateContentWithCascade(
 
 export async function analyzeScreenplayWithGemini(
   scriptText: string,
-  imagePartBase64?: { data: string; mimeType: string }
+  imagePartBase64?: { data: string; mimeType: string },
+  safeHarborAssets?: Array<{ originalText: string; clearedAs?: string; status: string }>
 ) {
   const genAI = getGeminiClient();
+
+  const safeHarborSection =
+    safeHarborAssets && safeHarborAssets.length > 0
+      ? `\nIMMUTABLE SAFE-HARBOR CLEARANCE REGISTRY (DO NOT FLAG AS HAZARDS):
+The following production assets have ALREADY completed full dialectic debate, received verified Parallel Search registry clearance, or hold valid commercial/sync licenses:
+${safeHarborAssets
+  .map(
+    (a, i) =>
+      `${i + 1}. "${a.clearedAs || a.originalText}" (Original: "${a.originalText}", Status: ${a.status.toUpperCase()})`
+  )
+  .join("\n")}
+
+STRICT RULE: DO NOT flag any of the above pre-cleared or pre-licensed assets as legal liabilities or hazards. Omit them completely from the entities list. If an asset is already cleared, statutory exposure is $0.\n`
+      : "";
 
   const prompt = `You are the Lead Script Supervisor and Legal Clearance Inspector for DeepClear Studio.
 Analyze the following screenplay excerpt and visual scene elements for legal liabilities:
@@ -113,7 +128,7 @@ Analyze the following screenplay excerpt and visual scene elements for legal lia
 2. Copyright risks (unlicensed sync music, songs, lyrics, copyrighted artwork/tattoos)
 3. Municipal filming permits & safety hazards (unpermitted drones over traffic, high-speed bridge/highway stunts, explosions, SAG-AFTRA overtime)
 4. State tax incentive eligibility (e.g. Georgia 30%, New York 30%, New Mexico 25%)
-
+${safeHarborSection}
 For each risk found, return a JSON object with this exact schema:
 {
   "entities": [
@@ -225,17 +240,20 @@ Rules for Real-World Clearance Authenticity:
 }
 
 /**
- * Generates dynamic, context-specific, cinematic debate turns for a specific hazard
- * ensuring no two negotiations ever sound repetitive or templated.
+ * Generates dynamic, context-specific, cinematic 5-agent debate turns for a specific hazard
+ * ensuring authentic dialectic exchange with active participation from Legal Counsel,
+ * The Director, Location / Art Manager, Script Supervisor, and Completion Bond Officer.
  */
 export async function generateDynamicDebateTurns(params: {
   scriptText: string;
   entity: ExtractedEntity;
+  isLicenseRoute?: boolean;
 }) {
   const genAI = getGeminiClient();
+  const isLicense = !!params.isLicenseRoute;
 
   const prompt = `You are the lead dialogue supervisor for a Hollywood film clearance war room.
-Generate a dynamic, authentic, high-stakes 4-turn dialectic debate between Legal Counsel and The Director over a detected scene hazard.
+Generate a dynamic, authentic, high-stakes dialectic debate between ALL 5 crew agents over a detected scene hazard.
 
 Scene Context:
 ${params.scriptText}
@@ -245,19 +263,26 @@ Specific Liability Under Debate:
 - Legal Issue: ${params.entity.description}
 - Proposed Substitution: "${params.entity.defusedText || "custom cleared prop"}"
 - Statutory Financial Exposure: $${params.entity.originalExposure.toLocaleString()}
+- Resolution Route: ${isLicense ? "PRODUCTION HOLDS ACTIVE COMMERCIAL/SYNC LICENSE OR PERMIT" : "CREATIVE COMPROMISE & NARRATIVE PROP SUBSTITUTION"}
 
-Requirements for the 4 turns:
-1. counselObjection: Legal Counsel raises a sharp, statutory legal objection specific to this exact asset and category (Lanham Act for trademarks, 17 U.S.C. 504 sync licensing for music, municipal MOME safety for locations/stunts). (1-2 sentences)
-2. directorDefense: The Director passionately defends why this exact asset or location is essential for character motivation, tone, or visual realism. (1-2 sentences)
-3. counselCompromise: Legal Counsel proposes substituting "${params.entity.rawText}" with "${params.entity.defusedText || "a cleared alternative"}", explaining how it protects the film's E&O policy while retaining dramatic tension. (1-2 sentences)
-4. directorAcceptance: The Director accepts the compromise and issues a practical instruction to the art, sound, or location department. (1 sentence)
+Crew Roles to Include:
+1. counselObjection: Legal Counsel raises a sharp statutory legal objection (Lanham Act § 43(a), 17 U.S.C. § 504 sync license, MOME permit). (1-2 sentences)
+2. directorDefense: The Director defends why this element is essential for artistic character motivation, visual realism, or Fair Use under Rogers v. Grimaldi. (1-2 sentences)
+3. locationManagerProposal: Location / Art Department Manager steps in:
+   - ${isLicense ? "Affirms production license documentation or municipal filming permit filed with local film commission." : `Proposes an aesthetically matched narrative substitute "${params.entity.defusedText || "bespoke prop"}" or relocating to a 30% tax-rebate qualified soundstage.`} (1-2 sentences)
+4. parallelSearchQuery: Targeted query formulated for live Parallel Search registry verification to check for zero commercial conflicts. (e.g. "${params.entity.defusedText || params.entity.rawText} trademark clearance USPTO")
+5. directorAcceptance: The Director accepts the solution and confirms aesthetic alignment with the crew. (1 sentence)
+6. bondOfficerSignOff: Completion Bond Officer evaluates Parallel Search grounding, underwrites the policy rider, and issues official E&O Safe Harbor clearance. (1 sentence)
 
 Return ONLY a JSON object with this schema:
 {
   "counselObjection": string,
   "directorDefense": string,
-  "counselCompromise": string,
-  "directorAcceptance": string
+  "locationManagerProposal": string,
+  "parallelSearchQuery": string,
+  "directorAcceptance": string,
+  "bondOfficerSignOff": string,
+  "proposedReplacement": string
 }`;
 
   const result = await generateContentWithCascade(genAI, prompt, {

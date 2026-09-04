@@ -1,13 +1,14 @@
 import { NextRequest } from "next/server";
 import { analyzeScreenplayWithGemini } from "@/lib/gemini";
 import { searchParallelGrounding } from "@/lib/parallel";
+import { extractClearancePassport } from "@/lib/passport";
 import { ExtractedEntity } from "@/types";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const { scriptText, imageBase64 } = await req.json();
+    const { scriptText, imageBase64, safeHarborAssets } = await req.json();
 
     if (!scriptText || !scriptText.trim()) {
       return new Response(
@@ -15,6 +16,16 @@ export async function POST(req: NextRequest) {
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
+
+    const { cleanedScript, passport } = extractClearancePassport(scriptText);
+    const combinedSafeHarbor = [
+      ...(safeHarborAssets || []),
+      ...(passport?.assets?.map((a) => ({
+        originalText: a.originalText,
+        clearedAs: a.clearedAs,
+        status: a.status,
+      })) || []),
+    ];
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -24,6 +35,16 @@ export async function POST(req: NextRequest) {
         };
 
         try {
+          if (passport) {
+            sendEvent({
+              type: "AGENT_THOUGHT",
+              agent: "bond_officer",
+              payload: {
+                message: `🛡️ Verified DeepClear Passport detected (${passport.merkleRoot.slice(0, 12)}...). Loading ${passport.assets.length} pre-cleared safe harbor exemptions into E&O ledger.`,
+              },
+            });
+          }
+
           // 1. Script Supervisor Thought
           sendEvent({
             type: "AGENT_THOUGHT",
@@ -33,10 +54,11 @@ export async function POST(req: NextRequest) {
             },
           });
 
-          // 2. Direct live Gemini Analysis
+          // 2. Direct live Gemini Analysis with Safe Harbor Exemptions
           const geminiResult = await analyzeScreenplayWithGemini(
-            scriptText,
-            imageBase64 ? { data: imageBase64, mimeType: "image/jpeg" } : undefined
+            cleanedScript,
+            imageBase64 ? { data: imageBase64, mimeType: "image/jpeg" } : undefined,
+            combinedSafeHarbor
           );
 
           const entities: ExtractedEntity[] = geminiResult.entities || [];
