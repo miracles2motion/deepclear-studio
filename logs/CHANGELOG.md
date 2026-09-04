@@ -24,6 +24,7 @@ This changelog records major releases, architectural features, and critical mile
   - *Flicker-Free Rate-Limit Pacing*: Inter-hazard delays (1.5s) now display active pacing telemetry via the Script Supervisor (`⚡ Auto-Pilot Swarm: Rate-limit defense pacing (1.5s) • Next: "..."`), eliminating visual blinks between items.
   - *Right Column HUD Progress Meter*: Added live animated progress bar and target counter in the Underwriting HUD tracking swarm resolution in real time.
   - *Smooth Viewport Auto-Lock*: Synchronized `useEffect` auto-scrolling with `agentThinking`, `agentTypingStatus`, and `isAutoClearing` to ensure the active reasoning state is always in viewport focus.
+  - *Judge Presets Visibility & Clearance Passport HUD Fix*: Resolved an issue where Judge Presets vanished after completing a cleared passport (`isCleared` was falsely requiring `initialExposure > 0`). Presets are now permanently accessible whenever idle (`!isLoading && !isAutoClearing`) with contextual status labels (`"🛡️ Passport Verified! Test Another Preset:"`). Synchronized the Underwriting HUD to display `APPROVED (SAFE HARBOR)` and `SAFE HARBOR (EXEMPT)` rather than falsely showing `IDLE` or `Awaiting Script Ingestion`. Ingested passport assets now immediately populate the Cleared Assets Ledger.
 
 ---
 

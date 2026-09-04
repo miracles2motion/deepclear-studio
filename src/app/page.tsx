@@ -431,6 +431,29 @@ Clearance secured. We have safe harbor.`,
       if (passport.productionTitle) {
         setProductionTitle(passport.productionTitle);
       }
+
+      // Populate pre-cleared assets directly into the ledger so they are visible and verifiable
+      if (passport.assets && passport.assets.length > 0) {
+        const passportEntities: ExtractedEntity[] = passport.assets.map((a, idx) => ({
+          id: `passport-asset-${idx + 1}`,
+          sceneNumber: 1,
+          rawText: a.originalText,
+          category: (a.category as any) || "trademark",
+          description:
+            a.status === "licensed"
+              ? (a.licenseRef || "Active production synchronization license on file")
+              : `Pre-cleared safe harbor substitute: ${a.clearedAs}`,
+          status: (a.status as ClearanceStatus) || "cleared",
+          originalExposure: 0,
+          clearedExposure: 0,
+          defusedText: a.clearedAs || `${a.originalText} (Licensed)`,
+          citations: [],
+        }));
+        setEntities(passportEntities);
+        setClearedEntityIds(passportEntities.filter((e) => e.status === "cleared").map((e) => e.id));
+        setLicensedEntityIds(passportEntities.filter((e) => e.status === "licensed").map((e) => e.id));
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -1481,10 +1504,13 @@ Clearance secured. We have safe harbor.`,
     setLicensedEntityIds([]);
     setInitialExposure(0);
     setCurrentExposure(0);
+    setCurrentScriptText("");
+    setDisputedEntityIds([]);
     setTaxSavings(0);
     setUploadedFileName(null);
   };
 
+  const hasPassport = messages.some((m) => m.content?.includes("Clearance Passport Ingested"));
   const pendingHazards = entities.filter(
     (e) =>
       !clearedEntityIds.includes(e.id) &&
@@ -1492,7 +1518,10 @@ Clearance secured. We have safe harbor.`,
       e.status !== "cleared" &&
       e.status !== "licensed"
   );
-  const isCleared = initialExposure > 0 && currentExposure === 0;
+  const isCleared =
+    hasPassport ||
+    (initialExposure > 0 && currentExposure === 0) ||
+    (currentScriptText.trim().length > 0 && pendingHazards.length === 0 && !isLoading && !isAutoClearing);
 
   return (
     <div className="h-screen w-screen bg-[#0C0C0E] text-zinc-100 flex flex-col antialiased overflow-hidden font-sans">
@@ -2443,22 +2472,30 @@ Clearance secured. We have safe harbor.`,
               </div>
             )}
 
-            {/* Quick Test Presets: Only visible when chat is fresh/empty OR after script is fully cleared */}
-            {(messages.length <= 1 || isCleared) && (
+            {/* Quick Test Presets: Always visible when idle, with dynamic contextual status */}
+            {!isLoading && !isAutoClearing && (
               <div className="flex items-center gap-1.5 flex-wrap px-1 text-[11px] font-mono animate-in fade-in duration-300">
                 <span
-                  className={`text-[10px] uppercase font-semibold ${
-                    isCleared ? "text-emerald-400" : "text-zinc-500"
+                  className={`text-[10px] uppercase font-semibold flex items-center gap-1 ${
+                    hasPassport
+                      ? "text-sky-400"
+                      : isCleared
+                      ? "text-emerald-400"
+                      : "text-zinc-500"
                   }`}
                 >
-                  {isCleared ? "🎉 All Cleared! Test Another Preset:" : "Judge Presets:"}
+                  {hasPassport
+                    ? "🛡️ Passport Verified! Test Another Preset:"
+                    : isCleared
+                    ? "🎉 All Cleared! Test Another Preset:"
+                    : "Judge Presets:"}
                 </span>
                 {DEMO_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
                     type="button"
                     onClick={() => handleSendMessage(preset.script)}
-                    disabled={isLoading}
+                    disabled={isLoading || isAutoClearing}
                     className={`px-2.5 py-1 rounded-lg border text-xs font-mono transition-all shadow-sm active:scale-95 flex items-center gap-1 disabled:opacity-50 ${
                       preset.id === "safe-harbor-demo"
                         ? "bg-emerald-950/60 hover:bg-emerald-900/80 border-emerald-500/40 text-emerald-300 font-semibold"
@@ -2551,14 +2588,18 @@ Clearance secured. We have safe harbor.`,
               <div className="flex items-center justify-between text-[10px] font-mono uppercase">
                 <span className="text-emerald-400">Tax Rebate Unlocked</span>
                 <span className="text-zinc-500 font-semibold">
-                  {initialExposure > 0 ? "QUALIFIED" : "IDLE"}
+                  {hasPassport ? "SAFE HARBOR" : initialExposure > 0 ? "QUALIFIED" : "IDLE"}
                 </span>
               </div>
               <div className="text-lg font-bold font-mono text-emerald-300">
-                {initialExposure > 0 ? `+${formatCurrency(taxSavings)}` : "$0"}
+                {hasPassport ? "$0 (EXEMPT)" : initialExposure > 0 ? `+${formatCurrency(taxSavings)}` : "$0"}
               </div>
               <div className="text-[10px] text-zinc-500 font-mono truncate">
-                {initialExposure > 0 ? taxJurisdiction : "Awaiting Script Ingestion"}
+                {hasPassport
+                  ? "Exempt under Clearance Passport"
+                  : initialExposure > 0
+                  ? taxJurisdiction
+                  : "Awaiting Script Ingestion"}
               </div>
             </div>
 
@@ -2593,36 +2634,46 @@ Clearance secured. We have safe harbor.`,
               const pendingEntities = entities.filter((e) => !clearedEntityIds.includes(e.id));
               const pendingCount = pendingEntities.length;
               const clearedCount = entities.length - pendingCount;
-              const isFullyResolved = initialExposure > 0 && (pendingCount === 0 || currentExposure === 0);
+              const hasScript =
+                currentScriptText.trim().length > 0 ||
+                messages.some((m) => m.type === "script" || m.sender === "user");
+              const isFullyResolved =
+                hasPassport || (hasScript && (pendingCount === 0 || currentExposure === 0));
 
               return (
                 <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-1.5">
                   <div className="flex items-center justify-between text-[10px] font-mono uppercase">
                     <span className="text-zinc-400">Distribution Risk</span>
-                    {initialExposure === 0 ? (
-                      <span className="text-zinc-500 font-semibold">IDLE</span>
+                    {hasPassport ? (
+                      <span className="text-emerald-400 font-semibold">APPROVED (SAFE HARBOR)</span>
                     ) : isFullyResolved ? (
                       <span className="text-emerald-400 font-semibold">APPROVED</span>
-                    ) : (
+                    ) : pendingCount > 0 ? (
                       <span className="text-rose-400 font-semibold">
                         HOLD ({clearedCount}/{entities.length} CLEARED)
                       </span>
+                    ) : (
+                      <span className="text-zinc-500 font-semibold">IDLE</span>
                     )}
                   </div>
                   <p className="text-xs text-zinc-300 leading-snug">
-                    {initialExposure === 0 ? (
-                      <span className="text-zinc-500">
-                        Awaiting screenplay ingestion to evaluate statutory exposure.
+                    {hasPassport ? (
+                      <span className="text-emerald-300">
+                        Verified DeepClear Clearance Passport active. Pre-cleared safe harbor exemptions confirmed with $0 statutory exposure. Form E&O-2026 certified for distribution.
                       </span>
                     ) : isFullyResolved ? (
                       <span className="text-emerald-300">
                         All {entities.length} liabilities resolved with $0 exposure. Form E&O-2026 certified for distribution.
                       </span>
-                    ) : (
+                    ) : pendingCount > 0 ? (
                       <span className="text-rose-300">
                         {clearedCount > 0 ? `${clearedCount} cleared, ` : ""}
                         {pendingCount} pending ({pendingEntities.slice(0, 2).map((e) => e.rawText).join(", ")}
                         {pendingCount > 2 ? "..." : ""}). Distribution holds pending clearance.
+                      </span>
+                    ) : (
+                      <span className="text-zinc-500">
+                        Awaiting screenplay ingestion to evaluate statutory exposure.
                       </span>
                     )}
                   </p>
