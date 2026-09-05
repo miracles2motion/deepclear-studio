@@ -2840,30 +2840,44 @@ Clearance secured. We have safe harbor.`,
               return (
                 <div className="bg-[#141418] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 space-y-1.5 animate-in fade-in duration-300 shadow-sm">
                   <div className="flex items-center justify-between text-[10px] font-mono uppercase text-zinc-400">
-                    <span className="font-semibold">Resolved Assets ({resolvedAssets.length})</span>
-                    <span className="text-emerald-400 font-semibold text-[10px]">Protected</span>
+                    <span className="font-semibold text-zinc-300">Resolved Hazards ({resolvedAssets.length})</span>
+                    <span className="text-emerald-400 font-semibold text-[10px] flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3 text-emerald-400" />
+                      <span>Safe Harbor ($0)</span>
+                    </span>
                   </div>
-                  <div className="space-y-1 max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-800">
+                  <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-800">
                     {resolvedAssets.map((e) => {
                       const isLic = licensedEntityIds.includes(e.id) || e.status === "licensed";
+                      const heroTitle = isLic ? e.rawText : e.defusedText || "Cleared Fictitious Prop";
+                      const subtitle = isLic
+                        ? `Licensed (Permit / Release On File) • -${formatCurrency(e.originalExposure)}`
+                        : `Defused from: "${e.rawText}" • -${formatCurrency(e.originalExposure)}`;
+
                       return (
                         <div
                           key={e.id}
-                          className="p-1.5 px-2 rounded-lg bg-zinc-900/80 border border-white/5 flex items-center justify-between text-[11px] font-mono group hover:bg-zinc-800/60 transition-colors"
+                          className="p-1.5 px-2 rounded-lg bg-zinc-900/80 border border-white/5 flex items-center justify-between text-[11px] font-mono group hover:bg-zinc-850 transition-colors"
                         >
-                          <div className="truncate min-w-0 pr-1.5">
-                            <span className="text-zinc-200 font-semibold block truncate text-[11px]">
-                              {e.rawText}
+                          <div className="truncate min-w-0 pr-2">
+                            <span
+                              className={`font-semibold block truncate text-[11px] ${
+                                isLic ? "text-sky-300" : "text-emerald-300"
+                              }`}
+                              title={heroTitle}
+                            >
+                              {isLic ? "📜 " : "🛡️ "}
+                              {heroTitle}
                             </span>
-                            <span className="text-[9px] text-zinc-500 block truncate font-mono">
-                              {isLic ? "Licensed (Permit / Release)" : `Mutated: ${e.defusedText || "Clean Prop"}`}
+                            <span className="text-[9px] text-zinc-400 block truncate font-mono" title={subtitle}>
+                              {subtitle}
                             </span>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleDisputeEntity(e)}
                             className="shrink-0 px-2 py-0.5 rounded bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/30 text-amber-300 text-[9px] font-mono transition-all active:scale-95 shadow-sm"
-                            title="Dispute / Re-open this clearance decision"
+                            title="Producer Appeal: Re-open this clearance decision and restore authentic asset"
                           >
                             Dispute
                           </button>
