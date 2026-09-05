@@ -128,6 +128,7 @@ export default function DeepClearStudioPage() {
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const hazardScrollRef = useRef<HTMLDivElement | null>(null);
   const autoClearanceRef = useRef<((hazards?: ExtractedEntity[]) => Promise<void>) | null>(null);
+  const currentScriptRef = useRef<string>("");
 
   const scrollHazards = (direction: "left" | "right") => {
     if (hazardScrollRef.current) {
@@ -401,6 +402,42 @@ Clearance secured. We have safe harbor.`,
     },
   ];
 
+  // Helper to reliably deliver the Final Cleared Production Script card into chat
+  const deliverFinalScriptCard = (scriptToDeliver?: string) => {
+    const text = (scriptToDeliver || currentScriptRef.current || currentScriptText).trim();
+    if (!text) return;
+
+    setMessages((prev) => {
+      // Avoid duplicate final script cards if one was already posted with matching content
+      const alreadyHasThisScript = prev.some(
+        (m) => m.type === "script" && m.content?.trim() === text
+      );
+      if (alreadyHasThisScript) return prev;
+
+      return [
+        ...prev,
+        {
+          id: `final-script-${Date.now()}`,
+          sender: "bond_officer",
+          senderName: "Completion Bond Officer",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "script",
+          content: text,
+        },
+      ];
+    });
+
+    if (typeof window !== "undefined") {
+      import("canvas-confetti").then((confettiModule) => {
+        confettiModule.default({
+          particleCount: 60,
+          spread: 70,
+          origin: { y: 0.7 },
+        });
+      });
+    }
+  };
+
   // Handle Send Message / Analyze Script
   const handleSendMessage = async (textToSend?: string) => {
     const queryText = (textToSend || input).trim();
@@ -417,6 +454,7 @@ Clearance secured. We have safe harbor.`,
     };
 
     setMessages((prev) => [...prev, userMsg]);
+    currentScriptRef.current = queryText;
     setCurrentScriptText(queryText);
     setInput("");
     setIsLoading(true);
@@ -613,8 +651,13 @@ Clearance secured. We have safe harbor.`,
                   },
                 ]);
 
-                // Auto-Pilot: autonomously clear queue without requiring manual button click
-                if (clearanceMode === "auto" && foundEntities.length > 0) {
+                // If 0 liabilities detected, deliver Final Cleared Production Script card directly
+                if (foundEntities.length === 0) {
+                  setTimeout(() => {
+                    deliverFinalScriptCard(cleanedScript || queryText);
+                  }, 600);
+                } else if (clearanceMode === "auto") {
+                  // Auto-Pilot: autonomously clear queue without requiring manual button click
                   const entitiesToClear = [...foundEntities];
                   setTimeout(() => {
                     autoClearanceRef.current?.(entitiesToClear);
@@ -1087,9 +1130,10 @@ Clearance secured. We have safe harbor.`,
       setCurrentExposure((prev) => Math.max(0, prev - entity.originalExposure));
 
       // Replace hazard with cleared legal compromise in screenplay text (if replacement route)
-      let updatedScript = currentScriptText;
+      let updatedScript = currentScriptRef.current || currentScriptText;
       if (!isLicenseRoute && updatedScript && entity.rawText) {
         updatedScript = updatedScript.replaceAll(entity.rawText, compromiseText);
+        currentScriptRef.current = updatedScript;
         setCurrentScriptText(updatedScript);
       }
 
@@ -1120,6 +1164,19 @@ Clearance secured. We have safe harbor.`,
         isLicenseRoute ? `License registered for ${entity.rawText}.` : `Script mutated to ${compromiseText}.`,
         "script_supervisor"
       );
+
+      // If all liabilities are resolved in manual mode, deliver Final Cleared Production Script
+      const remainingLiabilities = entities.filter(
+        (e) =>
+          e.id !== entity.id &&
+          !clearedEntityIds.includes(e.id) &&
+          !licensedEntityIds.includes(e.id) &&
+          e.status !== "cleared" &&
+          e.status !== "licensed"
+      );
+      if (remainingLiabilities.length === 0 && !isAutoClearing) {
+        deliverFinalScriptCard(updatedScript);
+      }
     } catch (err) {
       console.error("Debate orchestration error:", err);
     } finally {
@@ -1190,6 +1247,20 @@ Clearance secured. We have safe harbor.`,
     ]);
 
     await speakTextAsync(`Indemnity on file. Liability waived.`, "bond_officer");
+
+    // If all liabilities are resolved in manual mode, deliver Final Cleared Production Script
+    const remainingLiabilities = entities.filter(
+      (e) =>
+        e.id !== entity.id &&
+        !clearedEntityIds.includes(e.id) &&
+        !licensedEntityIds.includes(e.id) &&
+        e.status !== "cleared" &&
+        e.status !== "licensed"
+    );
+    if (remainingLiabilities.length === 0 && !isAutoClearing) {
+      deliverFinalScriptCard(currentScriptRef.current || currentScriptText);
+    }
+
     setIsLoading(false);
   };
 
@@ -1247,29 +1318,21 @@ Clearance secured. We have safe harbor.`,
     setAgentTypingStatus(null);
     setAgentThinking(null);
 
-    // Final celebration notice and Final Cleared Production Script Card
-    setMessages((prev) => {
-      const finishNotice: ChatMessage = {
+    // Final celebration notice
+    setMessages((prev) => [
+      ...prev,
+      {
         id: `auto-pilot-done-${Date.now()}`,
         sender: "bond_officer",
         senderName: "Completion Bond Officer",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
         content: `🛡️ **Auto-Pilot Clearance Complete**: All ${hazardsQueue.length} hazards autonomously resolved with **$0.00 statutory exposure**. Safe-Harbor Underwriting Binder certified for distribution.`,
-      };
-      const nextMsgs: ChatMessage[] = [...prev, finishNotice];
-      if (currentScriptText) {
-        nextMsgs.push({
-          id: `final-script-${Date.now()}`,
-          sender: "bond_officer",
-          senderName: "Completion Bond Officer",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "script",
-          content: currentScriptText,
-        });
-      }
-      return nextMsgs;
-    });
+      },
+    ]);
+
+    // Reliably deliver Final Cleared Production Script Card using non-stale ref
+    deliverFinalScriptCard(currentScriptRef.current || currentScriptText);
 
     if (typeof window !== "undefined") {
       import("canvas-confetti").then((confettiModule) => {
@@ -1386,6 +1449,7 @@ Clearance secured. We have safe harbor.`,
       }
       if (typeof data.currentScriptText === "string") {
         setCurrentScriptText(data.currentScriptText);
+        currentScriptRef.current = data.currentScriptText;
       }
       if (typeof data.uploadedFileName === "string") {
         setUploadedFileName(data.uploadedFileName);
@@ -1506,6 +1570,7 @@ Clearance secured. We have safe harbor.`,
     setInitialExposure(0);
     setCurrentExposure(0);
     setCurrentScriptText("");
+    currentScriptRef.current = "";
     setDisputedEntityIds([]);
     setTaxSavings(0);
     setUploadedFileName(null);
