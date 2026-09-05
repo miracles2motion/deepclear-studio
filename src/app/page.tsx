@@ -402,6 +402,27 @@ Clearance secured. We have safe harbor.`,
     },
   ];
 
+  // Safely mutates screenplay text, preventing stuttering duplicate words and article collisions (e.g. "vintage vintage", "An an")
+  const mutateScriptText = (script: string, rawText: string, replacement: string): string => {
+    if (!script || !rawText || !replacement) return script;
+
+    let updated = script.replaceAll(rawText, replacement);
+
+    // 1. Sanitize duplicate word stutters caused by prefix overlap (e.g. "vintage vintage" -> "vintage")
+    updated = updated.replace(/\b([a-zA-Z]+)\s+\1\b/gi, (match) => {
+      return match.split(/\s+/)[0];
+    });
+
+    // 2. Sanitize duplicate or clashing indefinite articles (e.g. "An an" -> "An", "a a" -> "a", "a an" -> "an")
+    updated = updated.replace(/\b(a|an)\s+(a|an)\b/gi, (match, first, second) => {
+      const isCapitalized = first[0] === first[0].toUpperCase() && first[0] !== first[0].toLowerCase();
+      const chosen = second.toLowerCase();
+      return isCapitalized ? chosen.charAt(0).toUpperCase() + chosen.slice(1) : chosen;
+    });
+
+    return updated;
+  };
+
   // Helper to reliably deliver the Final Cleared Production Script card into chat
   const deliverFinalScriptCard = (scriptToDeliver?: string) => {
     const text = (scriptToDeliver || currentScriptRef.current || currentScriptText).trim();
@@ -1132,7 +1153,7 @@ Clearance secured. We have safe harbor.`,
       // Replace hazard with cleared legal compromise in screenplay text (if replacement route)
       let updatedScript = currentScriptRef.current || currentScriptText;
       if (!isLicenseRoute && updatedScript && entity.rawText) {
-        updatedScript = updatedScript.replaceAll(entity.rawText, compromiseText);
+        updatedScript = mutateScriptText(updatedScript, entity.rawText, compromiseText);
         currentScriptRef.current = updatedScript;
         setCurrentScriptText(updatedScript);
       }
@@ -1369,6 +1390,28 @@ Clearance secured. We have safe harbor.`,
           : e
       )
     );
+
+    // Revert mutated screenplay text back to original authentic rawText
+    let updatedScript = currentScriptRef.current || currentScriptText;
+    if (updatedScript && entity.defusedText) {
+      if (updatedScript.includes(entity.defusedText)) {
+        updatedScript = updatedScript.replaceAll(entity.defusedText, entity.rawText);
+      } else {
+        const capitalizedDefused =
+          entity.defusedText.charAt(0).toUpperCase() + entity.defusedText.slice(1);
+        if (updatedScript.includes(capitalizedDefused)) {
+          updatedScript = updatedScript.replaceAll(capitalizedDefused, entity.rawText);
+        } else {
+          const escaped = entity.defusedText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const regex = new RegExp(escaped, "gi");
+          if (regex.test(updatedScript)) {
+            updatedScript = updatedScript.replace(regex, entity.rawText);
+          }
+        }
+      }
+      currentScriptRef.current = updatedScript;
+      setCurrentScriptText(updatedScript);
+    }
 
     // Add in-chat notice
     const disputeNotice: ChatMessage = {
