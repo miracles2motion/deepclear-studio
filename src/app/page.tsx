@@ -1589,6 +1589,44 @@ Clearance secured. We have safe harbor.`,
     (initialExposure > 0 && currentExposure === 0) ||
     (currentScriptText.trim().length > 0 && pendingHazards.length === 0 && !isLoading && !isAutoClearing);
 
+  // Pending actions check: true if any hazard is still unresolved or currently disputed
+  const hasPendingAction = pendingHazards.length > 0;
+
+  // Active workflow execution check: true if analysis, speech, agent cognition, or auto-clearance is actively running
+  const isWorkflowActive = Boolean(
+    isLoading ||
+    isAutoClearing ||
+    isGeneratingScene ||
+    speakingAgent ||
+    agentThinking ||
+    agentTypingStatus
+  );
+
+  // Unstarted initial state before any screenplay ingestion or workflow execution
+  const hasNoScript =
+    entities.length === 0 &&
+    currentScriptText.trim().length === 0 &&
+    currentScriptRef.current.trim().length === 0 &&
+    !hasPassport;
+
+  // Fully completed workflow: zero pending liabilities, zero remaining exposure, not currently executing,
+  // and a screenplay was actually processed or pre-cleared passport verified
+  const isWorkflowCompleted =
+    !isWorkflowActive &&
+    !hasPendingAction &&
+    (hasPassport ||
+      (entities.length > 0 && currentExposure === 0) ||
+      (currentScriptText.trim().length > 0 && entities.length === 0));
+
+  // Judge Presets MUST NOT be shown if:
+  // 1. There is action yet to be done (pendingHazards.length > 0), including after a user clicks Dispute
+  // 2. A workflow is currently running (isWorkflowActive)
+  // 3. A workflow has started but is not completed (!isWorkflowCompleted)
+  const shouldShowJudgePresets =
+    !isWorkflowActive &&
+    !hasPendingAction &&
+    (hasNoScript || isWorkflowCompleted);
+
   return (
     <div className="h-screen w-screen bg-[#0C0C0E] text-zinc-100 flex flex-col antialiased overflow-hidden font-sans">
       {/* Hidden File Input */}
@@ -2521,8 +2559,8 @@ Clearance secured. We have safe harbor.`,
               </div>
             )}
 
-            {/* Quick Test Presets: Always visible when idle, with dynamic contextual status */}
-            {!isLoading && !isAutoClearing && (
+            {/* Quick Test Presets: Visible strictly when idle on boot OR after workflow is 100% completed with 0 pending actions */}
+            {shouldShowJudgePresets && (
               <div className="flex items-center gap-1.5 flex-wrap px-1 text-[11px] font-mono animate-in fade-in duration-300">
                 <span
                   className={`text-[10px] uppercase font-semibold flex items-center gap-1 ${
@@ -2544,7 +2582,7 @@ Clearance secured. We have safe harbor.`,
                     key={preset.id}
                     type="button"
                     onClick={() => handleSendMessage(preset.script)}
-                    disabled={isLoading || isAutoClearing}
+                    disabled={isWorkflowActive || hasPendingAction}
                     className={`px-2.5 py-1 rounded-lg border text-xs font-mono transition-all shadow-sm active:scale-95 flex items-center gap-1 disabled:opacity-50 ${
                       preset.id === "safe-harbor-demo"
                         ? "bg-emerald-950/60 hover:bg-emerald-900/80 border-emerald-500/40 text-emerald-300 font-semibold"
