@@ -2612,49 +2612,53 @@ Clearance secured. We have safe harbor.`,
         {/* RIGHT COLUMN: Underwriting & E&O Clearance HUD (300px)    */}
         {/* ========================================================= */}
         <aside
-          className={`w-72 xl:w-80 border-l border-white/[0.06] bg-[#101012] p-4 flex-col justify-between shrink-0 overflow-y-auto ${
+          className={`w-72 xl:w-80 border-l border-white/[0.06] bg-[#101012] p-3 sm:p-3.5 flex flex-col h-full shrink-0 overflow-hidden ${
             mobileTab === "risk" ? "flex w-full h-full" : "hidden lg:flex"
           }`}
         >
-          <div className="space-y-4">
-            <div className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold border-b border-white/[0.06] pb-2">
-              E&O Underwriting Status
+          {/* Scrollable HUD content container */}
+          <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5 scrollbar-thin scrollbar-thumb-zinc-800">
+            <div className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold border-b border-white/[0.06] pb-1.5 flex items-center justify-between">
+              <span>E&O Underwriting Status</span>
+              <span className="text-[10px] font-mono text-zinc-500 font-normal">Form E&O-2026</span>
             </div>
 
-            {/* Statutory Exposure Card */}
-            <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-2">
-              <span className="text-[10px] font-mono text-zinc-400 uppercase">Statutory Liability</span>
-              <div className="text-2xl font-bold font-mono text-zinc-100">
+            {/* Statutory Exposure Card - High-Density HUD */}
+            <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 space-y-1 shadow-sm">
+              <div className="flex items-center justify-between text-[10px] font-mono uppercase text-zinc-400">
+                <span>Statutory Liability</span>
+                <span className="text-zinc-500 font-medium">Initial: {formatCurrency(initialExposure)}</span>
+              </div>
+              <div className="text-xl font-bold font-mono text-zinc-100 tracking-tight">
                 {formatCurrency(currentExposure)}
               </div>
-              <div className="text-[11px] font-mono text-zinc-500">
-                Initial: {formatCurrency(initialExposure)}
-              </div>
             </div>
 
-            {/* Tax Rebate Card */}
-            <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-1">
+            {/* Tax Rebate Card - High-Density HUD */}
+            <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 space-y-1 shadow-sm">
               <div className="flex items-center justify-between text-[10px] font-mono uppercase">
-                <span className="text-emerald-400">Tax Rebate Unlocked</span>
-                <span className="text-zinc-500 font-semibold">
+                <span className="text-emerald-400 font-semibold text-[10px]">Tax Rebate Unlocked</span>
+                <span className="text-zinc-500 font-semibold text-[10px]">
                   {hasPassport ? "SAFE HARBOR" : initialExposure > 0 ? "QUALIFIED" : "IDLE"}
                 </span>
               </div>
-              <div className="text-lg font-bold font-mono text-emerald-300">
-                {hasPassport ? "$0 (EXEMPT)" : initialExposure > 0 ? `+${formatCurrency(taxSavings)}` : "$0"}
-              </div>
-              <div className="text-[10px] text-zinc-500 font-mono truncate">
-                {hasPassport
-                  ? "Exempt under Clearance Passport"
-                  : initialExposure > 0
-                  ? taxJurisdiction
-                  : "Awaiting Script Ingestion"}
+              <div className="flex items-baseline justify-between gap-2">
+                <div className="text-xl font-bold font-mono text-emerald-300 tracking-tight">
+                  {hasPassport ? "$0 (EXEMPT)" : initialExposure > 0 ? `+${formatCurrency(taxSavings)}` : "$0"}
+                </div>
+                <div className="text-[10px] text-zinc-500 font-mono truncate max-w-[55%] text-right">
+                  {hasPassport
+                    ? "Exempt (Passport)"
+                    : initialExposure > 0
+                    ? taxJurisdiction.replace(" (30% QPE)", "").replace(" (35% Tier)", "").replace(" (25%)", "")
+                    : "Awaiting Script"}
+                </div>
               </div>
             </div>
 
             {/* Auto-Pilot Swarm Active Live HUD Meter */}
             {isAutoClearing && autoProgress && (
-              <div className="bg-indigo-950/40 border border-indigo-500/40 rounded-xl p-3 space-y-2 animate-in fade-in duration-300 shadow-lg shadow-indigo-950/50">
+              <div className="bg-indigo-950/40 border border-indigo-500/40 rounded-xl p-2.5 space-y-1.5 animate-in fade-in duration-300 shadow-md shadow-indigo-950/50">
                 <div className="flex items-center justify-between text-[10px] font-mono">
                   <span className="text-indigo-300 font-bold flex items-center gap-1.5">
                     <Zap className="h-3 w-3 text-amber-300 animate-pulse" />
@@ -2698,22 +2702,22 @@ Clearance secured. We have safe harbor.`,
                 (hasScript && (entities.length === 0 || pendingCount === 0 || currentExposure === 0));
 
               return (
-                <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-1.5">
+                <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 space-y-1 shadow-sm">
                   <div className="flex items-center justify-between text-[10px] font-mono uppercase">
-                    <span className="text-zinc-400">Distribution Risk</span>
+                    <span className="text-zinc-400 font-semibold">Distribution Risk</span>
                     {hasPassport ? (
-                      <span className="text-emerald-400 font-semibold">APPROVED (SAFE HARBOR)</span>
+                      <span className="text-emerald-400 font-semibold text-[10px]">APPROVED (SAFE HARBOR)</span>
                     ) : isFullyResolved && hasScript ? (
-                      <span className="text-emerald-400 font-semibold">APPROVED</span>
+                      <span className="text-emerald-400 font-semibold text-[10px]">APPROVED</span>
                     ) : pendingCount > 0 ? (
-                      <span className="text-rose-400 font-semibold">
+                      <span className="text-rose-400 font-semibold text-[10px]">
                         HOLD ({clearedCount}/{entities.length} CLEARED)
                       </span>
                     ) : (
-                      <span className="text-zinc-500 font-semibold">IDLE</span>
+                      <span className="text-zinc-500 font-semibold text-[10px]">IDLE</span>
                     )}
                   </div>
-                  <p className="text-xs text-zinc-300 leading-snug">
+                  <p className="text-[11px] text-zinc-300 leading-snug font-sans">
                     {hasPassport ? (
                       <span className="text-emerald-300">
                         Verified DeepClear Clearance Passport active. Pre-cleared safe harbor exemptions confirmed with $0 statutory exposure. Form E&O-2026 certified for distribution.
@@ -2753,31 +2757,31 @@ Clearance secured. We have safe harbor.`,
               if (resolvedAssets.length === 0) return null;
 
               return (
-                <div className="bg-[#141418] border border-white/[0.08] rounded-xl p-3 space-y-2 animate-in fade-in duration-300">
+                <div className="bg-[#141418] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 space-y-1.5 animate-in fade-in duration-300 shadow-sm">
                   <div className="flex items-center justify-between text-[10px] font-mono uppercase text-zinc-400">
-                    <span>Resolved Assets ({resolvedAssets.length})</span>
-                    <span className="text-emerald-400 font-semibold">Protected</span>
+                    <span className="font-semibold">Resolved Assets ({resolvedAssets.length})</span>
+                    <span className="text-emerald-400 font-semibold text-[10px]">Protected</span>
                   </div>
-                  <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-700">
+                  <div className="space-y-1 max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-800">
                     {resolvedAssets.map((e) => {
                       const isLic = licensedEntityIds.includes(e.id) || e.status === "licensed";
                       return (
                         <div
                           key={e.id}
-                          className="p-2 rounded-lg bg-zinc-900/80 border border-white/5 flex items-center justify-between text-[11px] font-mono group"
+                          className="p-1.5 px-2 rounded-lg bg-zinc-900/80 border border-white/5 flex items-center justify-between text-[11px] font-mono group hover:bg-zinc-800/60 transition-colors"
                         >
                           <div className="truncate min-w-0 pr-1.5">
-                            <span className="text-zinc-200 font-semibold block truncate">
+                            <span className="text-zinc-200 font-semibold block truncate text-[11px]">
                               {e.rawText}
                             </span>
-                            <span className="text-[9px] text-zinc-500 block truncate">
+                            <span className="text-[9px] text-zinc-500 block truncate font-mono">
                               {isLic ? "Licensed (Permit / Release)" : `Mutated: ${e.defusedText || "Clean Prop"}`}
                             </span>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleDisputeEntity(e)}
-                            className="shrink-0 px-1.5 py-0.5 rounded bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/30 text-amber-300 text-[9px] transition-all"
+                            className="shrink-0 px-2 py-0.5 rounded bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/30 text-amber-300 text-[9px] font-mono transition-all active:scale-95 shadow-sm"
                             title="Dispute / Re-open this clearance decision"
                           >
                             Dispute
@@ -2791,14 +2795,16 @@ Clearance secured. We have safe harbor.`,
             })()}
           </div>
 
-          {/* Export Binder Action */}
-          <button
-            onClick={() => setIsExportModalOpen(true)}
-            className="w-full py-2.5 px-3 rounded-xl bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-sm"
-          >
-            <Download className="h-3.5 w-3.5" />
-            <span>Export Form E&O-2026 PDF</span>
-          </button>
+          {/* Pinned Bottom Action Button with subtle border-t */}
+          <div className="pt-2.5 shrink-0 border-t border-white/[0.06]">
+            <button
+              onClick={() => setIsExportModalOpen(true)}
+              className="w-full py-2 px-3 rounded-xl bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.99]"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Export Form E&O-2026 PDF</span>
+            </button>
+          </div>
         </aside>
       </div>
 
