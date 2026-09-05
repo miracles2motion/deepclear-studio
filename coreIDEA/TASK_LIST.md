@@ -46,3 +46,10 @@
   - [x] Build `[ ⚡ Auto-Clear All (N) ]` queue runner in Action Required header with live sequential progress feedback.
   - [x] Implement Human-in-the-Loop Cleared Assets Ledger with 1-click `[ Dispute ]` rollback and chat audit notification.
   - [x] Verify zero TypeScript errors (`npx tsc --noEmit`) and successful production bundle build (`npm run build`).
+
+- [x] **Phase 8: Autonomous Swarm Orchestration, Reactive De-Queueing & Responsive Viewport Parity**
+  - [x] Zero-click autonomous swarm trigger in Auto-Pilot mode when screenplay analysis completes.
+  - [x] Immediate reactive de-queueing of cleared/licensed items from Action Required bar via functional state updaters.
+  - [x] Organic speech cadence and conversational pacing replacing artificial delays with 350ms handoff breath.
+  - [x] Unified responsive navigation breakpoint to `lg` (1024px) for full tablet & mobile E&O HUD accessibility.
+  - [x] Permanent codification of autonomous swarm and UI state invariants in `AGENTS.md`.

@@ -127,6 +127,7 @@ export default function DeepClearStudioPage() {
   const sessionFileInputRef = useRef<HTMLInputElement | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const hazardScrollRef = useRef<HTMLDivElement | null>(null);
+  const autoClearanceRef = useRef<((hazards?: ExtractedEntity[]) => Promise<void>) | null>(null);
 
   const scrollHazards = (direction: "left" | "right") => {
     if (hazardScrollRef.current) {
@@ -601,12 +602,24 @@ Clearance secured. We have safe harbor.`,
                     type: "text",
                     content:
                       foundEntities.length > 0
-                        ? `Underwriting analysis complete. Identified ${foundEntities.length} liabilities totaling ${formatCurrency(
-                            exposure
-                          )}. Click "Negotiate" below to begin dialectic compromise.`
+                        ? clearanceMode === "auto"
+                          ? `Underwriting analysis complete. Identified ${foundEntities.length} liabilities totaling ${formatCurrency(
+                              exposure
+                            )}. ⚡ Auto-Pilot Swarm is initiating autonomous clearance queue...`
+                          : `Underwriting analysis complete. Identified ${foundEntities.length} liabilities totaling ${formatCurrency(
+                              exposure
+                            )}. Click "Negotiate" or "Licensed" below to begin resolution.`
                         : "Clearance scan complete. No actionable trademark, copyright, or municipal liabilities detected.",
                   },
                 ]);
+
+                // Auto-Pilot: autonomously clear queue without requiring manual button click
+                if (clearanceMode === "auto" && foundEntities.length > 0) {
+                  const entitiesToClear = [...foundEntities];
+                  setTimeout(() => {
+                    autoClearanceRef.current?.(entitiesToClear);
+                  }, 800);
+                }
               }
             }
           }
@@ -679,7 +692,7 @@ Clearance secured. We have safe harbor.`,
   };
 
   // Promise-based sequential voice synthesis with unique voice casting per agent
-  // Enforces strict non-interference: cancels prior audio & condenses lines to punchy 6-7 word statements
+  // Enforces organic human conversational cadence and natural handoffs
   const speakTextAsync = (
     shortSummary: string,
     speaker: "director" | "legal_counsel" | "script_supervisor" | "bond_officer" | "location_manager"
@@ -691,18 +704,18 @@ Clearance secured. We have safe harbor.`,
         typeof window === "undefined" ||
         !("speechSynthesis" in window)
       ) {
-        resolve();
+        // Natural reading delay when muted so dialogue never flashes like a glitch
+        setTimeout(resolve, 850);
         return;
       }
 
       try {
-        // Cancel any pending or active utterances so agents never talk over each other
         synthRef.current.cancel();
 
-        // Strict Short Speech Policy: Condense to max 7 words so voice finishes cleanly in ~1.2-1.5s
+        // Condense to punchy line so speech finishes cleanly without drag
         const clean = shortSummary.replace(/[#*`_\[\]()]/g, "").trim();
         const words = clean.split(/\s+/);
-        const punchyText = words.length > 7 ? words.slice(0, 7).join(" ") + "." : clean;
+        const punchyText = words.length > 8 ? words.slice(0, 8).join(" ") + "." : clean;
 
         const utterance = new SpeechSynthesisUtterance(punchyText);
 
@@ -713,42 +726,46 @@ Clearance secured. We have safe harbor.`,
         }
 
         if (speaker === "director") {
-          utterance.pitch = 0.9;
-          utterance.rate = 1.05;
+          utterance.pitch = 0.92;
+          utterance.rate = 1.02;
         } else if (speaker === "legal_counsel") {
-          utterance.pitch = 1.1;
+          utterance.pitch = 1.08;
           utterance.rate = 1.02;
         } else if (speaker === "script_supervisor") {
-          utterance.pitch = 1.15;
-          utterance.rate = 1.05;
+          utterance.pitch = 1.12;
+          utterance.rate = 1.04;
         } else if (speaker === "location_manager") {
-          utterance.pitch = 0.95;
-          utterance.rate = 1.08;
+          utterance.pitch = 0.96;
+          utterance.rate = 1.02;
         } else {
-          utterance.pitch = 0.85;
-          utterance.rate = 0.96;
+          utterance.pitch = 0.88;
+          utterance.rate = 0.98;
         }
 
-        // Fast safety fallback timer so it never hangs and yields to the next agent promptly
-        const timeout = setTimeout(() => {
-          setSpeakingAgent(null);
-          resolve();
-        }, 3200);
+        let isCompleted = false;
+        const completeTurn = () => {
+          if (!isCompleted) {
+            isCompleted = true;
+            setSpeakingAgent(null);
+            // Natural 350ms breath pause between agent handoffs
+            setTimeout(resolve, 350);
+          }
+        };
+
+        const timeout = setTimeout(completeTurn, 3800);
 
         utterance.onstart = () => {
           setSpeakingAgent(speaker);
         };
 
         utterance.onend = () => {
-          setSpeakingAgent(null);
           clearTimeout(timeout);
-          resolve();
+          completeTurn();
         };
 
         utterance.onerror = () => {
-          setSpeakingAgent(null);
           clearTimeout(timeout);
-          resolve();
+          completeTurn();
         };
 
         synthRef.current.speak(utterance);
@@ -853,7 +870,7 @@ Clearance secured. We have safe harbor.`,
         role: "legal_counsel",
         thought: `Analyzing ${entity.category.toUpperCase()} exposure under Lanham Act § 43(a) for "${entity.rawText}"...`,
       });
-      await sleep(1500);
+      await sleep(350);
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -872,7 +889,6 @@ Clearance secured. We have safe harbor.`,
         },
       ]);
       await speakTextAsync(`${entity.category.toUpperCase()} hazard on ${entity.rawText}.`, "legal_counsel");
-      await sleep(600);
 
       // -------------------------------------------------------------
       // Turn 2: The Director defends artistic intent
@@ -883,7 +899,7 @@ Clearance secured. We have safe harbor.`,
         role: "director",
         thought: `Evaluating Rogers v. Grimaldi artistic relevance and character motivation for "${entity.rawText}"...`,
       });
-      await sleep(1500);
+      await sleep(350);
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -903,7 +919,6 @@ Clearance secured. We have safe harbor.`,
         },
       ]);
       await speakTextAsync("This prop is vital for dramatic character authenticity.", "director");
-      await sleep(600);
 
       // -------------------------------------------------------------
       // Turn 3: Location / Art Department Manager steps in
@@ -914,7 +929,7 @@ Clearance secured. We have safe harbor.`,
         role: "location_manager",
         thought: `Evaluating prop house inventory, soundstage alternatives, and tax credit eligibility...`,
       });
-      await sleep(1500);
+      await sleep(350);
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -934,7 +949,6 @@ Clearance secured. We have safe harbor.`,
         },
       ]);
       await speakTextAsync("Art department proposing conflict-free substitute.", "location_manager");
-      await sleep(600);
 
       // -------------------------------------------------------------
       // Turn 4: Live Parallel Search Registry Verification Card (STAR FEATURE)
@@ -945,7 +959,7 @@ Clearance secured. We have safe harbor.`,
         role: "legal_counsel",
         thought: `Executing runtime Parallel Search query: "${parallelData.queryExecuted}"...`,
       });
-      await sleep(1500);
+      await sleep(350);
 
       const citationsText =
         parallelData.citations && parallelData.citations.length > 0
@@ -975,7 +989,6 @@ Clearance secured. We have safe harbor.`,
         },
       ]);
       await speakTextAsync("Parallel Search confirms zero trademark conflicts.", "legal_counsel");
-      await sleep(600);
 
       // -------------------------------------------------------------
       // Turn 5: The Director confirms acceptance
@@ -986,7 +999,7 @@ Clearance secured. We have safe harbor.`,
         role: "director",
         thought: `Confirming aesthetic alignment on "${compromiseText}"...`,
       });
-      await sleep(1400);
+      await sleep(350);
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -1006,7 +1019,6 @@ Clearance secured. We have safe harbor.`,
         },
       ]);
       await speakTextAsync("Agreed. Art department cleared to proceed.", "director");
-      await sleep(600);
 
       // -------------------------------------------------------------
       // Turn 6: Completion Bond Officer underwrites Safe Harbor
@@ -1017,7 +1029,7 @@ Clearance secured. We have safe harbor.`,
         role: "bond_officer",
         thought: `Underwriting E&O insurance rider and validating safe harbor indemnity...`,
       });
-      await sleep(1400);
+      await sleep(350);
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -1037,7 +1049,6 @@ Clearance secured. We have safe harbor.`,
         },
       ]);
       await speakTextAsync("Safe harbor policy rider underwritten.", "bond_officer");
-      await sleep(600);
 
       // -------------------------------------------------------------
       // Turn 7: Script Supervisor records mutation / license & resolves risk
@@ -1050,17 +1061,30 @@ Clearance secured. We have safe harbor.`,
           ? `Registering active production license for "${entity.rawText}"...`
           : `Mutating screenplay text: substituting "${entity.rawText}" with "${compromiseText}"...`,
       });
-      await sleep(1200);
+      await sleep(350);
       setAgentTypingStatus(null);
       setAgentThinking(null);
 
-      const newClearedIds = [...clearedEntityIds, entity.id];
-      setClearedEntityIds(newClearedIds);
+      // Immediate reactive clearance: functional updates so Action Required bar dequeues immediately
+      setClearedEntityIds((prev) => (prev.includes(entity.id) ? prev : [...prev, entity.id]));
       if (isLicenseRoute) {
-        setLicensedEntityIds((prev) => [...prev, entity.id]);
+        setLicensedEntityIds((prev) => (prev.includes(entity.id) ? prev : [...prev, entity.id]));
       }
-      const newExposure = Math.max(0, currentExposure - entity.originalExposure);
-      setCurrentExposure(newExposure);
+      setEntities((prev) =>
+        prev.map((e) =>
+          e.id === entity.id
+            ? {
+                ...e,
+                status: isLicenseRoute ? ("licensed" as ClearanceStatus) : ("cleared" as ClearanceStatus),
+                clearedExposure: 0,
+                defusedText: isLicenseRoute
+                  ? `${entity.rawText} (Licensed Release On File)`
+                  : compromiseText,
+              }
+            : e
+        )
+      );
+      setCurrentExposure((prev) => Math.max(0, prev - entity.originalExposure));
 
       // Replace hazard with cleared legal compromise in screenplay text (if replacement route)
       let updatedScript = currentScriptText;
@@ -1069,46 +1093,33 @@ Clearance secured. We have safe harbor.`,
         setCurrentScriptText(updatedScript);
       }
 
-      const isNowFullyCleared = newClearedIds.length >= entities.length || newExposure === 0;
-
-      setMessages((prev) => {
-        const nextMsgs: ChatMessage[] = [
-          ...prev,
-          {
-            id: `mut-${Date.now()}`,
-            sender: "script_supervisor",
-            senderName: "Script Supervisor",
-            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            type: "text",
-            content: isLicenseRoute
-              ? `📜 **License Registered:** "${entity.rawText}" confirmed under production license. Original text preserved. Statutory liability reduced by ${formatCurrency(
-                  entity.originalExposure
-                )} to $0.`
-              : `✍️ **Script Mutated:** "${entity.rawText}" ➔ "${compromiseText}". Statutory liability reduced by ${formatCurrency(
-                  entity.originalExposure
-                )}.`,
-            replyTo: {
-              messageId: bondMsgId,
-              senderName: "Completion Bond Officer",
-              snippet: `E&O Safe Harbor Underwritten`,
-            },
-          },
-        ];
-
-        // If all liabilities are resolved, output the Final Cleared Production Script card!
-        if (isNowFullyCleared && updatedScript) {
-          nextMsgs.push({
-            id: `final-script-${Date.now()}`,
-            sender: "bond_officer",
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `mut-${Date.now()}`,
+          sender: "script_supervisor",
+          senderName: "Script Supervisor",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: isLicenseRoute
+            ? `📜 **License Registered:** "${entity.rawText}" confirmed under production license. Original text preserved. Statutory liability reduced by ${formatCurrency(
+                entity.originalExposure
+              )} to $0.`
+            : `✍️ **Script Mutated:** "${entity.rawText}" ➔ "${compromiseText}". Statutory liability reduced by ${formatCurrency(
+                entity.originalExposure
+              )}.`,
+          replyTo: {
+            messageId: bondMsgId,
             senderName: "Completion Bond Officer",
-            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            type: "script",
-            content: updatedScript,
-          });
-        }
+            snippet: `E&O Safe Harbor Underwritten`,
+          },
+        },
+      ]);
 
-        return nextMsgs;
-      });
+      await speakTextAsync(
+        isLicenseRoute ? `License registered for ${entity.rawText}.` : `Script mutated to ${compromiseText}.`,
+        "script_supervisor"
+      );
     } catch (err) {
       console.error("Debate orchestration error:", err);
     } finally {
@@ -1130,11 +1141,10 @@ Clearance secured. We have safe harbor.`,
       role: "location_manager",
       thought: `Verifying municipal filming permits, soundstage releases, and state film tax incentive records for "${entity.rawText}"...`,
     });
-    await sleep(1100);
+    await sleep(350);
 
     setAgentTypingStatus(null);
     await speakTextAsync(`Municipal permit verified for ${entity.rawText}.`, "location_manager");
-    await sleep(400);
 
     // Turn 2: Completion Bond Officer underwrites license indemnity
     setActiveAgent("bond_officer");
@@ -1143,17 +1153,14 @@ Clearance secured. We have safe harbor.`,
       role: "bond_officer",
       thought: `Underwriting policy rider: executing safe-harbor indemnity release on file for "${entity.rawText}". Waiving statutory liability to $0.00...`,
     });
-    await sleep(1100);
+    await sleep(350);
 
     setAgentTypingStatus(null);
     setAgentThinking(null);
 
-    const newLicensedIds = [...licensedEntityIds, entity.id];
-    setLicensedEntityIds(newLicensedIds);
-
-    const newClearedIds = [...clearedEntityIds, entity.id];
-    setClearedEntityIds(newClearedIds);
-
+    // Synchronous functional updates so Action Required bar dequeues immediately
+    setLicensedEntityIds((prev) => (prev.includes(entity.id) ? prev : [...prev, entity.id]));
+    setClearedEntityIds((prev) => (prev.includes(entity.id) ? prev : [...prev, entity.id]));
     setEntities((prev) =>
       prev.map((e) =>
         e.id === entity.id
@@ -1166,54 +1173,33 @@ Clearance secured. We have safe harbor.`,
           : e
       )
     );
+    setCurrentExposure((prev) => Math.max(0, prev - entity.originalExposure));
 
-    const newExposure = Math.max(0, currentExposure - entity.originalExposure);
-    setCurrentExposure(newExposure);
-
-    const isNowFullyCleared = newClearedIds.length >= entities.length || newExposure === 0;
-
-    setMessages((prev) => {
-      const nextMsgs: ChatMessage[] = [
-        ...prev,
-        {
-          id: `lic-${Date.now()}`,
-          sender: "bond_officer",
-          senderName: "Completion Bond Officer",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "text",
-          content: `📜 **Production License Verified:** Written release/permit on file for "${entity.rawText}". Statutory liability reduced by ${formatCurrency(
-            entity.originalExposure
-          )} to $0 under production indemnity agreement. Original asset retained in screenplay.`,
-        },
-      ];
-
-      // If all liabilities are resolved, deliver final script
-      if (isNowFullyCleared && currentScriptText) {
-        nextMsgs.push({
-          id: `final-script-${Date.now()}`,
-          sender: "bond_officer",
-          senderName: "Completion Bond Officer",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "script",
-          content: currentScriptText,
-        });
-      }
-
-      return nextMsgs;
-    });
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `lic-${Date.now()}`,
+        sender: "bond_officer",
+        senderName: "Completion Bond Officer",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: `📜 **Production License Verified:** Written release/permit on file for "${entity.rawText}". Statutory liability reduced by ${formatCurrency(
+          entity.originalExposure
+        )} to $0 under production indemnity agreement. Original asset retained in screenplay.`,
+      },
+    ]);
 
     await speakTextAsync(`Indemnity on file. Liability waived.`, "bond_officer");
-    await sleep(400);
-
     setIsLoading(false);
   };
 
   // Autonomous Swarm Clearance Loop (Auto-Pilot)
-  const handleRunAutoClearance = async () => {
-    if (isAutoClearing || pendingHazards.length === 0) return;
+  const handleRunAutoClearance = async (overrideHazards?: ExtractedEntity[]) => {
+    const queueToRun = overrideHazards && overrideHazards.length > 0 ? overrideHazards : pendingHazards;
+    if (isAutoClearing || queueToRun.length === 0) return;
 
     setIsAutoClearing(true);
-    const hazardsQueue = [...pendingHazards];
+    const hazardsQueue = [...queueToRun];
 
     // Announce Auto-Pilot run in chat
     const startNotice: ChatMessage = {
@@ -1222,7 +1208,7 @@ Clearance secured. We have safe harbor.`,
       senderName: "DeepClear Swarm",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       type: "text",
-      content: `⚡ **Autonomous Swarm Clearance Initiated**\n• Queue: **${hazardsQueue.length} pending liabilities**\n• Pacing: **1.5s rate-limit defense**\n• Strategy: Intelligent triage (Tax permits → Licensed; Brands → USPTO Mutated).`,
+      content: `⚡ **Autonomous Swarm Clearance Initiated**\n• Queue: **${hazardsQueue.length} pending liabilities**\n• Pacing: **1.2s rate-limit defense**\n• Strategy: Intelligent triage (Tax permits → Licensed; Brands → USPTO Mutated).`,
     };
     setMessages((prev) => [...prev, startNotice]);
 
@@ -1246,13 +1232,13 @@ Clearance secured. We have safe harbor.`,
         // Active rate-limit safe pacing feedback between items
         setActiveAgent("script_supervisor");
         setAgentTypingStatus(
-          `⚡ Auto-Pilot Swarm: Rate-limit defense pacing (1.5s) • Next: "${hazardsQueue[i + 1].rawText}"...`
+          `⚡ Auto-Pilot Swarm: Rate-limit defense pacing (1.2s) • Next: "${hazardsQueue[i + 1].rawText}"...`
         );
         setAgentThinking({
           role: "script_supervisor",
           thought: `Autonomous Swarm queue: Pacing API rate-limits. Next clearance target: "${hazardsQueue[i + 1].rawText}" (${hazardsQueue[i + 1].category.toUpperCase()})...`,
         });
-        await delayPace(1500); // 1.5s pacing to prevent rate limits
+        await delayPace(1200); // 1.2s pacing to prevent rate limits
       }
     }
 
@@ -1261,16 +1247,29 @@ Clearance secured. We have safe harbor.`,
     setAgentTypingStatus(null);
     setAgentThinking(null);
 
-    // Final celebration notice
-    const finishNotice: ChatMessage = {
-      id: `auto-pilot-done-${Date.now()}`,
-      sender: "bond_officer",
-      senderName: "Completion Bond Officer",
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      type: "text",
-      content: `🛡️ **Auto-Pilot Clearance Complete**: All ${hazardsQueue.length} hazards autonomously resolved with **$0.00 statutory exposure**. Safe-Harbor Underwriting Binder certified for distribution.`,
-    };
-    setMessages((prev) => [...prev, finishNotice]);
+    // Final celebration notice and Final Cleared Production Script Card
+    setMessages((prev) => {
+      const finishNotice: ChatMessage = {
+        id: `auto-pilot-done-${Date.now()}`,
+        sender: "bond_officer",
+        senderName: "Completion Bond Officer",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: `🛡️ **Auto-Pilot Clearance Complete**: All ${hazardsQueue.length} hazards autonomously resolved with **$0.00 statutory exposure**. Safe-Harbor Underwriting Binder certified for distribution.`,
+      };
+      const nextMsgs: ChatMessage[] = [...prev, finishNotice];
+      if (currentScriptText) {
+        nextMsgs.push({
+          id: `final-script-${Date.now()}`,
+          sender: "bond_officer",
+          senderName: "Completion Bond Officer",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "script",
+          content: currentScriptText,
+        });
+      }
+      return nextMsgs;
+    });
 
     if (typeof window !== "undefined") {
       import("canvas-confetti").then((confettiModule) => {
@@ -1282,6 +1281,8 @@ Clearance secured. We have safe harbor.`,
       });
     }
   };
+
+  autoClearanceRef.current = handleRunAutoClearance;
 
   // Producer Dispute & Appeal Handler
   const handleDisputeEntity = (entity: ExtractedEntity) => {
@@ -1534,15 +1535,15 @@ Clearance secured. We have safe harbor.`,
         className="hidden"
       />
 
-      {/* Mobile Top Navigation Header with 3-Way View Switcher */}
-      <header className="h-14 border-b border-white/[0.08] bg-[#0E0E12] px-3 flex items-center justify-between md:hidden shrink-0 z-20 shadow-md">
+      {/* Mobile & Tablet Top Navigation Header with 3-Way View Switcher */}
+      <header className="h-14 border-b border-white/[0.08] bg-[#0E0E12] px-3 flex items-center justify-between lg:hidden shrink-0 z-20 shadow-md">
         <div className="flex items-center gap-2">
           <img
             src="/favicon.png"
             alt="DeepClear Studio"
             className="h-6 w-6 rounded-md object-cover border border-white/10 shadow-sm"
           />
-          <span className="font-semibold text-xs text-zinc-100 tracking-tight">
+          <span className="font-semibold text-xs text-zinc-100 tracking-tight hidden sm:inline">
             DeepClear
           </span>
         </div>
@@ -1586,37 +1587,20 @@ Clearance secured. We have safe harbor.`,
           >
             <BarChart3 className="h-3 w-3 text-emerald-400" />
             <span>Risk</span>
+            {pendingHazards.length > 0 && (
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+            )}
           </button>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => sessionFileInputRef.current?.click()}
-            className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 border border-white/10 text-xs transition-all flex items-center gap-1"
-            title="Import Session JSON"
-          >
-            <Upload className="h-3 w-3 text-sky-400" />
-            <span className="hidden sm:inline font-mono">Import</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExportSession}
-            className="p-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 border border-white/10 text-xs transition-all flex items-center gap-1"
-            title="Export Session JSON"
-          >
-            <FileJson className="h-3 w-3 text-indigo-400" />
-            <span className="hidden sm:inline font-mono">Backup</span>
-          </button>
-
           {/* Export Binder Action */}
           <button
             onClick={() => setIsExportModalOpen(true)}
             className="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold shadow-sm transition-all flex items-center gap-1"
           >
             <Download className="h-3 w-3" />
-            <span className="hidden xs:inline">Export</span>
+            <span>Export</span>
           </button>
         </div>
       </header>
@@ -1628,7 +1612,7 @@ Clearance secured. We have safe harbor.`,
         {/* ========================================================= */}
         <aside
           className={`w-64 lg:w-72 border-r border-white/[0.06] bg-[#101012] flex-col justify-between p-3.5 shrink-0 overflow-y-auto ${
-            mobileTab === "crew" ? "flex w-full h-full" : "hidden md:flex"
+            mobileTab === "crew" ? "flex w-full h-full" : "hidden lg:flex"
           }`}
         >
           <div className="space-y-4">
@@ -1854,7 +1838,7 @@ Clearance secured. We have safe harbor.`,
         {/* ========================================================= */}
         <main
           className={`flex-1 flex-col h-full bg-[#0A0A0D] bg-[radial-gradient(ellipse_75%_75%_at_50%_-10%,rgba(56,189,248,0.05),rgba(0,0,0,0))] relative overflow-hidden ${
-            mobileTab === "chat" ? "flex" : "hidden md:flex"
+            mobileTab === "chat" ? "flex" : "hidden lg:flex"
           }`}
         >
           {/* Top Active Dynamic Glowing Gradient Bar per Agent */}
@@ -2286,7 +2270,7 @@ Clearance secured. We have safe harbor.`,
                     {clearanceMode === "auto" && (
                       <button
                         type="button"
-                        onClick={handleRunAutoClearance}
+                        onClick={() => handleRunAutoClearance()}
                         disabled={isAutoClearing || isLoading}
                         className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all shadow-md flex items-center gap-1.5 active:scale-95 disabled:opacity-50 ${
                           isAutoClearing

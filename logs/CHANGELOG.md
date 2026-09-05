@@ -4,6 +4,16 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.7.0] — 2026-09-05
+### ⚡ Autonomous Swarm Orchestration, Reactive De-Queueing & Tablet Accessibility
+- **Zero-Click Autonomous Initiation in Auto-Pilot Mode**: Screenplay analysis in Auto-Pilot mode now automatically initiates the multi-agent clearance queue after an 800ms analysis review transition. Eliminates the need for users to manually click "Auto-Clear All" when Auto-Pilot is active.
+- **Immediate Reactive De-Queueing**: Resolved state closure lag where cleared hazards remained in the Action Required bar across sequential auto-pilot runs. Implemented functional state updaters across `setEntities`, `setClearedEntityIds`, `setLicensedEntityIds`, and `setCurrentExposure`, ensuring hazards vanish immediately upon resolution.
+- **Organic Speech Cadence & Conversational Pacing**: Eliminated glitchy artificial delays (`sleep(1500)` and `sleep(600)`) with natural 350ms quick cognition blinks. Dialectic turn cards mount concurrently with speech onset, and `speakTextAsync` enforces natural 350ms handoff breath pauses between speaking agents.
+- **Multi-Viewport Tablet & Mobile Accessibility**: Fixed the tablet viewport gap (`768px - 1023px`) where the E&O Underwriting tab was previously inaccessible. Unified navigation breakpoint to `lg` (`1024px`), enabling seamless 1-touch tab switching (`Chat`, `Crew`, `Risk`) with live pending liability badges on mobile and tablet devices.
+- **Autonomous Swarm & UI Invariants**: Codified core operating rules in `AGENTS.md` (Section 5) to permanently protect autonomous execution, immediate de-queueing, conversational pacing, and multi-viewport accessibility.
+
+---
+
 ## [v0.6.0] — 2026-09-04
 ### ⚡ Autonomous Swarm Clearance Engine ("Auto-Pilot Mode") & Producer Dispute Controls
 - **Default Autonomous Clearance Mode**: DeepClear Studio now defaults to **Auto-Pilot Mode** on boot, enabling 1-click autonomous triage and clearance across all identified script hazards while preserving manual control when preferred.

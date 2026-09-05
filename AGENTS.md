@@ -21,3 +21,9 @@ You are the lead engineering agent for DeepClear Studio. Adhere to these guideli
 - **Zero Background Polling**: Never run automated background loops or scheduled pings against Gemini or Parallel Search APIs.
 - **On-Demand Only**: Only invoke external APIs when the user explicitly triggers an analysis or test.
 - **Mock/Fixture First for UI**: During frontend and UI component development, utilize lightweight local fixtures so zero API credits are consumed until final verification.
+
+## 5. 🤖 Autonomous Swarm & UI State Invariants
+- **Default Autonomous Execution**: When `clearanceMode === "auto"`, the system must immediately initiate the clearance swarm queue once screenplay analysis finishes, requiring 0 extra clicks from the user.
+- **Immediate Reactive De-queueing**: Every cleared or licensed asset must immediately be removed from the Action Required bar and horizontal queue via functional state updaters (`setEntities`, `setClearedEntityIds`, `setLicensedEntityIds`). Never retain resolved liabilities in active action queues.
+- **Speech-Synchronized Human Cadence**: Never use arbitrary rapid delays that feel like glitches. Agent turns must mount their text alongside their speech onset and provide natural 300–400ms conversational pauses.
+- **Multi-Viewport HUD Accessibility**: The E&O Underwriting Status and risk dashboard must be fully accessible across mobile (<768px), tablet (768px–1023px), and desktop (>=1024px) with responsive navigation controls.
