@@ -4,7 +4,7 @@
 > *Built for Google Cloud Agentic Cinema: The Blockbuster Hackathon — Parallel Track ($15,000 Category)*
 
 [![Live Vercel App](https://img.shields.io/badge/Live%20Demo-deepclear--studio.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://deepclear-studio.vercel.app)
-[![Google Cloud Gemini](https://img.shields.io/badge/Google%20Cloud-Gemini%202.0%20Flash-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://aistudio.google.com)
+[![Google Cloud Gemini](https://img.shields.io/badge/Google%20Cloud-Gemini%20Flash-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://aistudio.google.com)
 [![Parallel Search](https://img.shields.io/badge/Grounding-Parallel%20Search%20API-00E5FF?style=for-the-badge)](https://parallel.ai)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14%20App%20Router-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -26,7 +26,7 @@ Before any independent film or studio series can stream on **Netflix, Amazon Pri
 Today, clearance is governed by entertainment attorneys manually redlining scripts, storyboards, and call sheets over weeks. A single unvetted trademark, unpermitted drone shot, or background song can trigger statutory injunctions under **Lanham Act § 43(a)** or copyright infringement under **17 U.S.C. § 504**, shutting down distribution.
 
 **DeepClear Studio** turns film clearance into an autonomous, real-time command center:
-1. **Google Cloud Gemini 2.0 Flash Multimodal Vision & Parsing**: Detects brand trademarks, music sync cues, personality rights, and municipal permit hazards from scripts and storyboard frames.
+1. **Google Cloud Gemini Flash Multimodal Vision & Parsing**: Detects brand trademarks, music sync cues, personality rights, and municipal permit hazards from scripts and storyboard frames (`gemini-flash-latest` / Gemini 3.x Flash with self-healing model discovery).
 2. **Parallel Search 4D Grounding Engine**: Runs live, runtime verification against the USPTO Principal Trademark Register and legal frameworks before any prop substitution is accepted.
 3. **5-Agent Autonomous War Room**: Script Supervisor, Studio Legal Counsel, Location Manager, The Director, and the Completion Bond Officer engage in realistic, multi-perspective dialectic debate.
 4. **Dual Resolution Tracks**: Defuse hazards via script mutations or verify active production licenses (e.g. sync rights, municipal permits) to reduce statutory exposure to **$0** while preserving artistic intent.
@@ -75,11 +75,11 @@ flowchart TD
     subgraph Inputs["🎬 Production Ingestion"]
         SC["📄 Screenplay Script (.fountain / .md / .txt)"]
         CP["🛡️ Clearance Passport Frontmatter (YAML)"]
-        GEN["✨ Gemini 2.0 Dynamic Scene Generator"]
+        GEN["✨ Gemini Dynamic Scene Generator"]
     end
 
     subgraph Swarm["🤖 5-Agent Autonomous Crew Swarm"]
-        SS["👁️ Script Supervisor<br/><i>Gemini 2.0 Multimodal Token Scrubber</i>"]
+        SS["👁️ Script Supervisor<br/><i>Gemini Multimodal Token Scrubber</i>"]
         LC["⚖️ Studio Legal Counsel<br/><i>Statutory Lanham & Copyright Auditor</i>"]
         LM["📍 Location Manager<br/><i>Permits & Georgia 30% Tax Incentive</i>"]
         DIR["🎬 The Director<br/><i>Creative Vision & Fair-Use Defender</i>"]
@@ -200,7 +200,7 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 | Category | DeepClear Studio Implementation | Status |
 | :--- | :--- | :---: |
 | **Hackathon Track** | Google Cloud Agentic Cinema — Parallel Track ($15,000 Category) | ✅ Complete |
-| **Primary Multimodal AI** | Google Cloud Gemini 2.0 Flash (`@google/genai`) with self-healing cascade | ✅ Complete |
+| **Primary Multimodal AI** | Google Cloud Gemini Flash (`@google/genai` / `gemini-flash-latest`) with self-healing cascade | ✅ Complete |
 | **Grounding Engine** | Parallel Search API (`https://api.parallel.ai/v1/search`) live runtime query | ✅ Complete |
 | **Agent Collaboration** | 5-Agent Autonomous Crew Swarm (Supervisor, Legal, Location, Director, Bond) | ✅ Complete |
 | **Workflow Realism** | Form E&O-2026 Underwriting Binder + Clearance Passport safe-harbor | ✅ Complete |
