@@ -2680,14 +2680,22 @@ Clearance secured. We have safe harbor.`,
 
             {/* Dynamic Clearance & Distribution Risk Card */}
             {(() => {
-              const pendingEntities = entities.filter((e) => !clearedEntityIds.includes(e.id));
+              const pendingEntities = entities.filter(
+                (e) =>
+                  !clearedEntityIds.includes(e.id) &&
+                  !licensedEntityIds.includes(e.id) &&
+                  e.status !== "cleared" &&
+                  e.status !== "licensed"
+              );
               const pendingCount = pendingEntities.length;
               const clearedCount = entities.length - pendingCount;
               const hasScript =
                 currentScriptText.trim().length > 0 ||
+                currentScriptRef.current.trim().length > 0 ||
                 messages.some((m) => m.type === "script" || m.sender === "user");
               const isFullyResolved =
-                hasPassport || (hasScript && (pendingCount === 0 || currentExposure === 0));
+                hasPassport ||
+                (hasScript && (entities.length === 0 || pendingCount === 0 || currentExposure === 0));
 
               return (
                 <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-3.5 space-y-1.5">
@@ -2695,7 +2703,7 @@ Clearance secured. We have safe harbor.`,
                     <span className="text-zinc-400">Distribution Risk</span>
                     {hasPassport ? (
                       <span className="text-emerald-400 font-semibold">APPROVED (SAFE HARBOR)</span>
-                    ) : isFullyResolved ? (
+                    ) : isFullyResolved && hasScript ? (
                       <span className="text-emerald-400 font-semibold">APPROVED</span>
                     ) : pendingCount > 0 ? (
                       <span className="text-rose-400 font-semibold">
@@ -2710,9 +2718,11 @@ Clearance secured. We have safe harbor.`,
                       <span className="text-emerald-300">
                         Verified DeepClear Clearance Passport active. Pre-cleared safe harbor exemptions confirmed with $0 statutory exposure. Form E&O-2026 certified for distribution.
                       </span>
-                    ) : isFullyResolved ? (
+                    ) : isFullyResolved && hasScript ? (
                       <span className="text-emerald-300">
-                        All {entities.length} liabilities resolved with $0 exposure. Form E&O-2026 certified for distribution.
+                        {entities.length > 0
+                          ? `All ${entities.length} liabilities resolved with $0 exposure. Form E&O-2026 certified for distribution.`
+                          : "Screenplay evaluated 100% clean with zero statutory liabilities. Form E&O-2026 certified for distribution."}
                       </span>
                     ) : pendingCount > 0 ? (
                       <span className="text-rose-300">
@@ -2730,18 +2740,27 @@ Clearance secured. We have safe harbor.`,
               );
             })()}
 
-            {/* Cleared Assets Ledger & Producer Dispute Controls */}
-            {clearedEntityIds.length > 0 && (
-              <div className="bg-[#141418] border border-white/[0.08] rounded-xl p-3 space-y-2">
-                <div className="flex items-center justify-between text-[10px] font-mono uppercase text-zinc-400">
-                  <span>Cleared Assets ({clearedEntityIds.length})</span>
-                  <span className="text-emerald-400 font-semibold">Protected</span>
-                </div>
-                <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-700">
-                  {entities
-                    .filter((e) => clearedEntityIds.includes(e.id))
-                    .map((e) => {
-                      const isLic = licensedEntityIds.includes(e.id);
+            {/* Resolved Assets Ledger & Producer Dispute Controls (Dismissed when 0 resolved) */}
+            {(() => {
+              const resolvedAssets = entities.filter(
+                (e) =>
+                  clearedEntityIds.includes(e.id) ||
+                  licensedEntityIds.includes(e.id) ||
+                  e.status === "cleared" ||
+                  e.status === "licensed"
+              );
+
+              if (resolvedAssets.length === 0) return null;
+
+              return (
+                <div className="bg-[#141418] border border-white/[0.08] rounded-xl p-3 space-y-2 animate-in fade-in duration-300">
+                  <div className="flex items-center justify-between text-[10px] font-mono uppercase text-zinc-400">
+                    <span>Resolved Assets ({resolvedAssets.length})</span>
+                    <span className="text-emerald-400 font-semibold">Protected</span>
+                  </div>
+                  <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-700">
+                    {resolvedAssets.map((e) => {
+                      const isLic = licensedEntityIds.includes(e.id) || e.status === "licensed";
                       return (
                         <div
                           key={e.id}
@@ -2766,9 +2785,10 @@ Clearance secured. We have safe harbor.`,
                         </div>
                       );
                     })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
 
           {/* Export Binder Action */}
