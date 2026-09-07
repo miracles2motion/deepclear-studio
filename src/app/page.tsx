@@ -155,7 +155,11 @@ export default function DeepClearStudioPage() {
   const [isMentionMenuOpen, setIsMentionMenuOpen] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
+  const [taggedAgentRole, setTaggedAgentRole] = useState<AgentRole | null>(null);
+  const [isUserTyping, setIsUserTyping] = useState(false);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputMirrorRef = useRef<HTMLDivElement | null>(null);
 
   const filteredAgents = AVAILABLE_AGENTS.filter(
     (ag) =>
@@ -164,8 +168,55 @@ export default function DeepClearStudioPage() {
       ag.role.toLowerCase().includes(mentionQuery)
   );
 
+  const detectTaggedAgent = (text: string): AgentRole | null => {
+    const match = text.match(/@(legal_counsel|director|location_manager|script_supervisor|bond_officer)\b/i);
+    if (match) {
+      return match[1].toLowerCase() as AgentRole;
+    }
+    return null;
+  };
+
+  const AGENT_TAG_STYLES: Record<string, { color: string; label: string }> = {
+    "@legal_counsel": { color: "text-sky-400 font-bold", label: "Studio Legal Counsel" },
+    "@director": { color: "text-rose-400 font-bold", label: "The Director" },
+    "@location_manager": { color: "text-amber-400 font-bold", label: "Location & Art Manager" },
+    "@script_supervisor": { color: "text-emerald-400 font-bold", label: "Script Supervisor" },
+    "@bond_officer": { color: "text-indigo-400 font-bold", label: "Completion Bond Officer" },
+  };
+
+  const renderHighlightedPrompt = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(@(?:legal_counsel|director|location_manager|script_supervisor|bond_officer)\b)/gi);
+    return parts.map((part, idx) => {
+      const lower = part.toLowerCase();
+      const tagStyle = AGENT_TAG_STYLES[lower];
+      if (tagStyle) {
+        return (
+          <span key={idx} className={tagStyle.color}>
+            {part}
+          </span>
+        );
+      }
+      return <span key={idx} className="text-zinc-100">{part}</span>;
+    });
+  };
+
   const handleInputChange = (val: string) => {
     setInput(val);
+
+    const foundTagged = detectTaggedAgent(val);
+    setTaggedAgentRole(foundTagged);
+
+    if (foundTagged) {
+      setIsUserTyping(true);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => {
+        setIsUserTyping(false);
+      }, 1000);
+    } else {
+      setIsUserTyping(false);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    }
 
     const cursorIndex = textareaRef.current?.selectionStart ?? val.length;
     const textBeforeCursor = val.slice(0, cursorIndex);
@@ -189,6 +240,13 @@ export default function DeepClearStudioPage() {
     const finalVal = newTextBefore + textAfterCursor;
 
     setInput(finalVal);
+    setTaggedAgentRole(agent.role);
+    setIsUserTyping(true);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(() => {
+      setIsUserTyping(false);
+    }, 1000);
+
     setIsMentionMenuOpen(false);
     setTimeout(() => {
       if (textareaRef.current) {
@@ -205,6 +263,13 @@ export default function DeepClearStudioPage() {
       const cleanPrev = prev.replace(/^@\w+\s*/, "");
       return `${agent.tag} ${cleanPrev}`;
     });
+    setTaggedAgentRole(role);
+    setIsUserTyping(true);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(() => {
+      setIsUserTyping(false);
+    }, 1000);
+
     setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
@@ -661,6 +726,9 @@ Clearance secured. We have safe harbor.`,
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsMentionMenuOpen(false);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    setIsUserTyping(false);
+    setTaggedAgentRole(null);
 
     // Heuristic: Is this a screenplay to be analyzed, or an agent question / conversational query?
     const cleanScriptCandidate = queryText.replace(/^\[Uploaded File:[^\]]+\]\s*/i, "").trim();
@@ -2232,9 +2300,11 @@ Clearance secured. We have safe harbor.`,
             <div className="space-y-1">
 
               {agents.map((ag) => {
-                const isActive = activeAgent === ag.role;
+                const isTagged = taggedAgentRole === ag.role;
+                const isListening = isTagged && isUserTyping && !isLoading;
                 const isSpeaking = speakingAgent === ag.role;
                 const isThinking = agentThinking?.role === ag.role;
+                const isActive = activeAgent === ag.role || (isTagged && !isSpeaking && !isThinking);
                 const theme = AGENT_THEMES[ag.role];
 
                 return (
@@ -2245,9 +2315,11 @@ Clearance secured. We have safe harbor.`,
                     className={`p-2.5 rounded-xl border text-xs transition-all duration-300 cursor-pointer ${
                       isSpeaking
                         ? `${theme.cardActiveBg} ${theme.cardActiveBorder} ${theme.badgeText} shadow-md ring-1 ${theme.cardActiveRing}`
+                        : isListening
+                        ? `${theme.cardActiveBg} ${theme.cardActiveBorder} ${theme.thoughtText} shadow-md ring-1 ${theme.cardActiveRing}`
                         : isThinking
                         ? `${theme.cardActiveBg} ${theme.cardActiveBorder} ${theme.thoughtText} shadow-md ring-1 ${theme.cardActiveRing}`
-                        : isActive
+                        : isTagged || isActive
                         ? `${theme.cardActiveBg} ${theme.cardActiveBorder} text-zinc-100 shadow-sm ring-1 ring-white/10`
                         : "bg-transparent border-transparent hover:bg-zinc-900/80 hover:border-white/10 text-zinc-400 hover:text-zinc-200"
                     }`}
@@ -2255,7 +2327,7 @@ Clearance secured. We have safe harbor.`,
                     <div className="flex items-center gap-2.5">
                       <div
                         className={`p-1.5 rounded-lg border shrink-0 transition-colors ${
-                          isSpeaking || isThinking || isActive
+                          isSpeaking || isListening || isThinking || isTagged || isActive
                             ? `${theme.iconBg} ${theme.iconBorder} ${theme.iconText}`
                             : "bg-zinc-900 border-white/5 text-zinc-400"
                         }`}
@@ -2266,7 +2338,7 @@ Clearance secured. We have safe harbor.`,
                         <div className="flex items-center justify-between">
                           <p
                             className={`font-medium text-xs truncate ${
-                              isSpeaking || isThinking
+                              isSpeaking || isListening || isThinking || isTagged
                                 ? `${theme.accentText} font-semibold`
                                 : isActive
                                 ? "text-zinc-100 font-semibold"
@@ -2276,8 +2348,15 @@ Clearance secured. We have safe harbor.`,
                             {ag.name}
                           </p>
 
-                          {/* Animated Speaker Badge when agent is actively speaking */}
-                          {isSpeaking ? (
+                          {/* Animated Badge: LISTENING or LIVE speaking or active ping */}
+                          {isListening ? (
+                            <span
+                              className={`flex items-center gap-1 text-[9px] font-mono font-bold text-emerald-300 bg-emerald-950/90 border border-emerald-500/40 px-1.5 py-0.5 rounded-md animate-pulse shrink-0`}
+                            >
+                              <Radio className="h-3 w-3 text-emerald-400 animate-spin" />
+                              <span>LISTENING</span>
+                            </span>
+                          ) : isSpeaking ? (
                             <span
                               className={`flex items-center gap-1 text-[9px] font-mono font-bold ${theme.badgeText} ${theme.badgeBg} border ${theme.badgeBorder} px-1.5 py-0.5 rounded-md animate-pulse shrink-0`}
                             >
@@ -2294,8 +2373,36 @@ Clearance secured. We have safe harbor.`,
                       </div>
                     </div>
 
-                    {/* Agent Thinking Process Mini-Card with Persona Theme */}
-                    {isThinking && (
+                    {/* Agent Listening Thought Card when Tagged & User is Typing */}
+                    {isListening ? (
+                      <div
+                        className={`mt-2.5 p-2 rounded-lg bg-[#0C0C0E] border ${theme.thoughtBorder} text-[10px] font-mono ${theme.thoughtText} animate-in fade-in slide-in-from-top-1 duration-150 shadow-md flex items-start gap-1.5`}
+                      >
+                        <Radio className="h-3.5 w-3.5 shrink-0 mt-0.5 text-emerald-400 animate-pulse" />
+                        <div className="space-y-0.5 min-w-0 flex-1">
+                          <div
+                            className={`text-[9px] uppercase tracking-wider ${theme.accentText} font-bold flex items-center justify-between`}
+                          >
+                            <span className="flex items-center gap-1">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                              </span>
+                              <span>Listening</span>
+                            </span>
+                            <span className="text-[8px] font-mono text-zinc-500 lowercase">active input</span>
+                          </div>
+                          <p className="text-zinc-200 leading-snug break-words italic flex items-center gap-1.5">
+                            <span>listening... ... ...</span>
+                            <span className="inline-flex gap-0.5 items-center">
+                              <span className="h-1 w-1 rounded-full bg-emerald-400 animate-bounce [animation-delay:-0.3s]" />
+                              <span className="h-1 w-1 rounded-full bg-emerald-400 animate-bounce [animation-delay:-0.15s]" />
+                              <span className="h-1 w-1 rounded-full bg-emerald-400 animate-bounce" />
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    ) : isThinking ? (
                       <div
                         className={`mt-2.5 p-2 rounded-lg bg-[#0C0C0E] border ${theme.thoughtBorder} text-[10px] font-mono ${theme.thoughtText} animate-in fade-in slide-in-from-top-1 duration-200 shadow-md flex items-start gap-1.5`}
                       >
@@ -2320,7 +2427,7 @@ Clearance secured. We have safe harbor.`,
                           </p>
                         </div>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
@@ -3195,45 +3302,93 @@ Clearance secured. We have safe harbor.`,
               )}
 
               <div className="bg-[#141416] border border-white/[0.08] focus-within:border-white/20 rounded-2xl p-2 shadow-2xl flex flex-col gap-1.5 transition-all">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (isMentionMenuOpen && filteredAgents.length > 0) {
-                      if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        setMentionIndex((prev) => (prev + 1) % filteredAgents.length);
-                        return;
-                      }
-                      if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        setMentionIndex((prev) => (prev - 1 + filteredAgents.length) % filteredAgents.length);
-                        return;
-                      }
-                      if (e.key === "Enter" || e.key === "Tab") {
-                        e.preventDefault();
-                        if (filteredAgents[mentionIndex]) {
-                          handleSelectMention(filteredAgents[mentionIndex]);
-                        }
-                        return;
-                      }
-                      if (e.key === "Escape") {
-                        e.preventDefault();
-                        setIsMentionMenuOpen(false);
-                        return;
-                      }
-                    }
+                {/* Active Tagged Agent Banner Pill if an agent is currently tagged */}
+                {taggedAgentRole && (
+                  <div className="flex items-center justify-between px-1.5 pt-0.5 animate-in fade-in duration-200">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono text-zinc-500 uppercase font-semibold">Directing to:</span>
+                      <span
+                        className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md border flex items-center gap-1.5 ${
+                          AGENT_THEMES[taggedAgentRole].badgeBg
+                        } ${AGENT_THEMES[taggedAgentRole].badgeBorder} ${AGENT_THEMES[taggedAgentRole].badgeText}`}
+                      >
+                        <span className="text-xs">{AVAILABLE_AGENTS.find((a) => a.role === taggedAgentRole)?.avatar}</span>
+                        <span>@{taggedAgentRole}</span>
+                        <span className="text-[10px] font-normal opacity-70">
+                          • {AVAILABLE_AGENTS.find((a) => a.role === taggedAgentRole)?.name}
+                        </span>
+                      </span>
+                    </div>
 
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  placeholder="Ask any agent (type @ to tag), paste dialogue, or upload a .fountain/.md file..."
-                  rows={1}
-                  className="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none px-2 py-1 max-h-36 min-h-[38px] leading-relaxed"
-                />
+                    {isUserTyping && (
+                      <span className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 font-semibold animate-pulse">
+                        <Radio className="h-3 w-3 text-emerald-400" />
+                        <span>listening... ... ...</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Textarea with Highlighting Mirror Layer */}
+                <div className="relative w-full">
+                  {/* Mirrored Syntax Highlighting Backdrop */}
+                  {input && (
+                    <div
+                      ref={inputMirrorRef}
+                      aria-hidden="true"
+                      className="w-full bg-transparent text-sm leading-relaxed px-2 py-1 max-h-36 min-h-[38px] pointer-events-none whitespace-pre-wrap break-words font-sans text-zinc-100 overflow-hidden select-none absolute inset-0 z-0"
+                    >
+                      {renderHighlightedPrompt(input)}
+                    </div>
+                  )}
+
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    onScroll={(e) => {
+                      if (inputMirrorRef.current) {
+                        inputMirrorRef.current.scrollTop = e.currentTarget.scrollTop;
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (isMentionMenuOpen && filteredAgents.length > 0) {
+                        if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          setMentionIndex((prev) => (prev + 1) % filteredAgents.length);
+                          return;
+                        }
+                        if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          setMentionIndex((prev) => (prev - 1 + filteredAgents.length) % filteredAgents.length);
+                          return;
+                        }
+                        if (e.key === "Enter" || e.key === "Tab") {
+                          e.preventDefault();
+                          if (filteredAgents[mentionIndex]) {
+                            handleSelectMention(filteredAgents[mentionIndex]);
+                          }
+                          return;
+                        }
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          setIsMentionMenuOpen(false);
+                          return;
+                        }
+                      }
+
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder={input ? "" : "Ask any agent (type @ to tag), paste dialogue, or upload a .fountain/.md file..."}
+                    rows={1}
+                    className={`w-full bg-transparent text-sm placeholder-zinc-500 focus:outline-none resize-none px-2 py-1 max-h-36 min-h-[38px] leading-relaxed relative z-10 font-sans ${
+                      input ? "text-transparent caret-zinc-100 selection:bg-indigo-500/40 selection:text-white" : "text-zinc-100"
+                    }`}
+                  />
+                </div>
 
               <div className="flex items-center justify-between pt-1 border-t border-white/[0.04]">
                 {/* Upload Button */}
