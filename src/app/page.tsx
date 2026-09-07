@@ -331,6 +331,7 @@ export default function DeepClearStudioPage() {
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const hazardScrollRef = useRef<HTMLDivElement | null>(null);
   const autoClearanceRef = useRef<((hazards?: ExtractedEntity[]) => Promise<void>) | null>(null);
+  const processConversationalQueryRef = useRef<((queryText: string, userMsgId?: string) => Promise<void>) | null>(null);
   const currentScriptRef = useRef<string>("");
   const isAudioMutedRef = useRef<boolean>(false);
   const clearanceModeRef = useRef<ClearanceMode>("auto");
@@ -459,6 +460,15 @@ export default function DeepClearStudioPage() {
             ]);
             autoClearanceRef.current?.(remainingPending);
           }, 1200);
+        } else {
+          // If a conversational agent query was in-flight when user reloaded, resume agent answering!
+          const allMsgs = data.messages || [];
+          const lastMsg = allMsgs.length > 0 ? allMsgs[allMsgs.length - 1] : null;
+          if (lastMsg && lastMsg.sender === "user" && lastMsg.content) {
+            setTimeout(() => {
+              processConversationalQueryRef.current?.(lastMsg.content || "", lastMsg.id);
+            }, 800);
+          }
         }
       }
     }
@@ -913,6 +923,198 @@ Clearance secured. We have safe harbor.`,
     }
   };
 
+  // Process conversational agent queries and inter-agent consultation turns
+  const processConversationalQuery = async (queryText: string, userMsgId?: string) => {
+    setIsLoading(true);
+
+    // Determine target agent from explicit @ mention or leave undefined for auto-intent resolution
+    let targetRole: AgentRole | undefined = undefined;
+    const mentionMatch = queryText.match(/@(\w+)/);
+    if (mentionMatch) {
+      const found = AVAILABLE_AGENTS.find((a) => a.role === mentionMatch[1] || a.tag.slice(1) === mentionMatch[1]);
+      if (found) targetRole = found.role;
+    }
+
+    const initialDisplayAgent: AgentRole = targetRole || "legal_counsel";
+    setActiveAgent(initialDisplayAgent);
+    setAgentThinking({
+      role: initialDisplayAgent,
+      thought: "Synthesizing clearance counsel and querying Parallel Web Systems grounding...",
+    });
+    setAgentTypingStatus("Consulting with Studio Crew Swarm...");
+
+    try {
+      const res = await fetch("/api/agent-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: queryText,
+          targetAgent: targetRole,
+          scriptContext: currentScriptRef.current || currentScriptText,
+          entitiesContext: entities,
+        }),
+      });
+
+      let responseData: any = null;
+
+      if (res.ok) {
+        responseData = await res.json();
+      } else {
+        console.warn("API /api/agent-chat returned error status:", res.status);
+      }
+
+      const primaryRole: AgentRole = responseData?.sender || initialDisplayAgent;
+      setActiveAgent(primaryRole);
+      setAgentThinking(null);
+      setAgentTypingStatus(null);
+
+      let finalContent = responseData?.content;
+      let finalCitations = responseData?.citations || [];
+      let finalActions = responseData?.suggestedActions || [];
+
+      if (!finalContent) {
+        const lower = queryText.toLowerCase();
+        if (primaryRole === "legal_counsel" && (lower.includes("defam") || lower.includes("sue") || lower.includes("charge") || lower.includes("libel"))) {
+          finalContent = `⚖️ **Studio Legal Counsel Guidance on Screenplay Defamation & Civil Exposure**:
+
+1. **Civil Tort vs. Criminal Charges**:
+Defamation in narrative media is not a criminal charge—it is a high-stakes **civil tort (libel per se or libel per quod)**. Plaintiffs frequently pair defamation claims with statutory **Right of Publicity violations** (*e.g., Cal. Civ. Code § 3344*) and **False Light Invasion of Privacy**.
+
+2. **Total Lawsuit Exposure & Financial Damages**:
+• **Compensatory & Actual Damages**: Ranging from **$250,000 to $5,000,000+** if an identifiable living individual demonstrates proven reputational harm, emotional distress, or loss of professional livelihood.
+• **Punitive Damages**: Juries may award multi-million dollar punitive damages if actual malice or reckless disregard for the truth is proven.
+• **Defense Costs**: Even if successfully dismissed under the First Amendment (*Rogers v. Grimaldi*), defending media defamation costs **$150,000 to $750,000** in specialized entertainment litigation fees.
+
+3. **E&O Insurance & Completion Bond Impact**:
+Completion guarantors and E&O underwriting carriers will **exclude** un-cleared living person depictions from insurance binders. Without clean E&O coverage, distribution financing and bank escrow will immediately freeze.
+
+4. **Production Safe-Harbor Protocol**:
+Execute complete "greeking"—change character names, occupations, medical/bar license numbers, and biographical milestones. Alternatively, execute a formal **Life Story Rights Agreement** with an express covenant not to sue.`;
+          finalActions = [
+            "Execute character name & biographical 'greeking' to ensure zero living person collision",
+            "Verify character names against Parallel Public Records & Licensing Registry",
+            "Confirm E&O policy does not carry living person depiction exclusions",
+          ];
+        } else {
+          finalContent = `As ${AVAILABLE_AGENTS.find((a) => a.role === primaryRole)?.name || "Studio Agent"}, I've evaluated your clearance query. When developing scenes with potential brand, individual, or music references, we prioritize obtaining formal sync rights, greeking commercial trademarks to avoid Lanham Act § 43 dilution, and securing municipal permits prior to principal photography.`;
+          finalActions = [
+            "Audit screenplay for brand logos and songs",
+            "Inspect USPTO classifications in Parallel Inspector",
+            "Verify municipal film permit requirements",
+          ];
+        }
+      }
+
+      const agentMsg: ChatMessage = {
+        id: `agent-chat-${Date.now()}`,
+        sender: primaryRole,
+        senderName: responseData?.senderName || AVAILABLE_AGENTS.find((a) => a.role === primaryRole)?.name || "Studio Agent",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: finalContent,
+        citations: finalCitations,
+        suggestedActions: finalActions,
+        replyTo: userMsgId
+          ? {
+              messageId: userMsgId,
+              senderName: "You",
+              snippet: queryText.length > 60 ? queryText.slice(0, 60) + "..." : queryText,
+            }
+          : undefined,
+      };
+
+      setMessages((prev) => [...prev, agentMsg]);
+
+      // Speech audio synthesis in agent's voice
+      if (finalContent) {
+        const shortSpoken = finalContent.split("\n")[0].replace(/[*#_`]/g, "").slice(0, 140);
+        speakTextAsync(shortSpoken, primaryRole).catch(() => {});
+      }
+
+      // If another agent was cross-consulted, post their commentary turn
+      if (responseData?.consultedAgent && responseData.consultedAgent.comment) {
+        const secondaryRole: AgentRole = responseData.consultedAgent.role;
+        setTimeout(() => {
+          setActiveAgent(secondaryRole);
+          const consultMsg: ChatMessage = {
+            id: `agent-consult-${Date.now()}`,
+            sender: secondaryRole,
+            senderName: responseData.consultedAgent.name,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            type: "text",
+            content: responseData.consultedAgent.comment,
+            replyTo: {
+              messageId: agentMsg.id,
+              senderName: responseData.senderName,
+              snippet: finalContent.slice(0, 50) + "...",
+            },
+          };
+          setMessages((prev) => [...prev, consultMsg]);
+          const shortSpoken2 = responseData.consultedAgent.comment.split("\n")[0].replace(/[*#_`]/g, "").slice(0, 120);
+          speakTextAsync(shortSpoken2, secondaryRole).catch(() => {});
+        }, 600);
+      }
+    } catch (err) {
+      console.error("Agent chat error:", err);
+      setAgentThinking(null);
+      setAgentTypingStatus(null);
+
+      const primaryRole: AgentRole = targetRole || "legal_counsel";
+      const lower = queryText.toLowerCase();
+      let fallbackContent = `As ${AVAILABLE_AGENTS.find((a) => a.role === primaryRole)?.name || "Studio Agent"}, I've evaluated your clearance query. When developing scenes with potential brand, individual, or music references, we prioritize obtaining formal sync rights, greeking commercial trademarks to avoid Lanham Act § 43 dilution, and securing municipal permits prior to principal photography.`;
+      let fallbackActions = [
+        "Audit screenplay for brand logos and songs",
+        "Inspect USPTO classifications in Parallel Inspector",
+        "Verify municipal film permit requirements",
+      ];
+
+      if (primaryRole === "legal_counsel" && (lower.includes("defam") || lower.includes("sue") || lower.includes("charge") || lower.includes("libel"))) {
+        fallbackContent = `⚖️ **Studio Legal Counsel Guidance on Screenplay Defamation & Civil Exposure**:
+
+1. **Civil Tort vs. Criminal Charges**:
+Defamation in narrative film/TV is not a criminal charge—it is a high-stakes **civil tort (libel)**. Plaintiffs regularly couple defamation claims with statutory **Right of Publicity violations** (*e.g., Cal. Civ. Code § 3344*) and **False Light Invasion of Privacy**.
+
+2. **Total Lawsuit Exposure & Damage Potential**:
+• **Compensatory & Actual Damages**: Ranging from **$250,000 to $5,000,000+** if an identifiable living individual demonstrates proven reputational harm or loss of commercial standing.
+• **Punitive Damages**: Juries may award multi-million dollar punitive damages if actual malice or reckless disregard for the truth is found.
+• **Defense Costs**: Even if successfully defended under the First Amendment (*Rogers v. Grimaldi*), defending media defamation costs between **$150,000 and $750,000** in specialized entertainment litigation fees.
+
+3. **E&O Insurance & Completion Bond Impact**:
+Completion guarantors and E&O underwriting carriers will **exclude** un-cleared living person depictions from insurance binders. Without clean E&O coverage, distribution financing and bank escrow will immediately freeze.
+
+4. **Production Safe-Harbor Protocol**:
+Execute complete "greeking"—change character names, occupations, medical/bar license numbers, and biographical milestones. Alternatively, execute a formal **Life Story Rights Agreement** with an express covenant not to sue.`;
+        fallbackActions = [
+          "Execute character name & biographical 'greeking' to ensure zero living person collision",
+          "Verify character names against Parallel Public Records & Licensing Registry",
+          "Confirm E&O policy does not carry living person depiction exclusions",
+        ];
+      }
+
+      const agentMsg: ChatMessage = {
+        id: `agent-chat-${Date.now()}`,
+        sender: primaryRole,
+        senderName: AVAILABLE_AGENTS.find((a) => a.role === primaryRole)?.name || "Studio Agent",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: fallbackContent,
+        suggestedActions: fallbackActions,
+        replyTo: userMsgId
+          ? {
+              messageId: userMsgId,
+              senderName: "You",
+              snippet: queryText.length > 60 ? queryText.slice(0, 60) + "..." : queryText,
+            }
+          : undefined,
+      };
+
+      setMessages((prev) => [...prev, agentMsg]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  processConversationalQueryRef.current = processConversationalQuery;
+
   // Handle Send Message / Analyze Script or Conversational Agent Query
   const handleSendMessage = async (textToSend?: string) => {
     const queryText = (textToSend || input).trim();
@@ -946,192 +1148,7 @@ Clearance secured. We have safe harbor.`,
     const isScreenplay = hasSluglines || hasPassport || hasFountainScene || hasDialogueBlocks || isUploadedScript;
 
     if (!isScreenplay) {
-      // -------------------------------------------------------------
-      // CONVERSATIONAL AGENT Q&A & INTER-AGENT CONSULTATION ROUTE
-      // -------------------------------------------------------------
-      setIsLoading(true);
-
-      // Determine target agent from explicit @ mention or leave undefined for auto-intent resolution
-      let targetRole: AgentRole | undefined = undefined;
-      const mentionMatch = queryText.match(/@(\w+)/);
-      if (mentionMatch) {
-        const found = AVAILABLE_AGENTS.find((a) => a.role === mentionMatch[1] || a.tag.slice(1) === mentionMatch[1]);
-        if (found) targetRole = found.role;
-      }
-
-      const initialDisplayAgent: AgentRole = targetRole || "legal_counsel";
-      setActiveAgent(initialDisplayAgent);
-      setAgentThinking({
-        role: initialDisplayAgent,
-        thought: "Synthesizing clearance counsel and querying Parallel Web Systems grounding...",
-      });
-      setAgentTypingStatus("Consulting with Studio Crew Swarm...");
-
-      try {
-        const res = await fetch("/api/agent-chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: queryText,
-            targetAgent: targetRole,
-            scriptContext: currentScriptRef.current || currentScriptText,
-            entitiesContext: entities,
-          }),
-        });
-
-        let responseData: any = null;
-
-        if (res.ok) {
-          responseData = await res.json();
-        } else {
-          console.warn("API /api/agent-chat returned error status:", res.status);
-        }
-
-        const primaryRole: AgentRole = responseData?.sender || initialDisplayAgent;
-        setActiveAgent(primaryRole);
-        setAgentThinking(null);
-        setAgentTypingStatus(null);
-
-        let finalContent = responseData?.content;
-        let finalCitations = responseData?.citations || [];
-        let finalActions = responseData?.suggestedActions || [];
-
-        if (!finalContent) {
-          const lower = queryText.toLowerCase();
-          if (primaryRole === "legal_counsel" && (lower.includes("defam") || lower.includes("sue") || lower.includes("charge") || lower.includes("libel"))) {
-            finalContent = `⚖️ **Studio Legal Counsel Guidance on Screenplay Defamation & Civil Exposure**:
-
-1. **Civil Tort vs. Criminal Charges**:
-Defamation in narrative media is not a criminal charge—it is a high-stakes **civil tort (libel per se or libel per quod)**. Plaintiffs frequently pair defamation claims with statutory **Right of Publicity violations** (*e.g., Cal. Civ. Code § 3344*) and **False Light Invasion of Privacy**.
-
-2. **Total Lawsuit Exposure & Financial Damages**:
-• **Compensatory & Actual Damages**: Ranging from **$250,000 to $5,000,000+** if an identifiable living individual demonstrates proven reputational harm, emotional distress, or loss of professional livelihood.
-• **Punitive Damages**: Juries may award multi-million dollar punitive damages if actual malice or reckless disregard for the truth is proven.
-• **Defense Costs**: Even if successfully dismissed under the First Amendment (*Rogers v. Grimaldi*), defending media defamation costs **$150,000 to $750,000** in specialized entertainment litigation fees.
-
-3. **E&O Insurance & Completion Bond Impact**:
-Completion guarantors and E&O underwriting carriers will **exclude** un-cleared living person depictions from insurance binders. Without clean E&O coverage, distribution financing and bank escrow will immediately freeze.
-
-4. **Production Safe-Harbor Protocol**:
-Execute complete "greeking"—change character names, occupations, medical/bar license numbers, and biographical milestones. Alternatively, execute a formal **Life Story Rights Agreement** with an express covenant not to sue.`;
-            finalActions = [
-              "Execute character name & biographical 'greeking' to ensure zero living person collision",
-              "Verify character names against Parallel Public Records & Licensing Registry",
-              "Confirm E&O policy does not carry living person depiction exclusions",
-            ];
-          } else {
-            finalContent = `As ${AVAILABLE_AGENTS.find((a) => a.role === primaryRole)?.name || "Studio Agent"}, I've evaluated your clearance query. When developing scenes with potential brand, individual, or music references, we prioritize obtaining formal sync rights, greeking commercial trademarks to avoid Lanham Act § 43 dilution, and securing municipal permits prior to principal photography.`;
-            finalActions = [
-              "Audit screenplay for brand logos and songs",
-              "Inspect USPTO classifications in Parallel Inspector",
-              "Verify municipal film permit requirements",
-            ];
-          }
-        }
-
-        const agentMsg: ChatMessage = {
-          id: `agent-chat-${Date.now()}`,
-          sender: primaryRole,
-          senderName: responseData?.senderName || AVAILABLE_AGENTS.find((a) => a.role === primaryRole)?.name || "Studio Agent",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "text",
-          content: finalContent,
-          citations: finalCitations,
-          suggestedActions: finalActions,
-          replyTo: {
-            messageId: userMsg.id,
-            senderName: "You",
-            snippet: queryText.length > 60 ? queryText.slice(0, 60) + "..." : queryText,
-          },
-        };
-
-        setMessages((prev) => [...prev, agentMsg]);
-
-        // Speech audio synthesis in agent's voice
-        if (finalContent) {
-          const shortSpoken = finalContent.split("\n")[0].replace(/[*#_`]/g, "").slice(0, 140);
-          speakTextAsync(shortSpoken, primaryRole).catch(() => {});
-        }
-
-        // If another agent was cross-consulted, post their commentary turn
-        if (responseData?.consultedAgent && responseData.consultedAgent.comment) {
-          const secondaryRole: AgentRole = responseData.consultedAgent.role;
-          setTimeout(() => {
-            setActiveAgent(secondaryRole);
-            const consultMsg: ChatMessage = {
-              id: `agent-consult-${Date.now()}`,
-              sender: secondaryRole,
-              senderName: responseData.consultedAgent.name,
-              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-              type: "text",
-              content: responseData.consultedAgent.comment,
-              replyTo: {
-                messageId: agentMsg.id,
-                senderName: responseData.senderName,
-                snippet: finalContent.slice(0, 50) + "...",
-              },
-            };
-            setMessages((prev) => [...prev, consultMsg]);
-            const shortSpoken2 = responseData.consultedAgent.comment.split("\n")[0].replace(/[*#_`]/g, "").slice(0, 120);
-            speakTextAsync(shortSpoken2, secondaryRole).catch(() => {});
-          }, 600);
-        }
-      } catch (err) {
-        console.error("Agent chat error:", err);
-        setAgentThinking(null);
-        setAgentTypingStatus(null);
-
-        const primaryRole: AgentRole = targetRole || "legal_counsel";
-        const lower = queryText.toLowerCase();
-        let fallbackContent = `As ${AVAILABLE_AGENTS.find((a) => a.role === primaryRole)?.name || "Studio Agent"}, I've evaluated your clearance query. When developing scenes with potential brand, individual, or music references, we prioritize obtaining formal sync rights, greeking commercial trademarks to avoid Lanham Act § 43 dilution, and securing municipal permits prior to principal photography.`;
-        let fallbackActions = [
-          "Audit screenplay for brand logos and songs",
-          "Inspect USPTO classifications in Parallel Inspector",
-          "Verify municipal film permit requirements",
-        ];
-
-        if (primaryRole === "legal_counsel" && (lower.includes("defam") || lower.includes("sue") || lower.includes("charge") || lower.includes("libel"))) {
-          fallbackContent = `⚖️ **Studio Legal Counsel Guidance on Screenplay Defamation & Civil Exposure**:
-
-1. **Civil Tort vs. Criminal Charges**:
-Defamation in narrative film/TV is not a criminal charge—it is a high-stakes **civil tort (libel)**. Plaintiffs regularly couple defamation claims with statutory **Right of Publicity violations** (*e.g., Cal. Civ. Code § 3344*) and **False Light Invasion of Privacy**.
-
-2. **Total Lawsuit Exposure & Damage Potential**:
-• **Compensatory & Actual Damages**: Ranging from **$250,000 to $5,000,000+** if an identifiable living individual demonstrates proven reputational harm or loss of commercial standing.
-• **Punitive Damages**: Juries may award multi-million dollar punitive damages if actual malice or reckless disregard for the truth is found.
-• **Defense Costs**: Even if successfully defended under the First Amendment (*Rogers v. Grimaldi*), defending media defamation costs between **$150,000 and $750,000** in specialized entertainment litigation fees.
-
-3. **E&O Insurance & Completion Bond Impact**:
-Completion guarantors and E&O underwriting carriers will **exclude** un-cleared living person depictions from insurance binders. Without clean E&O coverage, distribution financing and bank escrow will immediately freeze.
-
-4. **Production Safe-Harbor Protocol**:
-Execute complete "greeking"—change character names, occupations, medical/bar license numbers, and biographical milestones. Alternatively, execute a formal **Life Story Rights Agreement** with an express covenant not to sue.`;
-          fallbackActions = [
-            "Execute character name & biographical 'greeking' to ensure zero living person collision",
-            "Verify character names against Parallel Public Records & Licensing Registry",
-            "Confirm E&O policy does not carry living person depiction exclusions",
-          ];
-        }
-
-        const agentMsg: ChatMessage = {
-          id: `agent-chat-${Date.now()}`,
-          sender: primaryRole,
-          senderName: AVAILABLE_AGENTS.find((a) => a.role === primaryRole)?.name || "Studio Agent",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "text",
-          content: fallbackContent,
-          suggestedActions: fallbackActions,
-          replyTo: {
-            messageId: userMsg.id,
-            senderName: "You",
-            snippet: queryText.length > 60 ? queryText.slice(0, 60) + "..." : queryText,
-          },
-        };
-
-        setMessages((prev) => [...prev, agentMsg]);
-      } finally {
-        setIsLoading(false);
-      }
+      await processConversationalQuery(queryText, userMsg.id);
       return;
     }
 
