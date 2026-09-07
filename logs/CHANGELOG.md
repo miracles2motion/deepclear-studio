@@ -17,6 +17,9 @@ This changelog records major releases, architectural features, and critical mile
   - While an agent is tagged and the user is actively typing, that agent's card in the Left Sidebar ("Autonomous Crew Swarm") illuminates with its theme ring and a green pulsing `LISTENING` badge.
   - An animated `listening... ... ...` thought card mounts in the agent's sidebar card with live radio frequency pulses and bouncing wave indicators.
   - Pausing typing automatically pauses/dismisses the listening card. Resuming typing instantly reactivates it. Dispatching the message (`Enter` or Send button) immediately clears listening and transitions cleanly to the agent's default thinking state (`agentThinking`).
+- **Mobile Prompt Bar Responsiveness & Compact Listening Badge**:
+  - Optimized the prompt bar's tagged agent banner and mini listening badge for compact mobile screens (iPhone SE, iPhone 14, 375px–390px viewports).
+  - Truncated redundant labels on small screens (`Directing:` hidden on `< sm`, long department titles hidden on `< md`), and streamlined the listening tag to a sleek, compact radio pill (`((•)) listening...`), ensuring generous breathing room and zero container clipping.
 - **Conversational Intent Router (`/api/agent-chat`)**:
   - Implemented intelligent distinction between screenplay ingestion and conversational inquiries. Screenplay analysis is reserved for text with scene sluglines (`EXT./INT.`), Fountain formatting, dialogue cue blocks, or uploaded files.
   - Conversational questions and directives bypass screenplay mutation and hazard extraction entirely, preserving authentic screenplay text and exposure metrics without false liabilities.

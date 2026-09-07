@@ -3304,26 +3304,29 @@ Clearance secured. We have safe harbor.`,
               <div className="bg-[#141416] border border-white/[0.08] focus-within:border-white/20 rounded-2xl p-2 shadow-2xl flex flex-col gap-1.5 transition-all">
                 {/* Active Tagged Agent Banner Pill if an agent is currently tagged */}
                 {taggedAgentRole && (
-                  <div className="flex items-center justify-between px-1.5 pt-0.5 animate-in fade-in duration-200">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-mono text-zinc-500 uppercase font-semibold">Directing to:</span>
+                  <div className="flex items-center justify-between gap-1.5 px-1 sm:px-1.5 pt-0.5 min-w-0 max-w-full overflow-hidden animate-in fade-in duration-200">
+                    <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1 overflow-hidden">
+                      <span className="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase font-semibold hidden sm:inline shrink-0">
+                        Directing:
+                      </span>
                       <span
-                        className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md border flex items-center gap-1.5 ${
+                        className={`text-[10px] sm:text-[11px] font-mono font-bold px-1.5 sm:px-2 py-0.5 rounded-md border flex items-center gap-1 truncate ${
                           AGENT_THEMES[taggedAgentRole].badgeBg
                         } ${AGENT_THEMES[taggedAgentRole].badgeBorder} ${AGENT_THEMES[taggedAgentRole].badgeText}`}
                       >
-                        <span className="text-xs">{AVAILABLE_AGENTS.find((a) => a.role === taggedAgentRole)?.avatar}</span>
-                        <span>@{taggedAgentRole}</span>
-                        <span className="text-[10px] font-normal opacity-70">
+                        <span className="text-xs shrink-0">{AVAILABLE_AGENTS.find((a) => a.role === taggedAgentRole)?.avatar}</span>
+                        <span className="truncate">@{taggedAgentRole}</span>
+                        <span className="text-[10px] font-normal opacity-70 hidden md:inline truncate">
                           • {AVAILABLE_AGENTS.find((a) => a.role === taggedAgentRole)?.name}
                         </span>
                       </span>
                     </div>
 
                     {isUserTyping && (
-                      <span className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 font-semibold animate-pulse">
-                        <Radio className="h-3 w-3 text-emerald-400" />
-                        <span>listening... ... ...</span>
+                      <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 font-medium shrink-0 animate-pulse bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                        <Radio className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-emerald-400 shrink-0" />
+                        <span className="sm:hidden">listening...</span>
+                        <span className="hidden sm:inline">listening... ... ...</span>
                       </span>
                     )}
                   </div>
