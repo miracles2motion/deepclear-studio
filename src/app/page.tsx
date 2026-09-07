@@ -426,6 +426,36 @@ export default function DeepClearStudioPage() {
       const activeRecord = saved.find((s) => s.id === activeId);
       if (activeRecord && activeRecord.sessionData) {
         handleImportSession(activeRecord.sessionData);
+
+        // Check if there were in-flight liabilities interrupted during Auto Mode
+        const data = activeRecord.sessionData;
+        const clearedIds = data.clearedEntityIds || [];
+        const licensedIds = data.licensedEntityIds || [];
+        const remainingPending = (data.entities || []).filter(
+          (e) =>
+            !clearedIds.includes(e.id) &&
+            !licensedIds.includes(e.id) &&
+            e.status !== "cleared" &&
+            e.status !== "licensed"
+        );
+
+        // If in Auto Mode and liabilities were interrupted by reload, automatically resume queue!
+        if (remainingPending.length > 0 && clearanceModeRef.current === "auto") {
+          setTimeout(() => {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `resume-queue-${Date.now()}`,
+                sender: "system",
+                senderName: "DeepClear Swarm",
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                type: "text",
+                content: `⚡ **Autonomous Swarm Resumed After Reload**: Restored active session with **${remainingPending.length} remaining liabilities**. Resuming clearance queue...`,
+              },
+            ]);
+            autoClearanceRef.current?.(remainingPending);
+          }, 1200);
+        }
       }
     }
   }, []);
