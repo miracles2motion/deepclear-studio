@@ -4,6 +4,16 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.2] — 2026-09-07
+### 📱 Microsoft Edge Live Preview & Multi-Viewport Mobile Audit Suite
+- **Edge Automated Viewport Testing Suite (`scripts/preview-mobile.js`)**: Configured direct execution of Windows Microsoft Edge (`C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`) via `puppeteer-core` to run high-resolution, end-to-end mobile audits across iPhone 14 (390x844), iPhone SE (375x667), and iPad (768x1024).
+- **Mobile Full-Width Sidebar Fix**: Removed conflicting base widths (`w-64`, `w-72`) on mobile sidebars in `src/app/page.tsx`, scoping desktop widths to `lg:w-72 xl:w-80` and allowing the Crew Swarm and E&O Risk HUD tabs to render at full width on mobile viewports.
+- **Responsive Subheader & Action Controls**: Added responsive breakpoint labels (`Swarm Debate & Audit` -> `Debate`, `Screenplay Redline` -> `Redline`, `Auto-Clear All` -> `Auto-Clear`) to eliminate header overcrowding on small viewports.
+- **Export Modal Mobile Scrolling**: Added `max-h-[92vh] overflow-y-auto` and adaptive padding (`p-4 sm:p-6`) to `ExportModal.tsx`, preventing action button clipping on compact screens.
+- **Parallel Inspector Mobile Bottom-Sheet**: Verified the slide-over drawer properly renders with segmented tabs (`Single Asset` / `All Dossier`), clean telemetry cards, and pinned bottom audit actions across mobile and small phone screens.
+
+---
+
 ## [v0.8.1] — 2026-09-07
 ### 🛡️ Speech Mute Cancellation, Auto-Pilot Abortion, DOM Scroll Preservation & Parallel Inspector Overhaul
 - **Instant Audio Mute Cancellation**: Added synchronous `isAudioMutedRef` tracking in `speakTextAsync` and on utterance start. Clicking "Voice Muted" now immediately invokes `synth.cancel()`, clears `speakingAgent`, and halts any pending playback with zero lag.
