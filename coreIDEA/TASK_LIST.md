@@ -61,3 +61,12 @@
   - [x] Build `ScreenplayRedlineView.tsx` with side-by-side desktop diff and mobile segmented tabs (`[Cleared]`, `[Original]`, `[Split]`).
   - [x] Add Exhibit B: Parallel Web Systems Grounding & Registry Audit Ledger to `src/lib/pdfGenerator.ts`.
   - [x] Complete production build verification (`npm run build`) and update changelog.
+
+- [x] **Phase 10: @ Mention Tagging System, Conversational Agent Engine & Inter-Agent Collaboration**
+  - [x] Build `@` mention autocomplete popover with keyboard navigation (`ArrowUp`, `ArrowDown`, `Enter`, `Tab`, `Escape`) in prompt box.
+  - [x] Add click-to-tag integration on Left Sidebar "Autonomous Crew Swarm" agent cards.
+  - [x] Implement `/api/agent-chat` route and `generateConversationalAgentResponse` in `src/lib/gemini.ts` for conversational inquiries.
+  - [x] Screenplay vs conversational intent classification preventing question mutation into fake liabilities.
+  - [x] Inter-agent consultation passing context between crew members with secondary follow-up commentary turns and audio speech.
+  - [x] Parallel Search grounding badges and interactive suggested action pills in text messages.
+

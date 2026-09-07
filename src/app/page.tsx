@@ -55,6 +55,8 @@ interface ChatMessage {
   content?: string;
   entities?: ExtractedEntity[];
   debateTurn?: DebateTurn;
+  citations?: ParallelGroundingCitation[];
+  suggestedActions?: string[];
   replyTo?: {
     messageId?: string;
     senderName: string;
@@ -105,6 +107,110 @@ export default function DeepClearStudioPage() {
   const [agentTypingStatus, setAgentTypingStatus] = useState<string | null>(null);
   const [speakingAgent, setSpeakingAgent] = useState<AgentRole | null>(null);
   const [agentThinking, setAgentThinking] = useState<{ role: AgentRole; thought: string } | null>(null);
+
+  // @ Mention Tagging & Available Agent Personas
+  const AVAILABLE_AGENTS = [
+    {
+      role: "legal_counsel" as AgentRole,
+      tag: "@legal_counsel",
+      name: "Studio Legal Counsel",
+      title: "Trademark & Copyright Clearance",
+      avatar: "⚖️",
+      color: "text-sky-400",
+    },
+    {
+      role: "director" as AgentRole,
+      tag: "@director",
+      name: "The Director",
+      title: "Creative Intent & Fair Use",
+      avatar: "🎬",
+      color: "text-rose-400",
+    },
+    {
+      role: "location_manager" as AgentRole,
+      tag: "@location_manager",
+      name: "Location & Art Manager",
+      title: "Permits & Tax Rebates",
+      avatar: "📍",
+      color: "text-amber-400",
+    },
+    {
+      role: "script_supervisor" as AgentRole,
+      tag: "@script_supervisor",
+      name: "Script Supervisor",
+      title: "Continuity & Redline Script",
+      avatar: "👁️",
+      color: "text-emerald-400",
+    },
+    {
+      role: "bond_officer" as AgentRole,
+      tag: "@bond_officer",
+      name: "Completion Bond Officer",
+      title: "E&O Underwriting & Risks",
+      avatar: "🛡️",
+      color: "text-indigo-400",
+    },
+  ];
+
+  const [isMentionMenuOpen, setIsMentionMenuOpen] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const filteredAgents = AVAILABLE_AGENTS.filter(
+    (ag) =>
+      ag.tag.toLowerCase().includes(mentionQuery) ||
+      ag.name.toLowerCase().includes(mentionQuery) ||
+      ag.role.toLowerCase().includes(mentionQuery)
+  );
+
+  const handleInputChange = (val: string) => {
+    setInput(val);
+
+    const cursorIndex = textareaRef.current?.selectionStart ?? val.length;
+    const textBeforeCursor = val.slice(0, cursorIndex);
+    const lastWordMatch = textBeforeCursor.match(/@(\w*)$/);
+
+    if (lastWordMatch) {
+      setMentionQuery(lastWordMatch[1].toLowerCase());
+      setIsMentionMenuOpen(true);
+      setMentionIndex(0);
+    } else {
+      setIsMentionMenuOpen(false);
+    }
+  };
+
+  const handleSelectMention = (agent: (typeof AVAILABLE_AGENTS)[0]) => {
+    const cursorIndex = textareaRef.current?.selectionStart ?? input.length;
+    const textBeforeCursor = input.slice(0, cursorIndex);
+    const textAfterCursor = input.slice(cursorIndex);
+
+    const newTextBefore = textBeforeCursor.replace(/@\w*$/, `${agent.tag} `);
+    const finalVal = newTextBefore + textAfterCursor;
+
+    setInput(finalVal);
+    setIsMentionMenuOpen(false);
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newTextBefore.length, newTextBefore.length);
+      }
+    }, 10);
+  };
+
+  const handleTagAgentFromSidebar = (role: AgentRole) => {
+    const agent = AVAILABLE_AGENTS.find((a) => a.role === role);
+    if (!agent) return;
+    setInput((prev) => {
+      const cleanPrev = prev.replace(/^@\w+\s*/, "");
+      return `${agent.tag} ${cleanPrev}`;
+    });
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 10);
+  };
 
   const handleCopyMessage = (msg: ChatMessage) => {
     let textToCopy = msg.content || "";
@@ -537,7 +643,7 @@ Clearance secured. We have safe harbor.`,
     }
   };
 
-  // Handle Send Message / Analyze Script
+  // Handle Send Message / Analyze Script or Conversational Agent Query
   const handleSendMessage = async (textToSend?: string) => {
     const queryText = (textToSend || input).trim();
     if (!queryText || isLoading) return;
@@ -553,10 +659,138 @@ Clearance secured. We have safe harbor.`,
     };
 
     setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setIsMentionMenuOpen(false);
+
+    // Heuristic: Is this a screenplay to be analyzed, or an agent question / conversational query?
+    const cleanScriptCandidate = queryText.replace(/^\[Uploaded File:[^\]]+\]\s*/i, "").trim();
+    const hasSluglines = /^(?:EXT\.|INT\.|INT\/EXT\.|I\/E\.)/im.test(cleanScriptCandidate);
+    const hasPassport = /---[\s\S]*deepclear_passport[\s\S]*---/i.test(cleanScriptCandidate);
+    const hasFountainScene = /^\.[A-Z0-9_\-\s]+$/m.test(cleanScriptCandidate);
+    const hasDialogueBlocks = /^[A-Z0-9\s]{2,}\n[^\n]+/m.test(cleanScriptCandidate) && cleanScriptCandidate.length > 80;
+    const isUploadedScript = queryText.startsWith("[Uploaded File:") && !cleanScriptCandidate.startsWith("?");
+
+    const isScreenplay = hasSluglines || hasPassport || hasFountainScene || hasDialogueBlocks || isUploadedScript;
+
+    if (!isScreenplay) {
+      // -------------------------------------------------------------
+      // CONVERSATIONAL AGENT Q&A & INTER-AGENT CONSULTATION ROUTE
+      // -------------------------------------------------------------
+      setIsLoading(true);
+
+      // Determine target agent from explicit @ mention or leave undefined for auto-intent resolution
+      let targetRole: AgentRole | undefined = undefined;
+      const mentionMatch = queryText.match(/@(\w+)/);
+      if (mentionMatch) {
+        const found = AVAILABLE_AGENTS.find((a) => a.role === mentionMatch[1] || a.tag.slice(1) === mentionMatch[1]);
+        if (found) targetRole = found.role;
+      }
+
+      const initialDisplayAgent: AgentRole = targetRole || "legal_counsel";
+      setActiveAgent(initialDisplayAgent);
+      setAgentThinking({
+        role: initialDisplayAgent,
+        thought: "Synthesizing clearance counsel and querying Parallel Web Systems grounding...",
+      });
+      setAgentTypingStatus("Consulting with Studio Crew Swarm...");
+
+      try {
+        const res = await fetch("/api/agent-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: queryText,
+            targetAgent: targetRole,
+            scriptContext: currentScriptRef.current || currentScriptText,
+            entitiesContext: entities,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const primaryRole: AgentRole = data.sender || initialDisplayAgent;
+          setActiveAgent(primaryRole);
+          setAgentThinking(null);
+          setAgentTypingStatus(null);
+
+          const agentMsg: ChatMessage = {
+            id: `agent-chat-${Date.now()}`,
+            sender: primaryRole,
+            senderName: data.senderName || "Studio Agent",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            type: "text",
+            content: data.content,
+            citations: data.citations || [],
+            suggestedActions: data.suggestedActions || [],
+            replyTo: {
+              messageId: userMsg.id,
+              senderName: "You",
+              snippet: queryText.length > 60 ? queryText.slice(0, 60) + "..." : queryText,
+            },
+          };
+
+          setMessages((prev) => [...prev, agentMsg]);
+
+          // Speech audio synthesis in agent's voice
+          if (data.content) {
+            const shortSpoken = data.content.split("\n")[0].replace(/[*#_`]/g, "").slice(0, 140);
+            speakTextAsync(shortSpoken, primaryRole).catch(() => {});
+          }
+
+          // If another agent was cross-consulted, post their commentary turn
+          if (data.consultedAgent && data.consultedAgent.comment) {
+            const secondaryRole: AgentRole = data.consultedAgent.role;
+            setTimeout(() => {
+              setActiveAgent(secondaryRole);
+              const consultMsg: ChatMessage = {
+                id: `agent-consult-${Date.now()}`,
+                sender: secondaryRole,
+                senderName: data.consultedAgent.name,
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                type: "text",
+                content: data.consultedAgent.comment,
+                replyTo: {
+                  messageId: agentMsg.id,
+                  senderName: data.senderName,
+                  snippet: data.content.slice(0, 50) + "...",
+                },
+              };
+              setMessages((prev) => [...prev, consultMsg]);
+              const shortSpoken2 = data.consultedAgent.comment.split("\n")[0].replace(/[*#_`]/g, "").slice(0, 120);
+              speakTextAsync(shortSpoken2, secondaryRole).catch(() => {});
+            }, 600);
+          }
+        } else {
+          setAgentThinking(null);
+          setAgentTypingStatus(null);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `error-${Date.now()}`,
+              sender: "system",
+              senderName: "DeepClear Swarm",
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              type: "text",
+              content: "⚠️ Unable to process agent query. Please ensure network connectivity and try again.",
+            },
+          ]);
+        }
+      } catch (err) {
+        console.error("Agent chat error:", err);
+        setAgentThinking(null);
+        setAgentTypingStatus(null);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // -------------------------------------------------------------
+    // SCREENPLAY INGESTION & CLEARANCE STREAMING ROUTE
+    // -------------------------------------------------------------
     currentScriptRef.current = queryText;
     setCurrentScriptText(queryText);
     setOriginalScriptSnapshot((prev) => (!prev ? queryText : prev));
-    setInput("");
     setIsLoading(true);
     setActiveAgent("script_supervisor");
     setAgentThinking({
@@ -2006,14 +2240,16 @@ Clearance secured. We have safe harbor.`,
                 return (
                   <div
                     key={ag.role}
-                    className={`p-2.5 rounded-xl border text-xs transition-all duration-300 ${
+                    onClick={() => handleTagAgentFromSidebar(ag.role)}
+                    title={`Click to tag ${ag.name} (@${ag.role}) in chat`}
+                    className={`p-2.5 rounded-xl border text-xs transition-all duration-300 cursor-pointer ${
                       isSpeaking
                         ? `${theme.cardActiveBg} ${theme.cardActiveBorder} ${theme.badgeText} shadow-md ring-1 ${theme.cardActiveRing}`
                         : isThinking
                         ? `${theme.cardActiveBg} ${theme.cardActiveBorder} ${theme.thoughtText} shadow-md ring-1 ${theme.cardActiveRing}`
                         : isActive
-                        ? `${theme.cardActiveBg} ${theme.cardActiveBorder} text-zinc-100 shadow-sm`
-                        : "bg-transparent border-transparent hover:bg-zinc-900/60 text-zinc-400"
+                        ? `${theme.cardActiveBg} ${theme.cardActiveBorder} text-zinc-100 shadow-sm ring-1 ring-white/10`
+                        : "bg-transparent border-transparent hover:bg-zinc-900/80 hover:border-white/10 text-zinc-400 hover:text-zinc-200"
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -2324,7 +2560,60 @@ Clearance secured. We have safe harbor.`,
                               </span>
                             </button>
                           )}
-                          {msg.content}
+                          <div>{msg.content}</div>
+
+                          {/* Parallel Search Grounding Citations */}
+                          {msg.citations && msg.citations.length > 0 && (
+                            <div className="mt-3 pt-2.5 border-t border-white/[0.06] space-y-1.5">
+                              <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 font-semibold">
+                                <ShieldCheck className="h-3 w-3 text-emerald-400" />
+                                <span>Parallel Grounding Sources</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {msg.citations.map((c, i) => (
+                                  <a
+                                    key={i}
+                                    href={c.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900 border border-white/10 hover:border-sky-500/40 text-[10px] font-mono text-sky-300 hover:text-sky-200 transition-colors max-w-xs truncate"
+                                    title={`${c.title}: ${c.snippet}`}
+                                  >
+                                    <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+                                    <span className="truncate">{c.title || c.sourceUrl}</span>
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Suggested Follow-up Actions */}
+                          {msg.suggestedActions && msg.suggestedActions.length > 0 && (
+                            <div className="mt-3 pt-2 border-t border-white/[0.04] space-y-1.5">
+                              <div className="text-[10px] font-mono text-zinc-400 flex items-center gap-1">
+                                <Zap className="h-2.5 w-2.5 text-amber-400" />
+                                <span>Suggested Actions:</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {msg.suggestedActions.map((action, i) => (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => {
+                                      setInput(action);
+                                      if (textareaRef.current) {
+                                        textareaRef.current.focus();
+                                      }
+                                    }}
+                                    className="text-left px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/20 text-[11px] text-zinc-300 hover:text-white transition-all active:scale-95 flex items-center gap-1 font-mono"
+                                  >
+                                    <span>💬</span>
+                                    <span>{action}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -2867,21 +3156,84 @@ Clearance secured. We have safe harbor.`,
               </div>
             )}
 
-            {/* Prompt Input Box */}
-            <div className="bg-[#141416] border border-white/[0.08] focus-within:border-white/20 rounded-2xl p-2 shadow-2xl flex flex-col gap-1.5 transition-all">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="Paste screenplay dialogue, upload a .fountain/.md file, or command the agents..."
-                rows={1}
-                className="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none px-2 py-1 max-h-36 min-h-[38px] leading-relaxed"
-              />
+            {/* Prompt Input Box with @ Mention Autocomplete */}
+            <div className="relative">
+              {/* Floating @ Mention Autocomplete Popover */}
+              {isMentionMenuOpen && filteredAgents.length > 0 && (
+                <div className="absolute bottom-full mb-2.5 left-0 w-full sm:w-88 max-w-full bg-[#141416]/95 border border-white/15 rounded-xl shadow-2xl p-1.5 z-50 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-150 ring-1 ring-white/10">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 px-2 py-1 flex items-center justify-between border-b border-white/[0.08] mb-1">
+                    <span className="flex items-center gap-1.5 text-zinc-200 font-semibold">
+                      <span>Tag Crew Agent</span>
+                    </span>
+                    <span className="text-[9px] text-zinc-500 font-mono">↑↓ Navigate • ↵ / Tab Select</span>
+                  </div>
+                  <div className="space-y-0.5 max-h-56 overflow-y-auto pr-0.5 scrollbar-thin scrollbar-thumb-zinc-800">
+                    {filteredAgents.map((ag, idx) => (
+                      <button
+                        key={ag.role}
+                        type="button"
+                        onClick={() => handleSelectMention(ag)}
+                        onMouseEnter={() => setMentionIndex(idx)}
+                        className={`w-full text-left px-2.5 py-2 rounded-lg flex items-center gap-2.5 transition-all text-xs ${
+                          idx === mentionIndex
+                            ? "bg-white/10 text-white font-medium shadow-sm ring-1 ring-white/10"
+                            : "text-zinc-300 hover:bg-white/[0.06]"
+                        }`}
+                      >
+                        <span className="text-base shrink-0">{ag.avatar}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`font-mono text-xs font-semibold ${ag.color}`}>{ag.tag}</span>
+                            <span className="text-zinc-400 text-[11px] truncate">({ag.name})</span>
+                          </div>
+                          <p className="text-[10px] text-zinc-500 truncate mt-0.5">{ag.title}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-[#141416] border border-white/[0.08] focus-within:border-white/20 rounded-2xl p-2 shadow-2xl flex flex-col gap-1.5 transition-all">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (isMentionMenuOpen && filteredAgents.length > 0) {
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setMentionIndex((prev) => (prev + 1) % filteredAgents.length);
+                        return;
+                      }
+                      if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setMentionIndex((prev) => (prev - 1 + filteredAgents.length) % filteredAgents.length);
+                        return;
+                      }
+                      if (e.key === "Enter" || e.key === "Tab") {
+                        e.preventDefault();
+                        if (filteredAgents[mentionIndex]) {
+                          handleSelectMention(filteredAgents[mentionIndex]);
+                        }
+                        return;
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        setIsMentionMenuOpen(false);
+                        return;
+                      }
+                    }
+
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder="Ask any agent (type @ to tag), paste dialogue, or upload a .fountain/.md file..."
+                  rows={1}
+                  className="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none px-2 py-1 max-h-36 min-h-[38px] leading-relaxed"
+                />
 
               <div className="flex items-center justify-between pt-1 border-t border-white/[0.04]">
                 {/* Upload Button */}
@@ -2914,6 +3266,7 @@ Clearance secured. We have safe harbor.`,
             </div>
           </div>
         </div>
+      </div>
     </main>
 
         {/* ========================================================= */}

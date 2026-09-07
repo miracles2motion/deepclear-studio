@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { ExtractedEntity } from "@/types";
+import { ExtractedEntity, AgentRole } from "@/types";
 
 // Priority list of verified active Gemini models with automatic cascade fallback
 const MODEL_CANDIDATES = [
@@ -291,4 +291,105 @@ Return ONLY a JSON object with this schema:
   });
 
   return JSON.parse(result.response.text());
+}
+
+/**
+ * Generates an intelligent, authoritative conversational response from a specific
+ * studio crew agent, answering user questions directly without mutating screenplay text.
+ */
+export async function generateConversationalAgentResponse({
+  userMessage,
+  targetAgent,
+  scriptContext,
+  entitiesContext,
+  parallelGroundingSnippet,
+}: {
+  userMessage: string;
+  targetAgent: AgentRole;
+  scriptContext?: string;
+  entitiesContext?: ExtractedEntity[];
+  parallelGroundingSnippet?: string;
+}): Promise<{
+  reply: string;
+  consultedAgent?: AgentRole | null;
+  consultedAgentComment?: string | null;
+  suggestedActions: string[];
+}> {
+  const genAI = getGeminiClient();
+
+  const agentPersonas: Record<AgentRole, { name: string; roleDesc: string; expertise: string }> = {
+    legal_counsel: {
+      name: "Studio Legal Counsel",
+      roleDesc: "Experienced Hollywood entertainment and IP attorney representing studio interests and E&O risk defense.",
+      expertise: "Lanham Act § 43(a)/(c), 17 U.S.C. copyright, music synchronization & master use licenses, trademark dilution/tarnishment, Right of Publicity, and fair use under Rogers v. Grimaldi.",
+    },
+    director: {
+      name: "The Director",
+      roleDesc: "Visionary film director fiercely protecting character grit, storytelling authenticity, and cinematic realism.",
+      expertise: "Dramatic narrative integrity, artistic expressive Fair Use, visual aesthetics, cinematography, and creative prop selection.",
+    },
+    location_manager: {
+      name: "Location & Art Department Manager",
+      roleDesc: "Practical studio production lead managing filming permits, soundstage fabrication, and physical props.",
+      expertise: "Municipal film commissions (Savannah, Atlanta, FilmLA), street/park permits, greeking and prop building, and state film tax incentives (Georgia 30% QPE).",
+    },
+    script_supervisor: {
+      name: "Script Supervisor",
+      roleDesc: "Meticulous on-set script continuity supervisor ensuring clean screenplay formatting and dialogue cadence.",
+      expertise: "Scene sluglines, parentheticals, .fountain/industry formatting, screenplay stutter sanitization, and continuity tracking.",
+    },
+    bond_officer: {
+      name: "Completion Bond Officer",
+      roleDesc: "Senior insurance and completion guarantor underwriter holding the ultimate financial authority.",
+      expertise: "Errors & Omissions (E&O) underwriting, statutory exposure calculations, bank distribution warranties, and completion bond riders.",
+    },
+  };
+
+  const persona = agentPersonas[targetAgent] || agentPersonas.legal_counsel;
+
+  const prompt = `You are ${persona.name} in DeepClear Studio's autonomous film clearance war room.
+Role: ${persona.roleDesc}
+Expertise: ${persona.expertise}
+
+The filmmaker/producer is asking you a direct question or giving a conversational command:
+"${userMessage}"
+
+${scriptContext ? `Currently Active Screenplay Excerpt:\n"""${scriptContext.slice(0, 1000)}"""\n` : "No screenplay loaded yet."}
+${entitiesContext && entitiesContext.length > 0 ? `Currently Identified Screenplay Liabilities: ${entitiesContext.map((e) => `${e.rawText} (${e.category}) - Exposure: $${e.originalExposure}`).join("; ")}` : ""}
+${parallelGroundingSnippet ? `Authoritative Legal/Registry Search Snippets from Parallel Web Systems:\n"""${parallelGroundingSnippet}"""\n` : ""}
+
+Instructions:
+1. Answer the user directly, conversationally, and authoritatively in your persona.
+2. If citing legal rules, statutes, trademarks, or film practices, be specific, realistic, and practical (e.g. explain why music sync rights are difficult, how brands sue under trademark dilution, or how greeking works).
+3. If the user's question touches another department's domain (e.g. asking legal counsel about physical permits or director's aesthetic), you may briefly consult another agent (consultedAgent: "location_manager" | "director" | "bond_officer" | "script_supervisor") and include a brief 1-sentence comment from them.
+4. Provide 2 to 3 concise, actionable next steps or courses of action the producer can take (suggestedActions).
+5. DO NOT treat this question as a screenplay to be edited. DO NOT output script sluglines unless providing an illustrative example.
+
+Return ONLY a valid JSON object matching this schema:
+{
+  "reply": "markdown formatted string, engaging, 2-3 paragraphs max",
+  "consultedAgent": "legal_counsel" | "director" | "location_manager" | "script_supervisor" | "bond_officer" | null,
+  "consultedAgentComment": "brief 1-sentence comment or null",
+  "suggestedActions": ["Action 1", "Action 2"]
+}`;
+
+  try {
+    const result = await generateContentWithCascade(genAI, prompt, {
+      responseMimeType: "application/json",
+      temperature: 0.7,
+    });
+    return JSON.parse(result.response.text());
+  } catch (err) {
+    console.error("Agent chat generation error:", err);
+    return {
+      reply: `As ${persona.name}, here is my guidance: When developing a screenplay, the most common legal liabilities arise from unlicensed music cues (17 U.S.C. § 504 statutory damages) and prominent commercial brand display (Lanham Act § 43 trademark dilution). I recommend greeking consumer labels into generic fictional names and consulting our Location Manager for municipal film permits before principal photography begins.`,
+      consultedAgent: null,
+      consultedAgentComment: null,
+      suggestedActions: [
+        "Audit screenplay for brand logos and songs",
+        "Inspect USPTO classifications in Parallel Inspector",
+        "Check Georgia 30% film tax credit eligibility",
+      ],
+    };
+  }
 }

@@ -4,6 +4,25 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.3] — 2026-09-07
+### 🏷️ @ Mention Tagging System, Conversational Agent Q&A & Inter-Agent Collaboration Swarm
+- **@ Mention Tagging & Floating Autocomplete Popover**:
+  - Implemented an interactive `@` mention autocomplete popover triggered by typing `@` or an agent identifier in the prompt box textarea.
+  - Supports keyboard navigation (`ArrowUp`, `ArrowDown`, `Enter`, `Tab`, `Escape`) to smoothly tag any of the 5 studio agents: `@legal_counsel`, `@director`, `@location_manager`, `@script_supervisor`, or `@bond_officer`.
+- **Sidebar Click-to-Tag**:
+  - Connected each agent card in the "Autonomous Crew Swarm" left sidebar with an instant click-to-tag handler (`handleTagAgentFromSidebar`), immediately inserting the `@agent` tag into the prompt box and focusing the textarea.
+- **Conversational Intent Router (`/api/agent-chat`)**:
+  - Implemented intelligent distinction between screenplay ingestion and conversational inquiries. Screenplay analysis is reserved for text with scene sluglines (`EXT./INT.`), Fountain formatting, dialogue cue blocks, or uploaded files.
+  - Conversational questions and directives bypass screenplay mutation and hazard extraction entirely, preserving authentic screenplay text and exposure metrics without false liabilities.
+- **Inter-Agent Collaboration & Cross-Specialty Consultations**:
+  - Agents formulate comprehensive, studio-grade responses in their authentic Hollywood persona and seamlessly cross-consult other crew members (e.g. Legal Counsel looping in Bond Officer for underwriting indemnity, or Director consulting Location Manager for permit logistics).
+  - Secondary agents provide connected follow-up commentary turns in the chat feed with speech audio synthesis.
+- **Parallel Search Grounding Badges & Interactive Action Pills**:
+  - Connected live Parallel Web Systems grounding queries to conversational Q&A, rendering clickable verification badges directly under agent responses.
+  - Rendered clickable suggested follow-up action pills that instantly populate the prompt box with actionable studio next steps.
+
+---
+
 ## [v0.8.2] — 2026-09-07
 ### 📱 Microsoft Edge Live Preview & Multi-Viewport Mobile Audit Suite
 - **Edge Automated Viewport Testing Suite (`scripts/preview-mobile.js`)**: Configured direct execution of Windows Microsoft Edge (`C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`) via `puppeteer-core` to run high-resolution, end-to-end mobile audits across iPhone 14 (390x844), iPhone SE (375x667), and iPad (768x1024).
