@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Download,
   Copy,
@@ -12,6 +12,8 @@ import {
   Split,
   Eye,
   FileCode,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { ExtractedEntity } from "@/types";
 
@@ -40,6 +42,14 @@ export default function ScreenplayRedlineView({
 }: ScreenplayRedlineViewProps) {
   const [mobileMode, setMobileMode] = useState<"cleared" | "original" | "split">("cleared");
   const [isCopied, setIsCopied] = useState(false);
+  const badgeScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollBadges = (direction: "left" | "right") => {
+    if (badgeScrollRef.current) {
+      const offset = direction === "left" ? -280 : 280;
+      badgeScrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
+    }
+  };
 
   // Fallback to active text if original is empty
   const baseOriginal = originalScript || clearedScript || "No screenplay loaded yet.";
@@ -232,12 +242,40 @@ export default function ScreenplayRedlineView({
           <span className="font-semibold text-zinc-300">
             Interactive Clearance Badges (Click to Inspect Parallel Grounding):
           </span>
-          <span className="text-zinc-500">
-            {entities.length} detected assets
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-500">
+              {entities.length} detected assets
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => scrollBadges("left")}
+                className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors"
+                title="Scroll badges left"
+              >
+                <ChevronLeft className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollBadges("right")}
+                className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors"
+                title="Scroll badges right"
+              >
+                <ChevronRight className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-zinc-800">
+        <div
+          ref={badgeScrollRef}
+          onWheel={(e) => {
+            if (badgeScrollRef.current && e.deltaY !== 0) {
+              badgeScrollRef.current.scrollLeft += e.deltaY;
+            }
+          }}
+          className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-zinc-800"
+        >
           {entities.map((entity) => {
             const isResolved =
               clearedEntityIds.includes(entity.id) ||

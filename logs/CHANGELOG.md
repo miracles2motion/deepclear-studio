@@ -4,6 +4,23 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.1] — 2026-09-07
+### 🛡️ Speech Mute Cancellation, Auto-Pilot Abortion, DOM Scroll Preservation & Parallel Inspector Overhaul
+- **Instant Audio Mute Cancellation**: Added synchronous `isAudioMutedRef` tracking in `speakTextAsync` and on utterance start. Clicking "Voice Muted" now immediately invokes `synth.cancel()`, clears `speakingAgent`, and halts any pending playback with zero lag.
+- **Immediate Auto-Pilot Abortion on Manual Toggle**: Fixed mode switching so clicking "Manual" during an active Auto-Pilot run immediately aborts the clearance queue via `isManualMode()` checks, stops ongoing speech, and restores granular control to the producer.
+- **DOM View Scroll State Preservation**: Converted the view switcher between "Swarm Debate & Audit" and "Screenplay Redline" to use CSS class visibility toggling (`hidden` vs `flex flex-col`) rather than conditional component unmounting. Switching tabs never resets or scrolls the chat feed to the top.
+- **Pre-Cleared Masterpiece Ingestion Bypass**: Scripts possessing a verified cryptographic Clearance Passport now bypass `/api/analyze` and dialectic swarm debates completely, certifying safe harbor at $0.00 exposure and immediately delivering the final certified production script card.
+- **Parallel Grounding Inspector Overhaul (`ParallelInspectorDrawer.tsx`)**:
+  - Added dual view modes: "Single Asset Telemetry" and "All Grounding Dossier" tabulating the entire screenplay's registry evidence, average latency, and external citations.
+  - Added asset picker pills for rapid switching between liabilities directly inside the drawer.
+  - Added "Cleaned Intelligence" vs "Raw Web Extract" snippet toggling powered by `cleanParallelSnippet()`.
+  - Added strict flex boundary containment (`min-w-0 max-w-full overflow-hidden break-words`) to prevent citation boxes from expanding outside card borders.
+- **Mouse-Wheel & Chevron Badge Scrolling (`ScreenplayRedlineView.tsx`)**: Added `onWheel` horizontal scroll translation and left/right navigation chevrons to the Interactive Clearance Badges bar, enabling effortless mouse wheel scrolling without requiring Shift key.
+- **Session Export & Import Parity**: Upgraded `DeepClearSessionData` to serialize and restore `originalScriptSnapshot` and `disputedEntityIds`, ensuring full redline diffs and active dispute states persist across backup files.
+- **PDF Layout & Page Break Protection**: Added bottom margin buffer (`bottom: 120`) in `autoTable` and smart page break calculation in `pdfGenerator.ts`, eliminating orphaned single lines (e.g. "Ram truck") from breaking across bottom page margins.
+
+---
+
 ## [v0.8.0] — 2026-09-07
 ### 🚀 Parallel Partner Track Hero Upgrade: Official SDK, Inspector Drawer, Redline Diff & PDF Audit Ledger
 - **Official `parallel-web` TypeScript SDK Integration**: Replaced raw HTTP REST calls with the official `Parallel` TypeScript SDK client (`client.search`, `client.extract`). Implemented typed request formulations (`search_queries`, `objective`, `mode: "fast"`) and rich telemetry extraction (`search_id`, latency in ms, publish dates).

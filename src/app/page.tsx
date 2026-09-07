@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation, DeepClearSessionData, ClearanceMode } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cleanParallelSnippet } from "@/lib/utils";
 import { ExportModal } from "@/components/ExportModal";
 import ParallelInspectorDrawer from "@/components/ParallelInspectorDrawer";
 import ScreenplayRedlineView from "@/components/ScreenplayRedlineView";
@@ -134,6 +134,79 @@ export default function DeepClearStudioPage() {
   const hazardScrollRef = useRef<HTMLDivElement | null>(null);
   const autoClearanceRef = useRef<((hazards?: ExtractedEntity[]) => Promise<void>) | null>(null);
   const currentScriptRef = useRef<string>("");
+  const isAudioMutedRef = useRef<boolean>(false);
+  const clearanceModeRef = useRef<ClearanceMode>("auto");
+  const isManualMode = () => clearanceModeRef.current === "manual";
+
+  // Synchronous, immediate voice mute toggle with utterance cancellation
+  const toggleAudioMute = () => {
+    setIsAudioMuted((prev) => {
+      const next = !prev;
+      isAudioMutedRef.current = next;
+      if (next && synthRef.current) {
+        try {
+          synthRef.current.cancel();
+        } catch {}
+        setSpeakingAgent(null);
+      }
+      return next;
+    });
+  };
+
+  // Immediate clearance mode switcher with queue abortion and audio cleanup
+  const handleSetClearanceMode = (mode: ClearanceMode) => {
+    setClearanceMode(mode);
+    clearanceModeRef.current = mode;
+    if (mode === "manual") {
+      setIsAutoClearing(false);
+      setAutoProgress(null);
+      setAgentTypingStatus(null);
+      setAgentThinking(null);
+      if (synthRef.current) {
+        try {
+          synthRef.current.cancel();
+        } catch {}
+        setSpeakingAgent(null);
+      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `mode-switch-${Date.now()}`,
+          sender: "system",
+          senderName: "DeepClear Swarm",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content:
+            "👤 **Switched to Manual Clearance Mode**: Autonomous queue halted. You have granular control to license or negotiate each remaining liability individually.",
+        },
+      ]);
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `mode-switch-${Date.now()}`,
+          sender: "system",
+          senderName: "DeepClear Swarm",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+          content: "⚡ **Switched to Auto-Pilot Mode**: Autonomous clearance queue ready.",
+        },
+      ]);
+      // If there are pending hazards, trigger auto clearance
+      const pending = entities.filter(
+        (e) =>
+          !clearedEntityIds.includes(e.id) &&
+          !licensedEntityIds.includes(e.id) &&
+          e.status !== "cleared" &&
+          e.status !== "licensed"
+      );
+      if (pending.length > 0 && !isAutoClearing && !isLoading) {
+        setTimeout(() => {
+          autoClearanceRef.current?.(pending);
+        }, 500);
+      }
+    }
+  };
 
   const scrollHazards = (direction: "left" | "right") => {
     if (hazardScrollRef.current) {
@@ -520,6 +593,14 @@ Clearance secured. We have safe harbor.`,
         setLicensedEntityIds(passportEntities.filter((e) => e.status === "licensed").map((e) => e.id));
       }
 
+      setInitialExposure(0);
+      setCurrentExposure(0);
+
+      const deliveredScript = cleanedScript || queryText;
+      currentScriptRef.current = deliveredScript;
+      setCurrentScriptText(deliveredScript);
+      setOriginalScriptSnapshot(deliveredScript);
+
       setMessages((prev) => [
         ...prev,
         {
@@ -528,9 +609,20 @@ Clearance secured. We have safe harbor.`,
           senderName: "Completion Bond Officer",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           type: "text",
-          content: `🛡️ **Verified DeepClear Clearance Passport Ingested**\n\n• **Merkle Hash**: \`${passport.merkleRoot}\`\n• **E&O Policy**: **${passport.policyStatus}** (\`${passport.bondPolicyId}\`)\n• **Exemptions Loaded**: ${passport.assets.length} pre-cleared/licensed assets (${passport.assets.map((a) => `\`${a.clearedAs || a.originalText}\` [${a.status.toUpperCase()}]`).join(", ")})\n\nSafe harbor exemptions active. Pre-cleared assets will not incur statutory liabilities.`,
+          content: `🛡️ **Verified DeepClear Clearance Passport Ingested**\n\n• **Merkle Hash**: \`${passport.merkleRoot}\`\n• **E&O Policy**: **${passport.policyStatus}** (\`${passport.bondPolicyId}\`)\n• **Exemptions Loaded**: ${passport.assets.length} pre-cleared/licensed assets (${passport.assets.map((a) => `\`${a.clearedAs || a.originalText}\` [${a.status.toUpperCase()}]`).join(", ")})\n\nSafe harbor exemptions validated. 100% pre-cleared with $0.00 statutory exposure. Final production screenplay certified for distribution.`,
         },
       ]);
+
+      setIsLoading(false);
+      setAgentThinking(null);
+      setAgentTypingStatus(null);
+      setActiveAgent("bond_officer");
+
+      setTimeout(() => {
+        deliverFinalScriptCard(deliveredScript);
+      }, 400);
+
+      return;
     } else {
       // Auto-detect production title if specified or from setting header
       const titleMatch = queryText.match(/^Title:\s*(.+)$/im);
@@ -552,11 +644,7 @@ Clearance secured. We have safe harbor.`,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           scriptText: queryText,
-          safeHarborAssets: passport?.assets?.map((a) => ({
-            originalText: a.originalText,
-            clearedAs: a.clearedAs,
-            status: a.status,
-          })),
+          safeHarborAssets: [],
         }),
       });
 
@@ -769,6 +857,7 @@ Clearance secured. We have safe harbor.`,
   ): Promise<void> => {
     return new Promise((resolve) => {
       if (
+        isAudioMutedRef.current ||
         isAudioMuted ||
         !synthRef.current ||
         typeof window === "undefined" ||
@@ -825,6 +914,14 @@ Clearance secured. We have safe harbor.`,
         const timeout = setTimeout(completeTurn, 3800);
 
         utterance.onstart = () => {
+          if (isAudioMutedRef.current) {
+            try {
+              synthRef.current?.cancel();
+            } catch {}
+            clearTimeout(timeout);
+            completeTurn();
+            return;
+          }
           setSpeakingAgent(speaker);
         };
 
@@ -1294,7 +1391,7 @@ Clearance secured. We have safe harbor.`,
   // Autonomous Swarm Clearance Loop (Auto-Pilot)
   const handleRunAutoClearance = async (overrideHazards?: ExtractedEntity[]) => {
     const queueToRun = overrideHazards && overrideHazards.length > 0 ? overrideHazards : pendingHazards;
-    if (isAutoClearing || queueToRun.length === 0) return;
+    if (isAutoClearing || queueToRun.length === 0 || isManualMode()) return;
 
     setIsAutoClearing(true);
     const hazardsQueue = [...queueToRun];
@@ -1311,6 +1408,14 @@ Clearance secured. We have safe harbor.`,
     setMessages((prev) => [...prev, startNotice]);
 
     for (let i = 0; i < hazardsQueue.length; i++) {
+      if (isManualMode()) {
+        setIsAutoClearing(false);
+        setAutoProgress(null);
+        setAgentTypingStatus(null);
+        setAgentThinking(null);
+        break;
+      }
+
       const h = hazardsQueue[i];
       setAutoProgress({
         current: i + 1,
@@ -1324,6 +1429,14 @@ Clearance secured. We have safe harbor.`,
         await handleMarkAsLicensed(h);
       } else {
         await handleStartDebate(h);
+      }
+
+      if (isManualMode()) {
+        setIsAutoClearing(false);
+        setAutoProgress(null);
+        setAgentTypingStatus(null);
+        setAgentThinking(null);
+        break;
       }
 
       if (i < hazardsQueue.length - 1) {
@@ -1340,9 +1453,18 @@ Clearance secured. We have safe harbor.`,
       }
     }
 
+    if (isManualMode()) {
+      setIsAutoClearing(false);
+      setAutoProgress(null);
+      setAgentTypingStatus(null);
+      setAgentThinking(null);
+      return;
+    }
+
     setIsAutoClearing(false);
     setAutoProgress(null);
     setAgentTypingStatus(null);
+    setAgentThinking(null);
     setAgentThinking(null);
 
     // Final celebration notice
@@ -1442,7 +1564,8 @@ Clearance secured. We have safe harbor.`,
         exportedAt: new Date().toISOString(),
         productionTitle: productionTitle || "Indie Production",
         uploadedFileName,
-        currentScriptText,
+        currentScriptText: currentScriptRef.current || currentScriptText,
+        originalScriptSnapshot: originalScriptSnapshot || currentScriptRef.current || currentScriptText,
         initialExposure,
         currentExposure,
         taxSavings,
@@ -1450,6 +1573,7 @@ Clearance secured. We have safe harbor.`,
         entities,
         clearedEntityIds,
         licensedEntityIds,
+        disputedEntityIds,
         messages,
       };
 
@@ -1500,6 +1624,11 @@ Clearance secured. We have safe harbor.`,
         setCurrentScriptText(data.currentScriptText);
         currentScriptRef.current = data.currentScriptText;
       }
+      if (typeof data.originalScriptSnapshot === "string") {
+        setOriginalScriptSnapshot(data.originalScriptSnapshot);
+      } else if (typeof data.currentScriptText === "string") {
+        setOriginalScriptSnapshot(data.currentScriptText);
+      }
       if (typeof data.uploadedFileName === "string") {
         setUploadedFileName(data.uploadedFileName);
       }
@@ -1523,6 +1652,9 @@ Clearance secured. We have safe harbor.`,
       }
       if (Array.isArray(data.licensedEntityIds)) {
         setLicensedEntityIds(data.licensedEntityIds);
+      }
+      if (Array.isArray(data.disputedEntityIds)) {
+        setDisputedEntityIds(data.disputedEntityIds);
       }
 
       const restoreNotice: ChatMessage = {
@@ -1832,7 +1964,7 @@ Clearance secured. We have safe harbor.`,
               <div className="bg-zinc-900/90 border border-white/[0.08] rounded-xl p-1 text-[11px] font-mono flex items-center gap-1 shadow-sm">
                 <button
                   type="button"
-                  onClick={() => setClearanceMode("auto")}
+                  onClick={() => handleSetClearanceMode("auto")}
                   className={`flex-1 py-1 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs ${
                     clearanceMode === "auto"
                       ? "bg-indigo-600 text-white font-semibold shadow-md ring-1 ring-indigo-400/40"
@@ -1845,7 +1977,7 @@ Clearance secured. We have safe harbor.`,
                 </button>
                 <button
                   type="button"
-                  onClick={() => setClearanceMode("manual")}
+                  onClick={() => handleSetClearanceMode("manual")}
                   className={`flex-1 py-1 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs ${
                     clearanceMode === "manual"
                       ? "bg-zinc-800 text-zinc-100 font-semibold shadow-md ring-1 ring-white/10"
@@ -1962,7 +2094,7 @@ Clearance secured. We have safe harbor.`,
           {/* Bottom Settings & Voice Toggle */}
           <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-zinc-400 px-1">
             <button
-              onClick={() => setIsAudioMuted(!isAudioMuted)}
+              onClick={toggleAudioMute}
               className="flex items-center gap-2 hover:text-white transition-all font-mono text-[11px]"
             >
               {isAudioMuted ? (
@@ -2068,24 +2200,25 @@ Clearance secured. We have safe harbor.`,
             </div>
           </div>
 
-          {activeCenterView === "redline" ? (
-            <div className="flex-1 p-2 sm:p-4 overflow-hidden flex flex-col">
-              <ScreenplayRedlineView
-                originalScript={originalScriptSnapshot || currentScriptRef.current || currentScriptText}
-                clearedScript={currentScriptText || currentScriptRef.current}
-                entities={entities}
-                clearedEntityIds={clearedEntityIds}
-                licensedEntityIds={licensedEntityIds}
-                productionTitle={productionTitle}
-                uploadedFileName={uploadedFileName}
-                onInspectEntity={(ent) => setInspectedEntity(ent)}
-                onOpenExportModal={() => setIsExportModalOpen(true)}
-              />
-            </div>
-          ) : (
-            <>
-              {/* Scrollable Message Feed */}
-              <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-7 max-w-3xl mx-auto w-full">
+          {/* SCREENPLAY REDLINE VIEW (Preserved in DOM to retain scroll position) */}
+          <div className={`flex-1 p-2 sm:p-4 overflow-hidden flex flex-col ${activeCenterView === "redline" ? "" : "hidden"}`}>
+            <ScreenplayRedlineView
+              originalScript={originalScriptSnapshot || currentScriptRef.current || currentScriptText}
+              clearedScript={currentScriptText || currentScriptRef.current}
+              entities={entities}
+              clearedEntityIds={clearedEntityIds}
+              licensedEntityIds={licensedEntityIds}
+              productionTitle={productionTitle}
+              uploadedFileName={uploadedFileName}
+              onInspectEntity={(ent) => setInspectedEntity(ent)}
+              onOpenExportModal={() => setIsExportModalOpen(true)}
+            />
+          </div>
+
+          {/* SWARM DEBATE & AUDIT VIEW (Preserved in DOM so switching tabs NEVER resets scroll position) */}
+          <div className={`flex-1 flex flex-col overflow-hidden ${activeCenterView === "chat" ? "" : "hidden"}`}>
+            {/* Scrollable Message Feed */}
+            <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-7 max-w-3xl mx-auto w-full">
               {messages.map((msg) => {
                 const isUser = msg.sender === "user";
                 const replyCount = messages.filter((m) => m.replyTo?.messageId === msg.id).length;
@@ -2224,32 +2357,38 @@ Clearance secured. We have safe harbor.`,
                                     : "bg-zinc-900/90 border-white/[0.08] text-zinc-200"
                                 }`}
                               >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="space-y-1">
+                                <div className="flex items-start justify-between gap-2 min-w-0 max-w-full overflow-hidden">
+                                  <div className="space-y-1 min-w-0 flex-1 max-w-full overflow-hidden">
                                     <div className="flex items-center gap-2">
-                                      <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-white/5 font-semibold">
+                                      <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-white/5 font-semibold shrink-0">
                                         {ent.category}
                                       </span>
-                                      <span className="font-semibold text-zinc-100">{ent.rawText}</span>
+                                      <span className="font-semibold text-zinc-100 truncate">{ent.rawText}</span>
                                     </div>
-                                    <p className="text-zinc-400 leading-snug">{ent.description}</p>
+                                    <p className="text-zinc-400 leading-snug break-words">{ent.description}</p>
 
                                     {/* Parallel Citations */}
                                     {ent.citations && ent.citations.length > 0 && (
-                                      <div className="mt-2 space-y-1">
+                                      <div className="mt-2 space-y-1 max-w-full overflow-hidden">
                                         {ent.citations.map((cit) => (
                                           <button
                                             key={cit.id}
                                             type="button"
                                             onClick={() => setInspectedEntity(ent)}
-                                            className="w-full flex items-start gap-1.5 text-[11px] font-mono text-zinc-400 bg-zinc-950/70 hover:bg-zinc-900 p-1.5 rounded border border-white/5 hover:border-sky-500/30 text-left transition-all group"
+                                            className="w-full flex items-start gap-1.5 text-[11px] font-mono text-zinc-400 bg-zinc-950/70 hover:bg-zinc-900 p-1.5 rounded border border-white/5 hover:border-sky-500/30 text-left transition-all group max-w-full overflow-hidden"
                                             title="Click to open Parallel Grounding Inspector"
                                           >
                                             <Zap className="h-3 w-3 mt-0.5 shrink-0 text-sky-400 group-hover:scale-110 transition-transform" />
-                                            <div className="flex-1 min-w-0">
-                                              <span className="text-zinc-200 font-semibold group-hover:text-sky-300 transition-colors">{cit.title}: </span>
-                                              <span className="line-clamp-2">{cit.snippet}</span>
-                                              <span className="text-[9px] text-sky-400 underline block mt-0.5">Inspect Parallel Telemetry & Grounding →</span>
+                                            <div className="flex-1 min-w-0 max-w-full overflow-hidden">
+                                              <span className="text-zinc-200 font-semibold group-hover:text-sky-300 transition-colors">
+                                                {cit.title}:{" "}
+                                              </span>
+                                              <span className="line-clamp-2 break-words break-all text-zinc-400">
+                                                {cleanParallelSnippet(cit.snippet, 180)}
+                                              </span>
+                                              <span className="text-[9px] text-sky-400 underline block mt-0.5">
+                                                Inspect Parallel Telemetry & Grounding →
+                                              </span>
                                             </div>
                                           </button>
                                         ))}
@@ -2771,8 +2910,7 @@ Clearance secured. We have safe harbor.`,
               </div>
             </div>
           </div>
-        </>
-      )}
+        </div>
     </main>
 
         {/* ========================================================= */}
@@ -3011,7 +3149,9 @@ Clearance secured. We have safe harbor.`,
       <ParallelInspectorDrawer
         isOpen={!!inspectedEntity}
         entity={inspectedEntity}
+        allEntities={entities}
         onClose={() => setInspectedEntity(null)}
+        onSelectEntity={(ent) => setInspectedEntity(ent)}
       />
 
       {/* Hidden Session File Input for .json chat/state restore */}

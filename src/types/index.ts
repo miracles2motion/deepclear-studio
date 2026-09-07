@@ -173,6 +173,8 @@ export interface DeepClearSessionData {
     };
   }>;
   passportData?: ClearancePassportData | null;
+  originalScriptSnapshot?: string;
+  disputedEntityIds?: string[];
 }
 
 export type ClearanceMode = "auto" | "manual";

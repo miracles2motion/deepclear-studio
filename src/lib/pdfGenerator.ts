@@ -184,7 +184,7 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
 
   autoTable(doc, {
     startY: 190,
-    margin: { left: margin, right: margin },
+    margin: { left: margin, right: margin, bottom: 120 },
     head: [
       [
         "No.",
@@ -256,7 +256,11 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   const finalY =
     (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || 380;
 
-  const footerY = Math.min(finalY + 12, pageHeight - 120);
+  let footerY = finalY + 12;
+  if (footerY + 95 > pageHeight - 30) {
+    doc.addPage();
+    footerY = 40;
+  }
 
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
