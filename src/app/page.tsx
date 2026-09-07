@@ -1898,8 +1898,8 @@ Clearance secured. We have safe harbor.`,
         {/* LEFT COLUMN: 5-Agent Crew Swarm (260px) */}
         {/* ========================================================= */}
         <aside
-          className={`w-64 lg:w-72 border-r border-white/[0.06] bg-[#101012] flex-col justify-between p-3.5 shrink-0 overflow-y-auto ${
-            mobileTab === "crew" ? "flex w-full h-full" : "hidden lg:flex"
+          className={`border-r border-white/[0.06] bg-[#101012] flex-col justify-between p-3.5 shrink-0 overflow-y-auto ${
+            mobileTab === "crew" ? "flex w-full h-full" : "hidden lg:flex lg:w-72"
           }`}
         >
           <div className="space-y-4">
@@ -2148,32 +2148,34 @@ Clearance secured. We have safe harbor.`,
           )}
 
           {/* Top Center View Switcher & Parallel Grounding Hero Bar */}
-          <div className="border-b border-white/[0.08] bg-[#0d0d10]/95 backdrop-blur-md px-3 sm:px-6 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
-            <div className="flex items-center gap-1.5 bg-zinc-900/90 border border-white/10 p-1 rounded-xl font-mono text-xs shadow-sm">
+          <div className="border-b border-white/[0.08] bg-[#0d0d10]/95 backdrop-blur-md px-2.5 sm:px-6 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
+            <div className="flex items-center gap-1 sm:gap-1.5 bg-zinc-900/90 border border-white/10 p-1 rounded-xl font-mono text-xs shadow-sm">
               <button
                 type="button"
                 onClick={() => setActiveCenterView("chat")}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   activeCenterView === "chat"
                     ? "bg-indigo-600 text-white font-semibold shadow-sm"
                     : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span>Swarm Debate & Audit</span>
+                <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">Swarm Debate & Audit</span>
+                <span className="sm:hidden">Debate</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveCenterView("redline")}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                   activeCenterView === "redline"
                     ? "bg-emerald-600 text-white font-semibold shadow-sm"
                     : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
-                <Film className="h-3.5 w-3.5" />
-                <span>Screenplay Redline</span>
+                <Film className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">Screenplay Redline</span>
+                <span className="sm:hidden">Redline</span>
                 {entities.length > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px] font-bold">
                     {entities.length}
@@ -2616,7 +2618,7 @@ Clearance secured. We have safe harbor.`,
           {/* ========================================================= */}
           {/* FLOATING GOOGLE GEMINI-STYLE PROMPT BAR AT BOTTOM         */}
           {/* ========================================================= */}
-          <div className="w-full max-w-3xl mx-auto px-4 pb-4 pt-1 shrink-0 space-y-2">
+          <div className="w-full max-w-3xl mx-auto px-2.5 sm:px-4 pb-2.5 sm:pb-4 pt-1 shrink-0 space-y-2">
             {/* PINNED HORIZONTAL QUICK ACTION BAR FOR PENDING HAZARDS */}
             {pendingHazards.length > 0 && (
               <div className="space-y-1 pb-0.5">
@@ -2639,7 +2641,7 @@ Clearance secured. We have safe harbor.`,
                         type="button"
                         onClick={() => handleRunAutoClearance()}
                         disabled={isAutoClearing || isLoading}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all shadow-md flex items-center gap-1.5 active:scale-95 disabled:opacity-50 ${
+                        className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all shadow-md flex items-center gap-1.5 active:scale-95 disabled:opacity-50 ${
                           isAutoClearing
                             ? "bg-indigo-950 text-indigo-300 border border-indigo-500/50 animate-pulse"
                             : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20 border border-indigo-400/40"
@@ -2650,13 +2652,14 @@ Clearance secured. We have safe harbor.`,
                           <>
                             <Loader2 className="h-3 w-3 animate-spin text-indigo-300" />
                             <span>
-                              Clearing {autoProgress?.current || 1}/{autoProgress?.total || pendingHazards.length}...
+                              {autoProgress?.current || 1}/{autoProgress?.total || pendingHazards.length}
                             </span>
                           </>
                         ) : (
                           <>
                             <Zap className="h-3 w-3 text-amber-300" />
-                            <span>Auto-Clear All ({pendingHazards.length})</span>
+                            <span className="hidden sm:inline">Auto-Clear All ({pendingHazards.length})</span>
+                            <span className="sm:hidden">Auto-Clear ({pendingHazards.length})</span>
                           </>
                         )}
                       </button>
@@ -2917,8 +2920,8 @@ Clearance secured. We have safe harbor.`,
         {/* RIGHT COLUMN: Underwriting & E&O Clearance HUD (300px)    */}
         {/* ========================================================= */}
         <aside
-          className={`w-72 xl:w-80 border-l border-white/[0.06] bg-[#101012] p-3 sm:p-3.5 flex flex-col h-full shrink-0 overflow-hidden ${
-            mobileTab === "risk" ? "flex w-full h-full" : "hidden lg:flex"
+          className={`border-l border-white/[0.06] bg-[#101012] p-3 sm:p-3.5 flex flex-col h-full shrink-0 overflow-hidden ${
+            mobileTab === "risk" ? "flex w-full h-full" : "hidden lg:flex lg:w-72 xl:w-80"
           }`}
         >
           {/* Scrollable HUD content container */}

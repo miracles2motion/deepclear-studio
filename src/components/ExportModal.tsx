@@ -167,8 +167,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-      <div className="bg-[#121214] border border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative text-zinc-100 font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+      <div className="bg-[#121214] border border-white/10 rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl relative text-zinc-100 font-sans max-h-[92vh] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800">
         {/* Close button */}
         <button
           onClick={onClose}
