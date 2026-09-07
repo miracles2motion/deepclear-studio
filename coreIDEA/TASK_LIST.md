@@ -71,5 +71,13 @@
 - [x] **Phase 11: Markdown Typography & Agent Response Formatting**
   - [x] Integrate `react-markdown` with Obsidian dark theme tokenized component mapping (`MarkdownRenderer.tsx`).
   - [x] Support markdown lists, headers, inline code, bold/italics, and external links in chat and debate feeds.
-  - [x] Harden prop interfaces for nullable/optional message contents and verify production build.
+- [x] **Phase 12: Smart Browser Session History, Auto-Archiving & Screenplay Clearance Resiliency**
+  - [x] Implement browser `localStorage` session history manager (`src/lib/sessionHistory.ts`) with quota management and SSR safety.
+  - [x] Implement smart session auto-partitioning: automatically snapshot and archive active sessions before topic switching, preset loading, or resets.
+  - [x] Auto-sync session data on milestone completions (after auto-clearance and individual liability resolutions).
+  - [x] Build glassmorphic `SessionHistoryModal.tsx` with search, relative timestamps, safe harbor badges, one-click restoration, and JSON download.
+  - [x] Add top-level Recent History icon button with live session count badge.
+  - [x] Fix screenplay slugline pollution by auto-routing tax incentives to licensing route with $0 text mutation.
+  - [x] Fix character cue mismatch by propagating base character name substitutions across standalone dialogue headers.
+  - [x] Verify clean Next.js production build (`npm run build` code 0).
 

@@ -179,6 +179,22 @@ export interface DeepClearSessionData {
   disputedEntityIds?: string[];
 }
 
+export interface SavedSessionRecord {
+  id: string;
+  savedAt: string;
+  title: string;
+  previewSnippet: string;
+  initialExposure: number;
+  currentExposure: number;
+  resolvedPercent: number;
+  taxSavings: number;
+  taxJurisdiction: string;
+  entityCount: number;
+  clearedCount: number;
+  licensedCount: number;
+  sessionData: DeepClearSessionData;
+}
+
 export type ClearanceMode = "auto" | "manual";
 
 export interface AutoClearanceStep {

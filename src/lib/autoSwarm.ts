@@ -20,11 +20,13 @@ export function determineHazardResolutionRoute(entity: ExtractedEntity): SwarmDe
   const descLower = entity.description.toLowerCase();
   const category = entity.category;
 
-  // 1. Municipal Locations, Historic Sites & Permits -> AUTO-LICENSE (Route: license)
+  // 1. Municipal Locations, Historic Sites, Filming Permits & State Tax Incentives -> AUTO-LICENSE (Route: license)
   // Reason: Locations tied to state tax rebates (e.g. Georgia 30%, California 25%) are vital
-  // and routinely cleared via city filming permits ($500-$2,500) rather than changing real-world locations.
-  const isLocationOrPermit =
+  // and cleared via city filming permits or state qualified production expenditure (QPE) audit compliance.
+  // Crucially, screenplay sluglines are preserved (e.g. "ATLANTA" remains "ATLANTA") with $0 script mutation!
+  const isLocationOrPermitOrTax =
     category === "permit" ||
+    category === "tax" ||
     textLower.includes("park") ||
     textLower.includes("fountain") ||
     textLower.includes("street") ||
@@ -32,17 +34,20 @@ export function determineHazardResolutionRoute(entity: ExtractedEntity): SwarmDe
     textLower.includes("district") ||
     textLower.includes("bridge") ||
     textLower.includes("historic") ||
+    descLower.includes("tax credit") ||
     descLower.includes("permit") ||
     descLower.includes("ordinance") ||
     descLower.includes("municipal") ||
     descLower.includes("faa");
 
-  if (isLocationOrPermit) {
+  if (isLocationOrPermitOrTax) {
     return {
       route: "license",
-      confidence: 0.96,
+      confidence: 0.98,
       statutoryReasoning:
-        "Municipal location / filming permit. Standard local filming permit or location release protects the production's statutory eligibility for state film tax credits without disrupting screenplay continuity.",
+        category === "tax"
+          ? "State/municipal film production incentive (e.g. Georgia 30% QPE, California 25%). Preserved in screenplay sluglines; qualified under state audit compliance and end-credits logo placement."
+          : "Municipal location / filming permit. Standard local filming permit or location release protects the production's statutory eligibility for state film tax credits without disrupting screenplay continuity.",
     };
   }
 

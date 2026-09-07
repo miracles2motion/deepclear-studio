@@ -4,6 +4,24 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.8] — 2026-09-07
+### 📂 Smart Browser Session History, Auto-Archiving & Screenplay Clearance Fixes
+- **Browser-Based Smart Session History (`sessionHistory.ts`, `SessionHistoryModal.tsx`)**:
+  - Implemented 100% browser-based session persistence using `localStorage`—zero backend storage required.
+  - **Smart Session Auto-Partitioning**: When a user pastes a new script, uploads a file, or switches topics, DeepClear automatically snapshots and archives the active session before clearing the board, preventing accidental data loss.
+  - **Auto-Sync on Milestones**: Active sessions automatically sync to local storage whenever liabilities are cleared/licensed or safe harbor is certified.
+  - **Interactive Recent History UI**: Added a dedicated `History` icon button in the top navigation with a live badge count of saved sessions. Clicking opens the glassmorphic `SessionHistoryModal` with search, exposure/tax badges, one-click session restore, and JSON download.
+- **Screenplay Slugline Preservation & Tax Credit Route Fix (`autoSwarm.ts`)**:
+  - Explicitly routed `category === "tax"` to `route: "license"` under Qualified Production Expenditure (QPE) audit compliance.
+  - Prevented state tax credit boilerplate from ever being injected into screenplay sluglines (`ATLANTA` preserved cleanly with $0 text mutation).
+- **Deep Character Name Propagation across Dialogue Cues (`page.tsx`)**:
+  - Enhanced `mutateScriptText` to extract base character names when substituting full parenthetical intros (e.g. `DR. JEFFREY STERLING (40s), Chief Cardiologist` ➔ `DR. ALISTAIR VANE (40s), Chief Cardiologist`).
+  - Propagates character name substitutions cleanly across all standalone dialogue cues throughout the entire script.
+- **Category-Aware Legal Arguments & Parallel Grounding Defaults (`page.tsx`)**:
+  - Replaced generic trademark Lanham Act fallback text with tailored legal standards for Defamation (Cal. Civ. Code § 3344), Domain/Telecom (Hollywood 555 reserve), Copyright (17 U.S.C. § 504 sync), and Tax incentives.
+
+---
+
 ## [v0.8.7] — 2026-09-07
 ### 🏛️ Living Person Defamation Radar & Fictional 555 / ICANN WHOIS Shield
 - **Living Person & Defamation Collision Radar (Cal. Civ. Code § 3344)**:

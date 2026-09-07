@@ -4,11 +4,19 @@ import React, { useState, useEffect, useRef } from "react";
 import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation, DeepClearSessionData, ClearanceMode } from "@/types";
 import { formatCurrency, cleanParallelSnippet } from "@/lib/utils";
 import { ExportModal } from "@/components/ExportModal";
+import { SessionHistoryModal } from "@/components/SessionHistoryModal";
 import ParallelInspectorDrawer from "@/components/ParallelInspectorDrawer";
 import ScreenplayRedlineView from "@/components/ScreenplayRedlineView";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { extractClearancePassport } from "@/lib/passport";
 import { determineHazardResolutionRoute, delayPace } from "@/lib/autoSwarm";
+import {
+  loadSavedSessions,
+  saveSessionToHistory,
+  getActiveSessionId,
+  setActiveSessionId,
+  clearActiveSessionId,
+} from "@/lib/sessionHistory";
 import {
   Sparkles,
   Paperclip,
@@ -17,6 +25,7 @@ import {
   Download,
   Upload,
   FileJson,
+  History,
   Eye,
   Scale,
   MapPin,
@@ -108,6 +117,9 @@ export default function DeepClearStudioPage() {
   const [agentTypingStatus, setAgentTypingStatus] = useState<string | null>(null);
   const [speakingAgent, setSpeakingAgent] = useState<AgentRole | null>(null);
   const [agentThinking, setAgentThinking] = useState<{ role: AgentRole; thought: string } | null>(null);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [activeSessionId, setActiveSessionIdState] = useState<string | null>(null);
+  const [savedSessionsCount, setSavedSessionsCount] = useState(0);
 
   // @ Mention Tagging & Available Agent Personas
   const AVAILABLE_AGENTS = [
@@ -394,7 +406,90 @@ export default function DeepClearStudioPage() {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       synthRef.current = window.speechSynthesis;
     }
+    const saved = loadSavedSessions();
+    setSavedSessionsCount(saved.length);
+    const activeId = getActiveSessionId();
+    if (activeId) {
+      setActiveSessionIdState(activeId);
+    }
   }, []);
+
+  // Construct snapshot of the current session state
+  const getCurrentSessionSnapshot = (): DeepClearSessionData => {
+    return {
+      version: "1.0",
+      type: "deepclear_session",
+      exportedAt: new Date().toISOString(),
+      productionTitle: productionTitle || "Indie Motion Picture",
+      uploadedFileName,
+      currentScriptText: currentScriptRef.current || currentScriptText,
+      originalScriptSnapshot: originalScriptSnapshot || currentScriptRef.current || currentScriptText,
+      initialExposure,
+      currentExposure,
+      taxSavings,
+      taxJurisdiction,
+      entities,
+      clearedEntityIds,
+      licensedEntityIds,
+      disputedEntityIds,
+      messages,
+    };
+  };
+
+  // Auto-archive active session before switching topics, loading new scripts, or resetting
+  const archiveCurrentSession = (silent = false): boolean => {
+    const hasContent =
+      (currentScriptRef.current || currentScriptText).trim().length > 0 ||
+      entities.length > 0 ||
+      messages.length > 1;
+
+    if (!hasContent) return false;
+
+    try {
+      const snapshot = getCurrentSessionSnapshot();
+      const saved = saveSessionToHistory(snapshot, activeSessionId || undefined);
+      setSavedSessionsCount(loadSavedSessions().length);
+      setActiveSessionIdState(saved.id);
+
+      if (!silent) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `archive-notice-${Date.now()}`,
+            sender: "system",
+            senderName: "DeepClear Swarm",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            type: "text",
+            content: `📁 **Session Auto-Archived**: "${snapshot.productionTitle}" safely preserved in Recent History in browser storage.`,
+          },
+        ]);
+      }
+      return true;
+    } catch (err) {
+      console.warn("Auto-archive error:", err);
+      return false;
+    }
+  };
+
+  // Restore a historical session from browser storage
+  const handleRestoreSession = (data: DeepClearSessionData, sessionId: string) => {
+    archiveCurrentSession(true);
+    handleImportSession(data);
+    setActiveSessionIdState(sessionId);
+    setActiveSessionId(sessionId);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `restore-notice-${Date.now()}`,
+        sender: "system",
+        senderName: "DeepClear Swarm",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: `📂 **Session Restored**: Successfully reloaded **"${data.productionTitle}"** from Recent History.`,
+      },
+    ]);
+  };
 
   // Dynamically generate fresh scene from Gemini API on demand
   const handleGenerateGeminiScene = async () => {
@@ -667,6 +762,16 @@ Clearance secured. We have safe harbor.`,
 
     let updated = script.replaceAll(rawText, replacement);
 
+    // Deep Character Name Propagation:
+    // If rawText contains parenthetical age/title (e.g. "DR. JEFFREY STERLING (40s), Chief Cardiologist")
+    // extract base names e.g. "DR. JEFFREY STERLING" -> "DR. ALISTAIR VANE" and replace standalone dialogue cues!
+    const rawBase = rawText.replace(/\s*\([^)]*\).*$/, "").trim();
+    const repBase = replacement.replace(/\s*\([^)]*\).*$/, "").trim();
+    if (rawBase && repBase && rawBase !== repBase && rawBase.length >= 3) {
+      const charCueRegex = new RegExp(`(^|\\n)(${rawBase.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")})(\\s*\\n)`, "g");
+      updated = updated.replace(charCueRegex, `$1${repBase}$3`);
+    }
+
     // 1. Sanitize duplicate word stutters caused by prefix overlap (e.g. "vintage vintage" -> "vintage")
     updated = updated.replace(/\b([a-zA-Z]+)\s+\1\b/gi, (match) => {
       return match.split(/\s+/)[0];
@@ -866,6 +971,21 @@ Clearance secured. We have safe harbor.`,
     // -------------------------------------------------------------
     // SCREENPLAY INGESTION & CLEARANCE STREAMING ROUTE
     // -------------------------------------------------------------
+    // Smart Session Partitioning: If active session already has work in progress and user sends another script, auto-archive!
+    const existingScript = (currentScriptRef.current || currentScriptText).trim();
+    if (existingScript.length > 0 && existingScript !== queryText.trim()) {
+      archiveCurrentSession(true);
+      const newSessionId = `session-${Date.now()}`;
+      setActiveSessionId(newSessionId);
+      setActiveSessionIdState(newSessionId);
+      setEntities([]);
+      setClearedEntityIds([]);
+      setLicensedEntityIds([]);
+      setDisputedEntityIds([]);
+      setInitialExposure(0);
+      setCurrentExposure(0);
+    }
+
     currentScriptRef.current = queryText;
     setCurrentScriptText(queryText);
     setOriginalScriptSnapshot((prev) => (!prev ? queryText : prev));
@@ -1287,6 +1407,22 @@ Clearance secured. We have safe harbor.`,
       let counselArg = `Under Lanham Act § 43(a), featuring "${entity.rawText}" prominently without a license creates estimated liability of ${formatCurrency(
         entity.originalExposure
       )}. We must defuse this asset.`;
+      if (entity.category === "defamation") {
+        counselArg = `Under Cal. Civ. Code § 3344 and defamation per se standards, depicting character "${entity.rawText}" in connection with criminal conduct risks immediate civil liability of ${formatCurrency(
+          entity.originalExposure
+        )}. We must defuse this character surname.`;
+      } else if (entity.category === "domain") {
+        counselArg = `Featuring active or unreserved domain/telecom asset "${entity.rawText}" creates estimated tort liability of ${formatCurrency(
+          entity.originalExposure
+        )} for harassment and cybersquatting. We must defuse into the Hollywood 555 reserve or cleared domain.`;
+      } else if (entity.category === "copyright") {
+        counselArg = `Under 17 U.S.C. § 504, featuring "${entity.rawText}" without sync licensing creates statutory damages of up to ${formatCurrency(
+          entity.originalExposure
+        )}. We must defuse this cue into an original score motif.`;
+      } else if (entity.category === "tax") {
+        counselArg = `Filming in "${entity.rawText}" qualifies under statutory film production tax incentive programs. We must register Qualified Production Expenditures and secure end-credits compliance.`;
+      }
+
       let directorArg = `This item is crucial for character authenticity and atmosphere! It is protected artistic Fair Use under Rogers v. Grimaldi!`;
       let locationArg = `Art department proposes substituting with an authentic fictionalized equivalent or filming on a qualified soundstage.`;
       const compromiseText = entity.defusedText || "custom cleared narrative prop";
@@ -1294,8 +1430,23 @@ Clearance secured. We have safe harbor.`,
       let bondSignOff = `Underwriting completion bond: E&O safe-harbor policy rider executed with $0 liability exposure.`;
       let parallelData = {
         verified: true,
-        registryStatus: "PASSED: ZERO CONFLICTING USPTO REGISTRATIONS",
-        queryExecuted: `"${compromiseText}" trademark USPTO registered brand conflict clearance`,
+        registryStatus:
+          entity.category === "domain"
+            ? "PASSED: ZERO CONFLICTING DOMAIN / 555 ALLOCATIONS"
+            : entity.category === "defamation"
+            ? "PASSED: ZERO CONFLICTING PUBLIC REGISTRATIONS"
+            : entity.category === "tax"
+            ? "PASSED: QUALIFIED PRODUCTION INCENTIVE EXEMPTION"
+            : "PASSED: ZERO CONFLICTING USPTO REGISTRATIONS",
+        queryExecuted: `"${compromiseText}" ${
+          entity.category === "domain"
+            ? "telecom safe reserve"
+            : entity.category === "defamation"
+            ? "public record and licensing clearance"
+            : entity.category === "tax"
+            ? "film incentive code"
+            : "trademark USPTO registered brand conflict clearance"
+        }`,
         citations: [] as ParallelGroundingCitation[],
       };
 
@@ -1804,6 +1955,11 @@ Clearance secured. We have safe harbor.`,
         });
       });
     }
+
+    // Auto-sync completed safe harbor session to browser history
+    setTimeout(() => {
+      archiveCurrentSession(true);
+    }, 400);
   };
 
   autoClearanceRef.current = handleRunAutoClearance;
@@ -2044,8 +2200,12 @@ Clearance secured. We have safe harbor.`,
     reader.readAsText(file);
   };
 
-  // Reset Chat Session
+  // Reset Chat Session (with auto-archiving)
   const handleNewSession = () => {
+    archiveCurrentSession(false);
+    clearActiveSessionId();
+    setActiveSessionIdState(null);
+
     setMessages([
       {
         id: `welcome-${Date.now()}`,
@@ -2070,6 +2230,7 @@ Clearance secured. We have safe harbor.`,
     setDisputedEntityIds([]);
     setTaxSavings(0);
     setUploadedFileName(null);
+    setProductionTitle("Indie Motion Picture");
   };
 
   const hasPassport = messages.some((m) => m.content?.includes("Clearance Passport Ingested"));
@@ -2237,6 +2398,21 @@ Clearance secured. We have safe harbor.`,
                   title="Import Chat History & Session (.JSON)"
                 >
                   <Upload className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Recent Session History */}
+                <button
+                  type="button"
+                  onClick={() => setIsHistoryModalOpen(true)}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-amber-300 hover:bg-zinc-800 transition-all relative"
+                  title="Recent Session History & Backups"
+                >
+                  <History className="h-3.5 w-3.5" />
+                  {savedSessionsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-amber-500 text-[9px] font-mono text-black font-bold flex items-center justify-center shadow-sm">
+                      {savedSessionsCount > 9 ? "9+" : savedSessionsCount}
+                    </span>
+                  )}
                 </button>
 
                 {/* Export Session */}
@@ -3669,6 +3845,15 @@ Clearance secured. We have safe harbor.`,
         finalScriptText={currentScriptText}
         uploadedFileName={uploadedFileName}
         onExportSession={handleExportSession}
+      />
+
+      {/* Session History Modal */}
+      <SessionHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        onRestoreSession={handleRestoreSession}
+        onStartNewSession={handleNewSession}
+        currentSessionId={activeSessionId}
       />
 
       {/* Parallel Grounding Inspector Drawer */}
