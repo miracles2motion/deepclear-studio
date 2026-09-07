@@ -39,7 +39,14 @@ export const PromptBar: React.FC<PromptBarProps> = ({
   return (
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pb-5 pt-2">
       {/* Quick Action Suggestion Chips */}
-      <div className="flex items-center gap-2 mb-2.5 overflow-x-auto pb-1 text-xs font-medium no-scrollbar">
+      <div
+        onWheel={(e) => {
+          if (e.currentTarget && e.deltaY !== 0) {
+            e.currentTarget.scrollLeft += e.deltaY;
+          }
+        }}
+        className="flex items-center gap-2 mb-2.5 overflow-x-auto pb-1 text-xs font-medium no-scrollbar"
+      >
         <button
           onClick={onRunScan}
           disabled={isScanning}

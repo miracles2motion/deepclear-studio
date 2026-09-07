@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   X,
   ExternalLink,
@@ -17,6 +17,8 @@ import {
   Scale,
   Layers,
   Filter,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { ExtractedEntity } from "@/types";
 import { cleanParallelSnippet } from "@/lib/utils";
@@ -40,6 +42,47 @@ export default function ParallelInspectorDrawer({
   const [viewMode, setViewMode] = useState<"single" | "all">("single");
   const [snippetMode, setSnippetMode] = useState<"clean" | "raw">("clean");
   const [activeAssetId, setActiveAssetId] = useState<string | null>(entity?.id || null);
+
+  const assetScrollRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+
+  const scrollAssets = (direction: "left" | "right") => {
+    if (assetScrollRef.current) {
+      const offset = direction === "left" ? -180 : 180;
+      assetScrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!assetScrollRef.current) return;
+    isDraggingRef.current = true;
+    startXRef.current = e.pageX - assetScrollRef.current.offsetLeft;
+    scrollLeftRef.current = assetScrollRef.current.scrollLeft;
+  };
+
+  const handleMouseLeaveOrUp = () => {
+    isDraggingRef.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current || !assetScrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - assetScrollRef.current.offsetLeft;
+    const walk = (x - startXRef.current) * 1.5;
+    assetScrollRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  // Auto-scroll active badge into view
+  useEffect(() => {
+    if (activeAssetId && assetScrollRef.current) {
+      const activeEl = assetScrollRef.current.querySelector<HTMLElement>(`[data-asset-id="${activeAssetId}"]`);
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      }
+    }
+  }, [activeAssetId]);
 
   // Sync active entity when prop changes
   useEffect(() => {
@@ -291,29 +334,62 @@ export default function ParallelInspectorDrawer({
 
             {/* Asset Picker Pills (when in Single mode and multiple assets exist) */}
             {viewMode === "single" && allEntities.length > 1 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 scrollbar-thin scrollbar-thumb-zinc-800">
-                {allEntities.map((ent) => {
-                  const isSelected = ent.id === currentEntity?.id;
-                  const isResolved =
-                    ent.status === "cleared" || ent.status === "licensed";
+              <div className="flex items-center gap-1 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => scrollAssets("left")}
+                  className="p-1 rounded-md bg-zinc-900/90 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0 border border-white/5 shadow-sm"
+                  title="Scroll badges left"
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                </button>
 
-                  return (
-                    <button
-                      key={ent.id}
-                      type="button"
-                      onClick={() => handleSelectAsset(ent)}
-                      className={`px-2 py-0.5 rounded-lg text-[10px] font-mono shrink-0 transition-all border ${
-                        isSelected
-                          ? "bg-sky-500/20 text-sky-300 border-sky-500/40 font-bold"
-                          : isResolved
-                          ? "bg-zinc-900/80 text-emerald-400 border-emerald-500/20 hover:bg-zinc-800"
-                          : "bg-zinc-900/80 text-rose-300 border-rose-500/20 hover:bg-zinc-800"
-                      }`}
-                    >
-                      {ent.rawText}
-                    </button>
-                  );
-                })}
+                <div
+                  ref={assetScrollRef}
+                  onWheel={(e) => {
+                    if (assetScrollRef.current && e.deltaY !== 0) {
+                      assetScrollRef.current.scrollLeft += e.deltaY;
+                    }
+                  }}
+                  onMouseDown={handleMouseDown}
+                  onMouseLeave={handleMouseLeaveOrUp}
+                  onMouseUp={handleMouseLeaveOrUp}
+                  onMouseMove={handleMouseMove}
+                  className="flex-1 flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 scrollbar-thin scrollbar-thumb-zinc-700/80 hover:scrollbar-thumb-zinc-500 scrollbar-track-zinc-900/40 scroll-smooth cursor-grab active:cursor-grabbing select-none"
+                >
+                  {allEntities.map((ent) => {
+                    const isSelected = ent.id === currentEntity?.id;
+                    const isResolved =
+                      ent.status === "cleared" || ent.status === "licensed";
+
+                    return (
+                      <button
+                        key={ent.id}
+                        data-asset-id={ent.id}
+                        type="button"
+                        onClick={() => handleSelectAsset(ent)}
+                        className={`px-2 py-0.5 rounded-lg text-[10px] font-mono shrink-0 transition-all border ${
+                          isSelected
+                            ? "bg-sky-500/20 text-sky-300 border-sky-500/40 font-bold shadow-sm ring-1 ring-sky-400/40"
+                            : isResolved
+                            ? "bg-zinc-900/80 text-emerald-400 border-emerald-500/20 hover:bg-zinc-800"
+                            : "bg-zinc-900/80 text-rose-300 border-rose-500/20 hover:bg-zinc-800"
+                        }`}
+                      >
+                        {ent.rawText}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => scrollAssets("right")}
+                  className="p-1 rounded-md bg-zinc-900/90 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0 border border-white/5 shadow-sm"
+                  title="Scroll badges right"
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </button>
               </div>
             )}
           </div>

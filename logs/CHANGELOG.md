@@ -4,6 +4,19 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.5] — 2026-09-07
+### 🧭 Parallel Inspector Pill Navigation & Smooth Scroll Suite
+- **Interactive Badge Scrolling & Wheel Translation (`ParallelInspectorDrawer.tsx`)**:
+  - Implemented vertical-to-horizontal mouse wheel translation (`deltaY` -> `scrollLeft`) on the Single Asset picker pill row, allowing standard mice to scroll pills smoothly without holding `Shift`.
+  - Added dedicated left (`ChevronLeft`) and right (`ChevronRight`) navigation buttons on the pill strip for effortless one-click scrolling.
+  - Added mouse drag-to-scroll interaction (`onMouseDown`, `onMouseMove`, `onMouseUp`) for intuitive click-and-drag horizontal panning.
+  - Implemented automatic centered scroll-into-view (`scrollIntoView({ inline: "center", behavior: "smooth" })`) whenever the active asset changes.
+  - Added visual active state ring highlights and styled custom scrollbars (`scrollbar-thumb-zinc-700/80`).
+- **Prompt Bar Suggestion Chips Wheel Support (`PromptBar.tsx`)**:
+  - Added mouse wheel horizontal scroll translation to the prompt suggestion chips container.
+
+---
+
 ## [v0.8.4] — 2026-09-07
 ### 📝 React Markdown Integration & Resilient Message Typography
 - **React Markdown Engine (`MarkdownRenderer.tsx`)**:
