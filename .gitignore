@@ -66,5 +66,7 @@ coverage/
 *.seed
 *.pid.lock
 scratch/
+scripts/
 *.mp4
 *.wav
+

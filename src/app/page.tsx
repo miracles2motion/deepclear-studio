@@ -177,11 +177,11 @@ export default function DeepClearStudioPage() {
   };
 
   const AGENT_TAG_STYLES: Record<string, { color: string; label: string }> = {
-    "@legal_counsel": { color: "text-sky-400 font-bold", label: "Studio Legal Counsel" },
-    "@director": { color: "text-rose-400 font-bold", label: "The Director" },
-    "@location_manager": { color: "text-amber-400 font-bold", label: "Location & Art Manager" },
-    "@script_supervisor": { color: "text-emerald-400 font-bold", label: "Script Supervisor" },
-    "@bond_officer": { color: "text-indigo-400 font-bold", label: "Completion Bond Officer" },
+    "@legal_counsel": { color: "text-sky-400", label: "Studio Legal Counsel" },
+    "@director": { color: "text-rose-400", label: "The Director" },
+    "@location_manager": { color: "text-amber-400", label: "Location & Art Manager" },
+    "@script_supervisor": { color: "text-emerald-400", label: "Script Supervisor" },
+    "@bond_officer": { color: "text-indigo-400", label: "Completion Bond Officer" },
   };
 
   const renderHighlightedPrompt = (text: string) => {
@@ -248,12 +248,13 @@ export default function DeepClearStudioPage() {
     }, 1000);
 
     setIsMentionMenuOpen(false);
-    setTimeout(() => {
+    const targetPos = newTextBefore.length;
+    requestAnimationFrame(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(newTextBefore.length, newTextBefore.length);
+        textareaRef.current.setSelectionRange(targetPos, targetPos);
       }
-    }, 10);
+    });
   };
 
   const handleTagAgentFromSidebar = (role: AgentRole) => {
@@ -270,11 +271,13 @@ export default function DeepClearStudioPage() {
       setIsUserTyping(false);
     }, 1000);
 
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
+        const len = textareaRef.current.value.length;
+        textareaRef.current.setSelectionRange(len, len);
       }
-    }, 10);
+    });
   };
 
   const handleCopyMessage = (msg: ChatMessage) => {
@@ -3339,7 +3342,7 @@ Clearance secured. We have safe harbor.`,
                     <div
                       ref={inputMirrorRef}
                       aria-hidden="true"
-                      className="w-full bg-transparent text-sm leading-relaxed px-2 py-1 max-h-36 min-h-[38px] pointer-events-none whitespace-pre-wrap break-words font-sans text-zinc-100 overflow-hidden select-none absolute inset-0 z-0"
+                      className="w-full bg-transparent text-sm leading-relaxed tracking-normal font-normal px-2 py-1 max-h-36 min-h-[38px] pointer-events-none whitespace-pre-wrap break-words font-sans text-zinc-100 overflow-hidden select-none absolute inset-0 z-0 border-0 m-0 box-border"
                     >
                       {renderHighlightedPrompt(input)}
                     </div>
@@ -3387,7 +3390,7 @@ Clearance secured. We have safe harbor.`,
                     }}
                     placeholder={input ? "" : "Ask any agent (type @ to tag), paste dialogue, or upload a .fountain/.md file..."}
                     rows={1}
-                    className={`w-full bg-transparent text-sm placeholder-zinc-500 focus:outline-none resize-none px-2 py-1 max-h-36 min-h-[38px] leading-relaxed relative z-10 font-sans ${
+                    className={`w-full bg-transparent text-sm placeholder-zinc-500 focus:outline-none resize-none px-2 py-1 max-h-36 min-h-[38px] leading-relaxed tracking-normal font-normal relative z-10 font-sans border-0 m-0 box-border ${
                       input ? "text-transparent caret-zinc-100 selection:bg-indigo-500/40 selection:text-white" : "text-zinc-100"
                     }`}
                   />
