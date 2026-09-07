@@ -65,3 +65,6 @@ coverage/
 *.pid
 *.seed
 *.pid.lock
+scratch/
+*.mp4
+*.wav

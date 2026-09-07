@@ -4,6 +4,19 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.4] — 2026-09-07
+### 🎥 Automated 1080p Studio Trailer Recorder & Synchronized Narration Engine
+- **Automated Video Recorder (`scripts/record-demo.js`)**:
+  - Engineered an automated 1080p 60/30fps video recording pipeline using Microsoft Edge via Puppeteer Chrome DevTools Protocol (`Page.startScreencast`) piped directly to `ffmpeg.exe` via stdin.
+  - Zero OS notifications, zero browser chrome/infobars (`--disable-notifications`, `--disable-infobars`, `--hide-scrollbars`), producing an uncompressed, studio-grade H.264 MP4 (`deepclear_studio_demo.mp4`).
+  - Choreographed end-to-end walkthrough covering: Studio Dashboard, `@` Agent Tagging with dynamic listening cards, Gemini Flash ingestion (Southern Gothic), 5-Agent dialectics with live Parallel SDK telemetry (~42ms), Parallel Inspector Drawer, Screenplay Redline Diff, Producer Dispute rollback, and Form E&O-2026 PDF Document scroll down to Exhibit B.
+- **Synchronized Voiceover Synthesizer & Audio Mixer (`scripts/generate-synced-audio.js`)**:
+  - Implemented a timed multi-act audio synthesizer dividing narration into 7 distinct acts with precise start-time offsets.
+  - Mixed all speech clips using FFmpeg's `adelay` and `amix` filter graph into a master audio stream (`master_narration.wav`).
+  - Automatically merged video and narration into a final, submission-ready video: **`deepclear_final_submission.mp4`** (1920x1080, AAC 192kbps stereo, ~7.1 MB).
+
+---
+
 ## [v0.8.3] — 2026-09-07
 ### 🏷️ @ Mention Tagging System, Conversational Agent Q&A & Inter-Agent Collaboration Swarm
 - **@ Mention Tagging & Floating Autocomplete Popover**:
