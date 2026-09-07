@@ -474,7 +474,15 @@ export default function DeepClearStudioPage() {
     }
   }, []);
 
-  // Construct snapshot of the current session state
+  // Helper to identify temporary system notices (restores, auto-archives, exports)
+  const isTransientNotice = (id: string): boolean =>
+    id.startsWith("restored-") ||
+    id.startsWith("restore-notice-") ||
+    id.startsWith("archive-notice-") ||
+    id.startsWith("resume-queue-") ||
+    id.startsWith("export-notice-");
+
+  // Construct snapshot of the current session state (strictly excludes temporary UI notices)
   const getCurrentSessionSnapshot = (): DeepClearSessionData => {
     return {
       version: "1.0",
@@ -492,7 +500,7 @@ export default function DeepClearStudioPage() {
       clearedEntityIds,
       licensedEntityIds,
       disputedEntityIds,
-      messages,
+      messages: messages.filter((m) => !isTransientNotice(m.id)),
     };
   };
 
@@ -512,10 +520,11 @@ export default function DeepClearStudioPage() {
       setActiveSessionIdState(saved.id);
 
       if (!silent) {
+        const archiveNoticeId = `archive-notice-${Date.now()}`;
         setMessages((prev) => [
-          ...prev,
+          ...prev.filter((m) => !m.id.startsWith("archive-notice-")),
           {
-            id: `archive-notice-${Date.now()}`,
+            id: archiveNoticeId,
             sender: "system",
             senderName: "DeepClear Swarm",
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -523,6 +532,9 @@ export default function DeepClearStudioPage() {
             content: `📁 **Session Auto-Archived**: "${snapshot.productionTitle}" safely preserved in Recent History in browser storage.`,
           },
         ]);
+        setTimeout(() => {
+          setMessages((prev) => prev.filter((m) => m.id !== archiveNoticeId));
+        }, 5000);
       }
       return true;
     } catch (err) {
@@ -538,17 +550,24 @@ export default function DeepClearStudioPage() {
     setActiveSessionIdState(sessionId);
     setActiveSessionId(sessionId);
 
+    const noticeId = `restore-notice-${Date.now()}`;
+    // Guarantee no duplicate or spam restored notices: filter out any existing restore notice
     setMessages((prev) => [
-      ...prev,
+      ...prev.filter((m) => !m.id.startsWith("restored-") && !m.id.startsWith("restore-notice-")),
       {
-        id: `restore-notice-${Date.now()}`,
+        id: noticeId,
         sender: "system",
         senderName: "DeepClear Swarm",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
-        content: `📂 **Session Restored**: Successfully reloaded **"${data.productionTitle}"** from Recent History.`,
+        content: `📂 **Session Restored**: Successfully reloaded **"${data.productionTitle || "Project"}"** from Recent History.`,
       },
     ]);
+
+    // Automatically dismiss temporary notification after 5 seconds
+    setTimeout(() => {
+      setMessages((prev) => prev.filter((m) => m.id !== noticeId));
+    }, 5000);
   };
 
   // Continuous Auto-Save: debounced sync to localStorage so a crash or force-reload loses zero work!
@@ -2244,15 +2263,23 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
+      const exportNoticeId = `export-notice-${Date.now()}`;
+      const cleanMessagesCount = messages.filter((m) => !isTransientNotice(m.id)).length;
       const exportNotice: ChatMessage = {
-        id: `export-notice-${Date.now()}`,
+        id: exportNoticeId,
         sender: "system",
         senderName: "DeepClear Swarm",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
-        content: `💾 **Chat & Session State Exported (.JSON)**\n• File: \`deepclear_session_${cleanTitle}_${new Date().toISOString().slice(0, 10)}.json\`\n• Messages saved: **${messages.length}**\n• Active liabilities tracked: **${entities.length}**\n\nYou can keep this backup or re-upload it anytime to restore your exact progress.`,
+        content: `💾 **Chat & Session State Exported (.JSON)**\n• File: \`deepclear_session_${cleanTitle}_${new Date().toISOString().slice(0, 10)}.json\`\n• Messages saved: **${cleanMessagesCount}**\n• Active liabilities tracked: **${entities.length}**\n\nYou can keep this backup or re-upload it anytime to restore your exact progress.`,
       };
-      setMessages((prev) => [...prev, exportNotice]);
+      setMessages((prev) => [
+        ...prev.filter((m) => !m.id.startsWith("export-notice-")),
+        exportNotice,
+      ]);
+      setTimeout(() => {
+        setMessages((prev) => prev.filter((m) => m.id !== exportNoticeId));
+      }, 5000);
     } catch (err) {
       console.error("Failed to export session:", err);
     }
@@ -2267,7 +2294,11 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       }
 
       if (Array.isArray(data.messages) && data.messages.length > 0) {
-        setMessages(data.messages);
+        // Strip any existing legacy or transient restore/archive notices from the loaded messages
+        const cleanMsgs = data.messages.filter(
+          (m: ChatMessage) => !isTransientNotice(m.id)
+        );
+        setMessages(cleanMsgs.length > 0 ? cleanMsgs : data.messages);
       }
       if (typeof data.productionTitle === "string") {
         setProductionTitle(data.productionTitle);
@@ -2310,16 +2341,30 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       }
 
       if (!silent) {
+        const restoreNoticeId = `restored-${Date.now()}`;
+        const cleanMsgCount = Array.isArray(data.messages)
+          ? data.messages.filter((m: ChatMessage) => !isTransientNotice(m.id)).length
+          : 0;
+
         const restoreNotice: ChatMessage = {
-          id: `restored-${Date.now()}`,
+          id: restoreNoticeId,
           sender: "system",
           senderName: "DeepClear Swarm",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           type: "text",
-          content: `📥 **Session & Chat History Restored Successfully**\n• Production: **${data.productionTitle || "Imported Project"}**\n• Messages Restored: **${data.messages?.length || 0}**\n• Hazards Tracked: **${data.entities?.length || 0}**\n• Underwriting Exposure: **$${(data.currentExposure || 0).toLocaleString()}**\n\nYou can continue chatting, negotiate new hazards, or generate updated Form E&O binders.`,
+          content: `📥 **Session & Chat History Restored Successfully**\n• Production: **${data.productionTitle || "Imported Project"}**\n• Messages Restored: **${cleanMsgCount}**\n• Hazards Tracked: **${data.entities?.length || 0}**\n• Underwriting Exposure: **$${(data.currentExposure || 0).toLocaleString()}**\n\nYou can continue chatting, negotiate new hazards, or generate updated Form E&O binders.`,
         };
 
-        setMessages((prev) => [...prev, restoreNotice]);
+        // Guarantee at most ONE restore notice exists: strip any previous restore notices
+        setMessages((prev) => [
+          ...prev.filter((m) => !m.id.startsWith("restored-") && !m.id.startsWith("restore-notice-")),
+          restoreNotice,
+        ]);
+
+        // Auto-dismiss temporary notification after 5 seconds
+        setTimeout(() => {
+          setMessages((prev) => prev.filter((m) => m.id !== restoreNoticeId));
+        }, 5000);
 
         import("canvas-confetti").then((confettiModule) => {
           confettiModule.default({
@@ -3016,6 +3061,18 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                               </>
                             )}
                           </button>
+
+                          {/* Dismiss Action for Transient Notices */}
+                          {isTransientNotice(msg.id) && (
+                            <button
+                              type="button"
+                              onClick={() => setMessages((prev) => prev.filter((m) => m.id !== msg.id))}
+                              className="flex items-center gap-1 text-zinc-500 hover:text-zinc-200 px-1.5 py-0.5 rounded hover:bg-white/[0.06] transition-all text-[9px] font-mono text-zinc-400"
+                              title="Dismiss temporary notice"
+                            >
+                              <span>Dismiss</span>
+                            </button>
+                          )}
                         </div>
                       </div>
 

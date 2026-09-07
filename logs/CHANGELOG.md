@@ -13,10 +13,11 @@ This changelog records major releases, architectural features, and critical mile
 - **In-Flight Conversational Agent Reload Resumption (`page.tsx`)**:
   - Engineered automatic detection of in-flight agent queries interrupted by browser reloads.
   - When the restored session ends on an unfulfilled user query, DeepClear automatically re-mounts the target agent's thinking indicator (`[STUDIO LEGAL COUNSEL]: Synthesizing clearance counsel...`) and resumes query generation seamlessly without creating duplicate user messages.
-- **Silent Boot Recovery & Duplicate Notice Elimination (`page.tsx`)**:
-  - Added `silent: boolean = false` parameter to `handleImportSession` and guarded on-mount boot recovery with `hasBootedRef`.
-  - Reloading or recovering an active session now seamlessly populates messages without spamming duplicate `📥 Session & Chat History Restored Successfully` notices or triggering redundant confetti.
-  - Explicit manual file uploads via the Attach File button or session modal continue to display confirmation notices.
+- **Single-Notice Anti-Spam & Ephemeral UI Toasts (`page.tsx`)**:
+  - Enforced single-notice invariant across all session restoration events: any previous restoration message is automatically cleared before displaying a new notice.
+  - Made all restoration, auto-archiving, and export notices **temporary** with an automatic 5-second self-destruct timer and an instant `[Dismiss]` button in the card header.
+  - Excluded transient UI notices (`restored-`, `restore-notice-`, `archive-notice-`, etc.) from session snapshots (`getCurrentSessionSnapshot`), ensuring local storage and exported JSON session files remain clean and uncluttered.
+  - Added `silent: boolean = false` parameter to `handleImportSession` and guarded on-mount boot recovery with `hasBootedRef` to ensure zero notices on reloads.
 
 ---
 
