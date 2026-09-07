@@ -70,6 +70,30 @@ export function determineHazardResolutionRoute(entity: ExtractedEntity): SwarmDe
     };
   }
 
+  // 4. Living Person Defamation & Right of Publicity -> AUTO-NEGOTIATE / MUTATE (Route: mutate)
+  // Reason: Fictitious characters colliding with living professionals risk California Civil Code § 3344 and defamation claims.
+  // Defusing into a phonetically distinct, conflict-free fictional surname protects the production with $0 liability.
+  if (category === "defamation") {
+    return {
+      route: "mutate",
+      confidence: 0.95,
+      statutoryReasoning:
+        "Living person collision under Cal. Civ. Code § 3344. Standard studio practice replaces full name with a verified fictitious surname grounded against public registries.",
+    };
+  }
+
+  // 5. Fictional Phone Numbers & Web Domains -> AUTO-NEGOTIATE / MUTATE (Route: mutate)
+  // Reason: Phone numbers outside the 555-0100 through 555-0199 safe reserve harass real citizens.
+  // Unregistered or third-party web domains risk cybersquatting and adult redirects.
+  if (category === "domain") {
+    return {
+      route: "mutate",
+      confidence: 0.97,
+      statutoryReasoning:
+        "Telecom / WHOIS domain conflict. Defusing into the official Hollywood 555 fictitious reserve or a studio-cleared URL eliminates harassment and cybersquatting liability.",
+    };
+  }
+
   // Default fallback
   return {
     route: "mutate",

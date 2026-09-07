@@ -128,6 +128,8 @@ Analyze the following screenplay excerpt and visual scene elements for legal lia
 2. Copyright risks (unlicensed sync music, songs, lyrics, copyrighted artwork/tattoos)
 3. Municipal filming permits & safety hazards (unpermitted drones over traffic, high-speed bridge/highway stunts, explosions, SAG-AFTRA overtime)
 4. State tax incentive eligibility (e.g. Georgia 30%, New York 30%, New Mexico 25%)
+5. Living Person Defamation & Right of Publicity (fictitious character full names with specific high-profile titles/professions/employers that risk colliding with real living individuals under Cal. Civ. Code § 3344)
+6. Fictional Phone Numbers & Web Domains (phone numbers outside the Hollywood safe reserve 555-0100 through 555-0199, or unregistered/risky web domains in dialogue)
 ${safeHarborSection}
 For each risk found, return a JSON object with this exact schema:
 {
@@ -136,7 +138,7 @@ For each risk found, return a JSON object with this exact schema:
       "id": "ent-1",
       "sceneNumber": 1,
       "rawText": "exact string from script",
-      "category": "trademark" | "copyright" | "permit" | "caselaw" | "tax",
+      "category": "trademark" | "copyright" | "permit" | "caselaw" | "tax" | "defamation" | "domain",
       "description": "precise explanation of statutory liability",
       "status": "hazard",
       "originalExposure": 350000 (realistic statutory liability exposure in USD),

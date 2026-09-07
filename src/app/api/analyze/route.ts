@@ -91,7 +91,9 @@ export async function POST(req: NextRequest) {
                   entity.category === "trademark" ||
                   entity.category === "permit" ||
                   entity.category === "caselaw" ||
-                  entity.category === "tax"
+                  entity.category === "tax" ||
+                  entity.category === "defamation" ||
+                  entity.category === "domain"
                     ? entity.category
                     : "trademark",
               });

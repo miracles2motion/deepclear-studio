@@ -68,6 +68,7 @@ We built 3 curated 1-click test presets directly above the prompt bar in the liv
 | :--- | :--- | :--- |
 | **`[ 🚀 Cyber Heist ]`** | High-Stakes Sci-Fi Action (Silicon Valley Lab) | Flags $1.25M exposure (Apple Vision Pro, Tesla Cybertruck, Radiohead - Idioteque). In Auto-Pilot mode, the 5-agent swarm automatically negotiates narrative alternatives while **Parallel Search** verifies *"Aegis Visor"* and *"Zenith GT"* have 0 USPTO trademark conflicts. |
 | **`[ 🏛️ Southern Gothic ]`** | Savannah Historic District & Drone Aerials | Flags historic park municipal permits, Macallan 25, and Georgia 30% tax incentive compliance. Click **📜 Licensed** to mark permits cleared and watch liability drop to $0 while preserving narrative text. |
+| **`[ ⚖️ Legal & WHOIS Shield ]`** | Living Person Defamation & 555 / WHOIS Radar | Flags living person collision under Cal. Civ. Code § 3344 (*Dr. Jeffrey Sterling at Emory Hospital*), out-of-range phone numbers (`310-456-7890`), and unvetted domain `apexbiocorp.com`. Demonstrates live public records scanning and FCC safe 555 reserve mutation. |
 | **`[ 🛡️ Cleared Masterpiece ]`** | Pre-Cleared Script with Clearance Passport | Demonstrates our **Clearance Passport safe-harbor engine**. Shows verified Merkle seal `0x7a8f...` and exempts pre-cleared assets from false-positive re-flagging upon upload. |
 
 ---

@@ -12,7 +12,9 @@ export type HazardCategory =
   | "caselaw"
   | "tax"
   | "sag_overtime"
-  | "safety";
+  | "safety"
+  | "defamation"
+  | "domain";
 
 export type ClearanceStatus =
   | "hazard"
@@ -34,7 +36,7 @@ export interface BoundingBox {
 
 export interface ParallelGroundingCitation {
   id: string;
-  category: "trademark" | "permit" | "caselaw" | "tax";
+  category: "trademark" | "permit" | "caselaw" | "tax" | "defamation" | "domain";
   title: string;
   sourceUrl: string;
   snippet: string;

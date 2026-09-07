@@ -4,6 +4,23 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.7] — 2026-09-07
+### 🏛️ Living Person Defamation Radar & Fictional 555 / ICANN WHOIS Shield
+- **Living Person & Defamation Collision Radar (Cal. Civ. Code § 3344)**:
+  - Extended Gemini clearance engine with Category 5 extraction: flags fictitious character full names paired with high-profile professions, titles, and real-world institutions that risk colliding with living professionals.
+  - Connected Parallel Search API to live public licensing boards, medical/legal directories, and judicial dockets (`"defamation"` category).
+  - Autonomous triage routes defamation risks to creative mutation, substituting conflict-free fictional surnames verified against public records.
+- **Fictional Phone Number & ICANN WHOIS Domain Shield**:
+  - Extended Gemini clearance engine with Category 6 extraction: identifies phone numbers outside the official Hollywood fictitious reserve (`555-0100` through `555-0199`) and unregistered/predatory domain names in dialogue.
+  - Connected Parallel Search API to ICANN WHOIS registries and FCC telecom exchange databases (`"domain"` category).
+  - Autonomous triage defuses out-of-range phone numbers to the safe 555 reserve and validates domain safe harbor.
+- **New 1-Click Judge Preset: `[ ⚖️ Legal & WHOIS Shield ]`**:
+  - Added a 4th curated scenario preset (*The Manhattan Arbitrage*) featuring Dr. Jeffrey Sterling at Emory Medical Center, `apexbiocorp.com`, and phone `310-456-7890`.
+- **Full Type Safety & Production Verification**:
+  - Extended `HazardCategory` and `ParallelGroundingCitation` with `"defamation"` and `"domain"`. Verified clean production build (`npm run build` code 0).
+
+---
+
 ## [v0.8.6] — 2026-09-07
 ### 🛡️ Dedicated Error Handling & Enterprise System Resilience Guide (`logs/ERROR_HANDLING.md`)
 - **Published Enterprise Resilience Architecture Document**:

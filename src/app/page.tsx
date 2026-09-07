@@ -616,6 +616,12 @@ export default function DeepClearStudioPage() {
       script: `Title: SAVANNAH NOIR\nEXT. FORSYTH PARK - SAVANNAH, GEORGIA - DUSK\n\nSpanish moss sways from the ancient live oaks. DETECTIVE CASH (50s) leans against a vintage 1968 Ford Mustang Fastback.\n\nHe pours two fingers from an authentic bottle of Macallan 25 Scotch into a crystal glass.\n\nCASH\nThe mayor's office didn't authorize filming on this square tonight. We're on borrowed time.\n\nAn Otis Redding classic drifts from a nearby street performer's amplifier.`,
     },
     {
+      id: "defamation-domain-check",
+      label: "⚖️ Legal & WHOIS Shield",
+      desc: "Living Person Defamation (Cal. Civ. Code § 3344) & 555 / Domain WHOIS Radar",
+      script: `Title: THE MANHATTAN ARBITRAGE\nINT. EMORY MEDICAL CENTER - ATLANTA - DAY\n\nDR. JEFFREY STERLING (40s), Chief Cardiologist, slips an illicit clinical trial dossier into his trench coat. He taps his smartphone.\n\nDR. JEFFREY STERLING\nWire the offshore funds immediately. If the FDA regulators call, tell them to inspect our clinical protocol at apexbiocorp.com or call our emergency desk at 310-456-7890.\n\nNURSE ALYSSA (30s) watches suspiciously from the ICU doorway as he rushes toward the service elevator.`,
+    },
+    {
       id: "safe-harbor-demo",
       label: "🛡️ Cleared Masterpiece",
       desc: "Pre-cleared with DeepClear Passport ($0 risk on ingestion)",
@@ -3257,6 +3263,8 @@ Clearance secured. We have safe harbor.`,
                         ? "bg-emerald-950/60 hover:bg-emerald-900/80 border-emerald-500/40 text-emerald-300 font-semibold"
                         : preset.id === "cyber-heist"
                         ? "bg-sky-950/40 hover:bg-sky-900/60 border-sky-500/30 text-sky-300"
+                        : preset.id === "defamation-domain-check"
+                        ? "bg-purple-950/40 hover:bg-purple-900/60 border-purple-500/30 text-purple-300"
                         : "bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/30 text-amber-300"
                     }`}
                     title={preset.desc}
