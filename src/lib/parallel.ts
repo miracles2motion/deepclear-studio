@@ -1,5 +1,6 @@
 import Parallel from "parallel-web";
 import { ParallelGroundingCitation } from "@/types";
+import { cleanParallelSnippet } from "./utils";
 
 export interface ParallelSearchParams {
   query: string;
@@ -163,7 +164,7 @@ export async function searchParallelGrounding({
       title: item.title || `${category.toUpperCase()} Reference: ${query}`,
       sourceUrl: item.url || "https://parallel.ai",
       snippet: (item.excerpts && item.excerpts.length > 0)
-        ? item.excerpts[0]
+        ? cleanParallelSnippet(item.excerpts[0], 280)
         : `Verified via Parallel Search API for "${query}".`,
       publishedDate: item.publish_date || undefined,
       verified: true,
@@ -292,7 +293,7 @@ export async function verifySubstitutePropWithParallel(
       title: item.title || `Parallel Clearance Registry: "${propName}"`,
       sourceUrl: item.url || "https://parallel.ai",
       snippet: (item.excerpts && item.excerpts.length > 0)
-        ? item.excerpts[0]
+        ? cleanParallelSnippet(item.excerpts[0], 280)
         : `Verified clearance search via Parallel Search API for "${propName}".`,
       publishedDate: item.publish_date || undefined,
       verified: true,
@@ -407,7 +408,7 @@ export async function verifyLicensingFrameworkWithParallel(
         title: item.title || `Licensing Authority: ${entityName}`,
         sourceUrl: item.url || "https://parallel.ai",
         snippet: (item.excerpts && item.excerpts.length > 0)
-          ? item.excerpts[0]
+          ? cleanParallelSnippet(item.excerpts[0], 280)
           : `Parallel Search verified statutory clearance for ${entityName}.`,
         publishedDate: item.publish_date || undefined,
         verified: true,

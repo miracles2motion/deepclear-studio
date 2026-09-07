@@ -1797,9 +1797,10 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
 
       const citationsText =
         parallelData.citations && parallelData.citations.length > 0
-          ? "\n\n**Verified Citations:**\n" +
+          ? "\n\n**Verified Sources:**\n" +
             parallelData.citations
-              .map((c) => `• [${c.title}](${c.sourceUrl}) — ${c.snippet}`)
+              .slice(0, 2)
+              .map((c) => `• [${c.title}](${c.sourceUrl}) — ${cleanParallelSnippet(c.snippet, 160)}`)
               .join("\n")
           : "";
 

@@ -4,6 +4,18 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.11] — 2026-09-07
+### 🔍 Parallel Search Grounding Sanitization & Citation Compacting
+- **Scraped Snippet Sanitization (`utils.ts`, `parallel.ts`)**:
+  - Resolved issue where Parallel Web Search returned raw website scrapings containing extensive USPTO navigation menus, tables of contents, breadcrumbs, search forms, and legal disclaimers in the chat feed.
+  - Significantly enhanced `cleanParallelSnippet()` with regular expressions that strip markdown tables (`^\|.*\|$`), raw markdown images/links, HTML entities, and government/e-commerce boilerplate headers.
+  - Applied `cleanParallelSnippet` directly at the data layer in `verifySubstitutePropWithParallel`, `searchParallelGrounding`, and `verifyLicensingFrameworkWithParallel`, ensuring citations stored in entity metadata are clean, compact, and readable.
+- **Counsel Verification Card Compacting (`page.tsx`)**:
+  - In Turn 4 of the autonomous debate swarm, capped rendered verified citations to the top 2 sources (`parallelData.citations.slice(0, 2)`).
+  - Passed each citation snippet through `cleanParallelSnippet(c.snippet, 160)`, condensing long scraped walls of text into crisp, single-sentence legal summaries while preserving full telemetry in the Parallel Inspector Drawer.
+
+---
+
 ## [v0.8.10] — 2026-09-07
 ### 💬 Conversational Agent Delivery Shield & Silent Session Recovery
 - **Guaranteed Conversational Agent Delivery (`page.tsx`, `gemini.ts`, `api/agent-chat/route.ts`)**:
