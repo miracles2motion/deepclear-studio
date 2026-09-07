@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ExtractedEntity, DebateTurn, AgentRole } from "@/types";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 import {
   FileText,
   AlertTriangle,
@@ -141,7 +142,7 @@ export const ConversationalFeed: React.FC<ConversationalFeedProps> = ({
                       : "bg-[#141416] border border-white/[0.08] text-zinc-200 rounded-tl-sm"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  <MarkdownRenderer content={msg.content || ""} />
                 </div>
               )}
 

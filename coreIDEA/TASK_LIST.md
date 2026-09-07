@@ -68,5 +68,8 @@
   - [x] Implement `/api/agent-chat` route and `generateConversationalAgentResponse` in `src/lib/gemini.ts` for conversational inquiries.
   - [x] Screenplay vs conversational intent classification preventing question mutation into fake liabilities.
   - [x] Inter-agent consultation passing context between crew members with secondary follow-up commentary turns and audio speech.
-  - [x] Parallel Search grounding badges and interactive suggested action pills in text messages.
+- [x] **Phase 11: Markdown Typography & Agent Response Formatting**
+  - [x] Integrate `react-markdown` with Obsidian dark theme tokenized component mapping (`MarkdownRenderer.tsx`).
+  - [x] Support markdown lists, headers, inline code, bold/italics, and external links in chat and debate feeds.
+  - [x] Harden prop interfaces for nullable/optional message contents and verify production build.
 

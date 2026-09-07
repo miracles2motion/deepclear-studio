@@ -6,6 +6,7 @@ import { formatCurrency, cleanParallelSnippet } from "@/lib/utils";
 import { ExportModal } from "@/components/ExportModal";
 import ParallelInspectorDrawer from "@/components/ParallelInspectorDrawer";
 import ScreenplayRedlineView from "@/components/ScreenplayRedlineView";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { extractClearancePassport } from "@/lib/passport";
 import { determineHazardResolutionRoute, delayPace } from "@/lib/autoSwarm";
 import {
@@ -2652,7 +2653,7 @@ Clearance secured. We have safe harbor.`,
 
                       {/* Standard Text: User & Agent share matching sleek Obsidian card */}
                       {msg.type === "text" && (
-                        <div className="p-3.5 rounded-2xl bg-[#141416] border border-white/[0.08] text-zinc-200 rounded-tl-sm shadow-sm text-xs sm:text-sm leading-relaxed whitespace-pre-wrap text-left font-sans">
+                        <div className="p-3.5 rounded-2xl bg-[#141416] border border-white/[0.08] text-zinc-200 rounded-tl-sm shadow-sm text-xs sm:text-sm leading-relaxed text-left font-sans">
                           {/* Quoted Direct Reply Banner (Click to jump & highlight) */}
                           {msg.replyTo && (
                             <button
@@ -2670,7 +2671,7 @@ Clearance secured. We have safe harbor.`,
                               </span>
                             </button>
                           )}
-                          <div>{msg.content}</div>
+                          <MarkdownRenderer content={msg.content || ""} />
 
                           {/* Parallel Search Grounding Citations */}
                           {msg.citations && msg.citations.length > 0 && (

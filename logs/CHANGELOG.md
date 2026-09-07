@@ -4,6 +4,19 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.4] — 2026-09-07
+### 📝 React Markdown Integration & Resilient Message Typography
+- **React Markdown Engine (`MarkdownRenderer.tsx`)**:
+  - Integrated `react-markdown` across conversational feeds and swarm debate text cards.
+  - Implemented custom styling for headings, inline code pills, code blocks, lists, blockquotes, emphasized text, and external links styled to match the studio's dark Obsidian theme.
+- **Strict TypeScript Prop Hardening**:
+  - Made `content` prop optional (`content?: string`) with safe default fallback (`content = ""`), eliminating build breakage on nullable message structures.
+  - Updated `ConversationalFeed.tsx` and `page.tsx` with fallback binding (`content={msg.content || ""}`).
+- **Build Verification**:
+  - Verified Next.js 14 App Router production compilation (`npm run build`) exited cleanly with code 0 and zero type or lint errors.
+
+---
+
 ## [v0.8.3] — 2026-09-07
 ### 🏷️ @ Mention Tagging System, Conversational Agent Q&A & Inter-Agent Collaboration Swarm
 - **@ Mention Tagging & Floating Autocomplete Popover**:
