@@ -2,7 +2,7 @@ import { DeepClearSessionData, SavedSessionRecord } from "@/types";
 
 const STORAGE_KEY = "deepclear_session_history_v1";
 const ACTIVE_SESSION_KEY = "deepclear_active_session_id_v1";
-const MAX_SAVED_SESSIONS = 20;
+const MAX_SAVED_SESSIONS = 50;
 
 /**
  * Safely loads all saved session history records from browser localStorage
@@ -31,6 +31,16 @@ export function getActiveSessionId(): string | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Retrieves the full active session record from storage (for seamless reload recovery)
+ */
+export function getActiveSessionRecord(): SavedSessionRecord | null {
+  const activeId = getActiveSessionId();
+  if (!activeId) return null;
+  const sessions = loadSavedSessions();
+  return sessions.find((s) => s.id === activeId) || null;
 }
 
 /**

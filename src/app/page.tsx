@@ -422,6 +422,11 @@ export default function DeepClearStudioPage() {
     const activeId = getActiveSessionId();
     if (activeId) {
       setActiveSessionIdState(activeId);
+      // Auto-recovery on reload: if active session has data, resume it seamlessly!
+      const activeRecord = saved.find((s) => s.id === activeId);
+      if (activeRecord && activeRecord.sessionData) {
+        handleImportSession(activeRecord.sessionData);
+      }
     }
   }, []);
 
@@ -501,6 +506,46 @@ export default function DeepClearStudioPage() {
       },
     ]);
   };
+
+  // Continuous Auto-Save: debounced sync to localStorage so a crash or force-reload loses zero work!
+  const isInitialMountRef = useRef(true);
+  useEffect(() => {
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      return;
+    }
+
+    const hasContent =
+      (currentScriptRef.current || currentScriptText).trim().length > 0 ||
+      entities.length > 0 ||
+      messages.length > 1;
+
+    if (!hasContent) return;
+
+    const timer = setTimeout(() => {
+      try {
+        const snapshot = getCurrentSessionSnapshot();
+        const saved = saveSessionToHistory(snapshot, activeSessionId || undefined);
+        if (!activeSessionId) {
+          setActiveSessionIdState(saved.id);
+        }
+        setSavedSessionsCount(loadSavedSessions().length);
+      } catch (err) {
+        console.warn("Auto-sync warning:", err);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [
+    messages,
+    entities,
+    currentScriptText,
+    clearedEntityIds,
+    licensedEntityIds,
+    currentExposure,
+    taxSavings,
+    productionTitle,
+  ]);
 
   // Dynamically generate fresh scene from Gemini API on demand
   const handleGenerateGeminiScene = async () => {
