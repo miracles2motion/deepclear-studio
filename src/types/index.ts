@@ -177,6 +177,7 @@ export interface DeepClearSessionData {
   passportData?: ClearancePassportData | null;
   originalScriptSnapshot?: string;
   disputedEntityIds?: string[];
+  clearanceMode?: ClearanceMode;
 }
 
 export interface SavedSessionRecord {

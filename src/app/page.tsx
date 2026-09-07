@@ -500,6 +500,7 @@ export default function DeepClearStudioPage() {
       clearedEntityIds,
       licensedEntityIds,
       disputedEntityIds,
+      clearanceMode: clearanceModeRef.current,
       messages: messages.filter((m) => !isTransientNotice(m.id)),
     };
   };
@@ -2338,6 +2339,10 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       }
       if (Array.isArray(data.disputedEntityIds)) {
         setDisputedEntityIds(data.disputedEntityIds);
+      }
+      if (data.clearanceMode === "auto" || data.clearanceMode === "manual") {
+        setClearanceMode(data.clearanceMode);
+        clearanceModeRef.current = data.clearanceMode;
       }
 
       if (!silent) {
