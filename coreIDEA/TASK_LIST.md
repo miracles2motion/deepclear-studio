@@ -53,3 +53,11 @@
   - [x] Organic speech cadence and conversational pacing replacing artificial delays with 350ms handoff breath.
   - [x] Unified responsive navigation breakpoint to `lg` (1024px) for full tablet & mobile E&O HUD accessibility.
   - [x] Permanent codification of autonomous swarm and UI state invariants in `AGENTS.md`.
+
+- [x] **Phase 9: Parallel Partner Track Hero Upgrade (Official SDK, Inspector Drawer, Redline Diff & PDF Audit Exhibit)**
+  - [x] Upgrade `src/lib/parallel.ts` to official `parallel-web` TypeScript SDK with typed `client.search` and `client.extract`.
+  - [x] Extend `ParallelGroundingCitation` with search telemetry (`searchId`, `searchLatencyMs`, `trademarkClass`, `registrationStatus`).
+  - [x] Build `ParallelInspectorDrawer.tsx` with responsive desktop slide-over and mobile bottom sheet.
+  - [x] Build `ScreenplayRedlineView.tsx` with side-by-side desktop diff and mobile segmented tabs (`[Cleared]`, `[Original]`, `[Split]`).
+  - [x] Add Exhibit B: Parallel Web Systems Grounding & Registry Audit Ledger to `src/lib/pdfGenerator.ts`.
+  - [x] Complete production build verification (`npm run build`) and update changelog.

@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation, DeepClearSessionData, ClearanceMode } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { ExportModal } from "@/components/ExportModal";
+import ParallelInspectorDrawer from "@/components/ParallelInspectorDrawer";
+import ScreenplayRedlineView from "@/components/ScreenplayRedlineView";
 import { extractClearancePassport } from "@/lib/passport";
 import { determineHazardResolutionRoute, delayPace } from "@/lib/autoSwarm";
 import {
@@ -81,6 +83,9 @@ export default function DeepClearStudioPage() {
   const [currentExposure, setCurrentExposure] = useState(0);
   const [taxSavings, setTaxSavings] = useState(0);
   const [currentScriptText, setCurrentScriptText] = useState<string>("");
+  const [originalScriptSnapshot, setOriginalScriptSnapshot] = useState<string>("");
+  const [inspectedEntity, setInspectedEntity] = useState<ExtractedEntity | null>(null);
+  const [activeCenterView, setActiveCenterView] = useState<"chat" | "redline">("chat");
   const [taxJurisdiction, setTaxJurisdiction] = useState("Qualified Film Credit (30%)");
   const [entities, setEntities] = useState<ExtractedEntity[]>([]);
   const [clearedEntityIds, setClearedEntityIds] = useState<string[]>([]);
@@ -477,6 +482,7 @@ Clearance secured. We have safe harbor.`,
     setMessages((prev) => [...prev, userMsg]);
     currentScriptRef.current = queryText;
     setCurrentScriptText(queryText);
+    setOriginalScriptSnapshot((prev) => (!prev ? queryText : prev));
     setInput("");
     setIsLoading(true);
     setActiveAgent("script_supervisor");
@@ -1614,6 +1620,9 @@ Clearance secured. We have safe harbor.`,
     setCurrentExposure(0);
     setCurrentScriptText("");
     currentScriptRef.current = "";
+    setOriginalScriptSnapshot("");
+    setActiveCenterView("chat");
+    setInspectedEntity(null);
     setDisputedEntityIds([]);
     setTaxSavings(0);
     setUploadedFileName(null);
@@ -2006,8 +2015,77 @@ Clearance secured. We have safe harbor.`,
             </div>
           )}
 
-          {/* Scrollable Message Feed */}
-          <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-7 max-w-3xl mx-auto w-full">
+          {/* Top Center View Switcher & Parallel Grounding Hero Bar */}
+          <div className="border-b border-white/[0.08] bg-[#0d0d10]/95 backdrop-blur-md px-3 sm:px-6 py-2 flex items-center justify-between gap-2 shrink-0 z-20">
+            <div className="flex items-center gap-1.5 bg-zinc-900/90 border border-white/10 p-1 rounded-xl font-mono text-xs shadow-sm">
+              <button
+                type="button"
+                onClick={() => setActiveCenterView("chat")}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeCenterView === "chat"
+                    ? "bg-indigo-600 text-white font-semibold shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span>Swarm Debate & Audit</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveCenterView("redline")}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeCenterView === "redline"
+                    ? "bg-emerald-600 text-white font-semibold shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <Film className="h-3.5 w-3.5" />
+                <span>Screenplay Redline</span>
+                {entities.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px] font-bold">
+                    {entities.length}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const target = entities[0] || null;
+                  if (target) setInspectedEntity(target);
+                }}
+                disabled={entities.length === 0}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-mono transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                title={entities.length > 0 ? "Inspect live Parallel Search grounding telemetry" : "Ingest screenplay to inspect Parallel grounding"}
+              >
+                <Zap className="h-3 w-3 text-sky-400 animate-pulse" />
+                <span className="hidden sm:inline">Parallel Inspector</span>
+                <span className="sm:hidden">Inspector</span>
+              </button>
+            </div>
+          </div>
+
+          {activeCenterView === "redline" ? (
+            <div className="flex-1 p-2 sm:p-4 overflow-hidden flex flex-col">
+              <ScreenplayRedlineView
+                originalScript={originalScriptSnapshot || currentScriptRef.current || currentScriptText}
+                clearedScript={currentScriptText || currentScriptRef.current}
+                entities={entities}
+                clearedEntityIds={clearedEntityIds}
+                licensedEntityIds={licensedEntityIds}
+                productionTitle={productionTitle}
+                uploadedFileName={uploadedFileName}
+                onInspectEntity={(ent) => setInspectedEntity(ent)}
+                onOpenExportModal={() => setIsExportModalOpen(true)}
+              />
+            </div>
+          ) : (
+            <>
+              {/* Scrollable Message Feed */}
+              <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-7 max-w-3xl mx-auto w-full">
               {messages.map((msg) => {
                 const isUser = msg.sender === "user";
                 const replyCount = messages.filter((m) => m.replyTo?.messageId === msg.id).length;
@@ -2160,16 +2238,20 @@ Clearance secured. We have safe harbor.`,
                                     {ent.citations && ent.citations.length > 0 && (
                                       <div className="mt-2 space-y-1">
                                         {ent.citations.map((cit) => (
-                                          <div
+                                          <button
                                             key={cit.id}
-                                            className="flex items-start gap-1.5 text-[11px] font-mono text-zinc-400 bg-zinc-950/70 p-1.5 rounded border border-white/5"
+                                            type="button"
+                                            onClick={() => setInspectedEntity(ent)}
+                                            className="w-full flex items-start gap-1.5 text-[11px] font-mono text-zinc-400 bg-zinc-950/70 hover:bg-zinc-900 p-1.5 rounded border border-white/5 hover:border-sky-500/30 text-left transition-all group"
+                                            title="Click to open Parallel Grounding Inspector"
                                           >
-                                            <ExternalLink className="h-3 w-3 mt-0.5 shrink-0 text-sky-400" />
-                                            <div>
-                                              <span className="text-zinc-200 font-semibold">{cit.title}: </span>
-                                              <span>{cit.snippet}</span>
+                                            <Zap className="h-3 w-3 mt-0.5 shrink-0 text-sky-400 group-hover:scale-110 transition-transform" />
+                                            <div className="flex-1 min-w-0">
+                                              <span className="text-zinc-200 font-semibold group-hover:text-sky-300 transition-colors">{cit.title}: </span>
+                                              <span className="line-clamp-2">{cit.snippet}</span>
+                                              <span className="text-[9px] text-sky-400 underline block mt-0.5">Inspect Parallel Telemetry & Grounding →</span>
                                             </div>
-                                          </div>
+                                          </button>
                                         ))}
                                       </div>
                                     )}
@@ -2511,10 +2593,12 @@ Clearance secured. We have safe harbor.`,
                         {/* Middle: Full Asset Title & Statutory Description */}
                         <div className="space-y-0.5 min-w-0">
                           <h4
-                            className="text-xs font-bold text-zinc-100 truncate"
-                            title={h.rawText}
+                            onClick={() => setInspectedEntity(h)}
+                            className="text-xs font-bold text-zinc-100 truncate hover:text-sky-300 cursor-pointer flex items-center gap-1 transition-colors group/h"
+                            title={`Click to inspect Parallel Grounding for "${h.rawText}"`}
                           >
-                            {h.rawText}
+                            <span className="truncate">{h.rawText}</span>
+                            <Zap className="h-2.5 w-2.5 text-sky-400 shrink-0 opacity-70 group-hover/h:opacity-100" />
                           </h4>
                           <p
                             className="text-[10px] text-zinc-400 leading-tight line-clamp-1"
@@ -2687,7 +2771,9 @@ Clearance secured. We have safe harbor.`,
               </div>
             </div>
           </div>
-        </main>
+        </>
+      )}
+    </main>
 
         {/* ========================================================= */}
         {/* RIGHT COLUMN: Underwriting & E&O Clearance HUD (300px)    */}
@@ -2919,6 +3005,13 @@ Clearance secured. We have safe harbor.`,
         finalScriptText={currentScriptText}
         uploadedFileName={uploadedFileName}
         onExportSession={handleExportSession}
+      />
+
+      {/* Parallel Grounding Inspector Drawer */}
+      <ParallelInspectorDrawer
+        isOpen={!!inspectedEntity}
+        entity={inspectedEntity}
+        onClose={() => setInspectedEntity(null)}
       />
 
       {/* Hidden Session File Input for .json chat/state restore */}

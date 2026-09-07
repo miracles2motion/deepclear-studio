@@ -40,6 +40,11 @@ export interface ParallelGroundingCitation {
   snippet: string;
   publishedDate?: string;
   verified: boolean;
+  trademarkClass?: string;
+  registrationStatus?: string;
+  extractedStatute?: string;
+  searchId?: string;
+  searchLatencyMs?: number;
 }
 
 export interface ExtractedEntity {
