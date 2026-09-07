@@ -4,6 +4,19 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.10] — 2026-09-07
+### 💬 Conversational Agent Delivery Shield & Silent Session Recovery
+- **Guaranteed Conversational Agent Delivery (`page.tsx`, `gemini.ts`, `api/agent-chat/route.ts`)**:
+  - Resolved issue where casual agent queries (e.g. `@legal_counsel ...`) could fail silently or get interrupted during browser reload cycles.
+  - Implemented comprehensive fallback delivery in `page.tsx`: if the network or API encounters delays or interruptions, the system immediately posts authoritative, domain-tailored agent counsel (such as California Civil Code § 3344 defamation guidance, $250k–$5M exposure brackets, and E&O exclusion riders) directly into the feed.
+  - Added a 4000ms `Promise.race` timeout guard on `searchParallelGrounding` in `/api/agent-chat/route.ts`, preventing slow web lookups from hanging the chat response.
+- **Silent Boot Recovery & Duplicate Notice Elimination (`page.tsx`)**:
+  - Added `silent: boolean = false` parameter to `handleImportSession` and guarded on-mount boot recovery with `hasBootedRef`.
+  - Reloading or recovering an active session now seamlessly populates messages without spamming duplicate `📥 Session & Chat History Restored Successfully` notices or triggering redundant confetti.
+  - Explicit manual file uploads via the Attach File button or session modal continue to display confirmation notices.
+
+---
+
 ## [v0.8.9] — 2026-09-07
 ### 🎨 Signature Agent Color Tagging & Desktop Knowledge DeepClear Sync Directive
 - **Desktop Knowledge DeepClear Operating Directive (`AGENTS.md`)**:

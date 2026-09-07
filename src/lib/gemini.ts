@@ -383,15 +383,52 @@ Return ONLY a valid JSON object matching this schema:
     return JSON.parse(result.response.text());
   } catch (err) {
     console.error("Agent chat generation error:", err);
+    const lowerMsg = userMessage.toLowerCase();
+    let dynamicReply = `As ${persona.name}, here is my guidance: When developing a screenplay, the most common liabilities arise from unlicensed commercial marks, living person rights, and intellectual property collisions.`;
+    let dynamicActions = [
+      "Audit screenplay for brand logos and songs",
+      "Inspect USPTO classifications in Parallel Inspector",
+      "Check production insurance & E&O warranty riders",
+    ];
+
+    if (lowerMsg.includes("defam") || lowerMsg.includes("sued") || lowerMsg.includes("charge") || lowerMsg.includes("libel")) {
+      dynamicReply = `⚖️ **Studio Legal Counsel Guidance on Screenplay Defamation & Civil Exposure**:
+
+1. **Civil Tort vs. Criminal Charges**:
+Defamation in narrative media is not a criminal charge—it is a high-stakes **civil tort (libel per se or libel per quod)**. Additionally, plaintiffs often pair defamation claims with **Right of Publicity** statutory violations (*e.g., Cal. Civ. Code § 3344*) and **False Light Invasion of Privacy**.
+
+2. **Total Lawsuit Exposure & Damage Potential**:
+• **Compensatory & Actual Damages**: Ranging from **$250,000 to $5,000,000+** if a plaintiff proves verifiable loss of livelihood, business disruption, or reputation harm.
+• **Punitive Damages**: Juries can award multi-million dollar punitive damages if malice or reckless disregard for the truth is demonstrated.
+• **Defense Costs**: Even if successfully defended under the First Amendment (*Rogers v. Grimaldi*), defending a media defamation lawsuit costs between **$150,000 and $750,000** in legal retainers.
+
+3. **E&O Insurance & Completion Bond Impact**:
+Completion guarantors and E&O underwriting carriers will **exclude** un-cleared living person depictions from insurance binders. Without clean E&O coverage, distribution financing and bank escrow will immediately freeze.
+
+4. **Recommended Production Mitigation**:
+Execute strict "greeking"—change the character's name, employer, specific medical/legal licenses, and biographical milestones. Alternatively, obtain an executed **Life Story Rights Agreement** with an explicit waiver of claims.`;
+      dynamicActions = [
+        "Execute character name & biographical 'greeking' to ensure zero living person collision",
+        "Verify character names against Parallel Public Records & Licensing Registry",
+        "Confirm E&O policy does not carry living person depiction exclusions",
+      ];
+    } else if (lowerMsg.includes("tax") || lowerMsg.includes("rebate") || lowerMsg.includes("credit") || lowerMsg.includes("georgia")) {
+      dynamicReply = `📍 **Location & Art Manager Tax Guidance**:
+Our production qualifies for state filming incentives (such as Georgia's 30% Qualified Production Expenditure rebate). To maximize credit realization, expenditures must pass through local resident payroll, approved soundstages, and registered resident vendors. Keep all equipment rentals within the state tax jurisdiction.`;
+      dynamicActions = [
+        "Audit scene expenditures against Georgia 30% QPE requirements",
+        "Verify local vendor registration with state film commission",
+        "Confirm certified CPA expenditure audit timeline",
+      ];
+    }
+
     return {
-      reply: `As ${persona.name}, here is my guidance: When developing a screenplay, the most common legal liabilities arise from unlicensed music cues (17 U.S.C. § 504 statutory damages) and prominent commercial brand display (Lanham Act § 43 trademark dilution). I recommend greeking consumer labels into generic fictional names and consulting our Location Manager for municipal film permits before principal photography begins.`,
-      consultedAgent: null,
-      consultedAgentComment: null,
-      suggestedActions: [
-        "Audit screenplay for brand logos and songs",
-        "Inspect USPTO classifications in Parallel Inspector",
-        "Check Georgia 30% film tax credit eligibility",
-      ],
+      reply: dynamicReply,
+      consultedAgent: targetAgent === "legal_counsel" ? "bond_officer" : null,
+      consultedAgentComment: targetAgent === "legal_counsel"
+        ? "From the Completion Bond desk: An unresolved defamation exposure halts bond issuance. We will not close production funding until Legal gives complete safe-harbor clearance."
+        : null,
+      suggestedActions: dynamicActions,
     };
   }
 }

@@ -67,11 +67,15 @@ export async function POST(req: NextRequest) {
         resolvedAgent === "legal_counsel" ? "caselaw" :
         "trademark";
 
-      const citations = await searchParallelGrounding({
+      const citationsPromise = searchParallelGrounding({
         query: cleanMessage.slice(0, 150),
         category,
         maxResults: 2,
       });
+
+      // 4000ms timeout guard so web requests never freeze agent replies
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000));
+      const citations = await Promise.race([citationsPromise, timeoutPromise]);
 
       if (citations && citations.length > 0) {
         parallelCitations = citations;
