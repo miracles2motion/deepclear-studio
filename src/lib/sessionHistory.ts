@@ -114,10 +114,38 @@ export function saveSessionToHistory(
       ? 100
       : 0;
 
+  // Intelligent Title Resolution
+  let derivedTitle = sessionData.productionTitle;
+  if (!derivedTitle || derivedTitle === "Indie Motion Picture" || derivedTitle === "Indie Production") {
+    if (sessionData.uploadedFileName) {
+      derivedTitle = sessionData.uploadedFileName
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[-_]+/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+    } else if (sessionData.currentScriptText && sessionData.currentScriptText.trim()) {
+      const titleMatch = sessionData.currentScriptText.match(/^(?:Title:\s*|#\s*)([^\n]+)/im);
+      if (titleMatch) {
+        derivedTitle = titleMatch[1].trim();
+      } else {
+        const slugMatch = sessionData.currentScriptText.match(/^(?:EXT\.|INT\.|INT\/EXT\.|I\/E\.)\s+([^\n\-]+)/im);
+        if (slugMatch) {
+          derivedTitle = slugMatch[1].trim() + " Scene";
+        }
+      }
+    } else {
+      // Pure casual chat inquiry: derive title from first user question
+      const firstUserMsg = sessionData.messages?.find((m) => m.sender === "user");
+      if (firstUserMsg && firstUserMsg.content) {
+        const clean = firstUserMsg.content.replace(/^@\w+\s*/, "").trim();
+        derivedTitle = clean.length > 36 ? clean.slice(0, 33) + "..." : clean;
+      }
+    }
+  }
+
   const record: SavedSessionRecord = {
     id,
     savedAt: now,
-    title: sessionData.productionTitle || "Indie Production",
+    title: derivedTitle || "Indie Production",
     previewSnippet: createPreviewSnippet(sessionData),
     initialExposure: sessionData.initialExposure || 0,
     currentExposure: sessionData.currentExposure || 0,
