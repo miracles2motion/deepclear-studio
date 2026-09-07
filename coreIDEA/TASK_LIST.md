@@ -80,4 +80,10 @@
   - [x] Fix screenplay slugline pollution by auto-routing tax incentives to licensing route with $0 text mutation.
   - [x] Fix character cue mismatch by propagating base character name substitutions across standalone dialogue headers.
   - [x] Verify clean Next.js production build (`npm run build` code 0).
+- [x] **Phase 13: Signature Agent Color Tagging & Desktop Knowledge DeepClear Sync Invariant**
+  - [x] Add permanent operating invariant to `AGENTS.md` to always update `C:\Users\dd\Desktop\knowledge deepclear` (`knowledge.md` and `about.md`).
+  - [x] Update `C:\Users\dd\Desktop\knowledge deepclear\knowledge.md` (Sections 11 & 12) and `about.md` (Sections J & K).
+  - [x] Implement unique multi-agent color badges in `MarkdownRenderer.tsx` with department avatars and glow borders for `@agent` tags in chat feeds.
+  - [x] Colorize quoted direct reply headers with target agent department palette (`getAgentNameColor`).
+  - [x] Verify production build (`npm run build` code 0).
 

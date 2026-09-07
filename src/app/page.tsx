@@ -197,6 +197,17 @@ export default function DeepClearStudioPage() {
     "@bond_officer": { color: "text-indigo-400", label: "Completion Bond Officer" },
   };
 
+  const getAgentNameColor = (name: string): string => {
+    const lower = name.toLowerCase();
+    if (lower.includes("legal") || lower.includes("counsel")) return "text-sky-400";
+    if (lower.includes("director")) return "text-rose-400";
+    if (lower.includes("location") || lower.includes("art")) return "text-amber-400";
+    if (lower.includes("supervisor") || lower.includes("script")) return "text-emerald-400";
+    if (lower.includes("bond") || lower.includes("completion")) return "text-indigo-400";
+    if (lower === "you" || lower.includes("producer")) return "text-indigo-300";
+    return "text-zinc-300";
+  };
+
   const renderHighlightedPrompt = (text: string) => {
     if (!text) return null;
     const parts = text.split(/(@(?:legal_counsel|director|location_manager|script_supervisor|bond_officer)\b)/gi);
@@ -2845,7 +2856,7 @@ Clearance secured. We have safe harbor.`,
                               title={msg.replyTo.messageId ? "Click to jump to replied message" : undefined}
                             >
                               <CornerDownRight className="h-3 w-3 text-sky-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                              <span className="font-semibold text-zinc-300 shrink-0">
+                              <span className={`font-semibold shrink-0 ${getAgentNameColor(msg.replyTo.senderName)}`}>
                                 @{msg.replyTo.senderName}:
                               </span>
                               <span className="truncate italic text-zinc-400 group-hover:text-zinc-200">

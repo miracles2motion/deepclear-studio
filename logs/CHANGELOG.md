@@ -4,6 +4,19 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.9] — 2026-09-07
+### 🎨 Signature Agent Color Tagging & Desktop Knowledge DeepClear Sync Directive
+- **Desktop Knowledge DeepClear Operating Directive (`AGENTS.md`)**:
+  - Enshrined permanent operating invariant in `AGENTS.md` Section 3 requiring the agent to always synchronize `C:\Users\dd\Desktop\knowledge deepclear` (`knowledge.md` and `about.md`) whenever major architecture, feature sets, or documentation are added.
+  - Synchronized `C:\Users\dd\Desktop\knowledge deepclear\knowledge.md` (Sections 11 & 12) and `about.md` (Sections J & K) with the Browser Session History and Multi-Agent Color Tagging features.
+- **Signature Multi-Agent Color Tagging in Chat Feed (`MarkdownRenderer.tsx`)**:
+  - Enhanced markdown tokenization to identify `@agent` mentions (`@legal_counsel`, `@director`, `@location_manager`, `@script_supervisor`, `@bond_officer`, and short aliases) within all user and agent messages.
+  - Replaced plain text tags with high-contrast, interactive department badge pills displaying signature role emojis, custom border glows, and distinct department palettes (Sky Blue for Legal Counsel, Rose for Director, Amber for Location Manager, Emerald for Script Supervisor, and Indigo for Completion Bond Officer).
+- **Reply Banner Agent Palette Coloring (`page.tsx`)**:
+  - Integrated `getAgentNameColor` to dynamically colorize quoted reply headers with the target agent's department color rather than plain gray text.
+
+---
+
 ## [v0.8.8] — 2026-09-07
 ### 📂 Smart Browser Session History, Auto-Archiving & Screenplay Clearance Fixes
 - **Browser-Based Smart Session History (`sessionHistory.ts`, `SessionHistoryModal.tsx`)**:

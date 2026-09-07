@@ -16,6 +16,7 @@ You are the lead engineering agent for DeepClear Studio. Adhere to these guideli
 - **Changelog**: When resolving an error or bug, automatically note it in `logs/CHANGELOG.md`.
 - **Task List**: After completing a task in `coreIDEA/TASK_LIST.md`, check off the corresponding item.
 - **Git Sync**: Use `auto-push` to keep GitHub synchronized after milestone completions.
+- **Desktop Knowledge Sync**: Always update the `knowledge deepclear` folder on the desktop (`C:\Users\dd\Desktop\knowledge deepclear`) whenever features, architecture, or documentation are added or modified, keeping `knowledge.md` and `about.md` strictly synchronized with the codebase.
 
 ## 4. 💳 Credit Conservation & Strict On-Demand API Policy
 - **Zero Background Polling**: Never run automated background loops or scheduled pings against Gemini or Parallel Search APIs.
