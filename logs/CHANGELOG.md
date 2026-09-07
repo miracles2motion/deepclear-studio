@@ -4,6 +4,18 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.6] — 2026-09-07
+### 🛡️ Dedicated Error Handling & Enterprise System Resilience Guide (`logs/ERROR_HANDLING.md`)
+- **Published Enterprise Resilience Architecture Document**:
+  - Authored a dedicated technical specification ([`logs/ERROR_HANDLING.md`](file:///c:/Users/dd/Desktop/deepclear-studio/logs/ERROR_HANDLING.md)) targeted at hackathon judges and systems engineers.
+  - Documented Gemini 1,000,000+ token single-pass screenplay ingestion vs. naive chunking rate-limit risks.
+  - Formally specified the Google Gemini Dynamic Model Cascade (`generateContentWithCascade`) and live ModelService discovery.
+  - Outlined Parallel Web Systems concurrency defense, 30-minute in-memory query deduplication cache (`getCachedParallelQuery`), and the 1.2s Auto-Pilot pacing defense.
+  - Detailed the Screenplay Mutation Stutter Sanitizer, Speech Synthesis Mute Interruption, and Producer Dispute Rollback Invariants.
+  - Included a complete Incident Response & Error Taxonomy matrix mapping error codes to self-healing mechanisms.
+
+---
+
 ## [v0.8.5] — 2026-09-07
 ### 🧭 Parallel Inspector Pill Navigation & Smooth Scroll Suite
 - **Interactive Badge Scrolling & Wheel Translation (`ParallelInspectorDrawer.tsx`)**:
