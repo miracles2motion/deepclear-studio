@@ -4,6 +4,23 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.15] - 2026-09-09
+### Live Sequential Screenplay Redline Diff and Real-Time Hazard Clearance Feedback
+- **Sequential Real-Time Clearance Feedback (`ScreenplayRedlineView.tsx`)**:
+  - Replaced static `E&O CERTIFIED` indicator with a dynamic 3-phase status header:
+    - `AWAITING CLEARANCE (0 OF N)` prior to swarm debate initiation.
+    - Glowing animated `LIVE UPDATE: X OF N CLEARED` during iterative clearance execution.
+    - Verified `E&O CERTIFIED (100% CLEARED)` safe-harbor badge upon complete resolution.
+  - Implemented real-time resolution pop-up banner ticker in the Adjudicated Production Script column showing live hazard transitions (`[Raw Hazard] -> [Cleared Prop]`), producer directive badges, and remaining liability counts as each asset clears.
+- **Interactive Script Token Highlighting (`ScreenplayRedlineView.tsx`)**:
+  - Implemented `renderHighlightedOriginal()`: segments raw script text into reactive tokens, rendering active liabilities in red badges (`bg-rose-950/70 border-rose-500/50`) and resolved items in muted strikethrough tokens.
+  - Implemented `renderHighlightedAdjudicated()`: segments living production script text into verified substitution tokens, rendering cleared props in glowing emerald badges (`bg-emerald-950/80 border-emerald-500/50`) with verification checkmarks and producer directive tags, while highlighting pending liabilities with amber dashed pending tokens.
+  - Interactive bottom badges flip dynamically from Zap alerts to green checkmarks upon clearance.
+- **Export and Download Integrity Preserved (`ScreenplayRedlineView.tsx`)**:
+  - Guaranteed that all screenplay export formats (`.fountain`, `.md`, `.txt`) and clipboard copies utilize pristine text with cryptographic YAML Clearance Passports, completely decoupling UI highlight marks from production-ready deliverables.
+
+---
+
 ## [v0.8.14] - 2026-09-08
 ### Controlled Autonomy: Fail-Closed Clearance Gate, Bounded Deadlocks, and Producer Directive
 - **Fail-Closed Clearance Gate (`parallel.ts`, `types/index.ts`)**:

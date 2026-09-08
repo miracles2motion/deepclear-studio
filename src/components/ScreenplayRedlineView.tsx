@@ -73,6 +73,127 @@ export default function ScreenplayRedlineView({
       e.status !== "licensed"
   );
 
+  const isFullyCleared = entities.length > 0 && pendingEntities.length === 0;
+  const isPartiallyCleared = resolvedEntities.length > 0 && pendingEntities.length > 0;
+  const lastResolved = resolvedEntities.length > 0 ? resolvedEntities[resolvedEntities.length - 1] : null;
+
+  // Segment and highlight original text with red pending liabilities / muted cleared tokens
+  const renderHighlightedOriginal = (text: string) => {
+    if (!text || entities.length === 0) return text;
+
+    const sorted = [...entities].filter((e) => Boolean(e.rawText)).sort((a, b) => b.rawText.length - a.rawText.length);
+    if (sorted.length === 0) return text;
+
+    const pattern = new RegExp(
+      `(${sorted.map((e) => e.rawText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
+      "gi"
+    );
+
+    const parts = text.split(pattern);
+    return parts.map((part, idx) => {
+      const matchedEntity = sorted.find((e) => e.rawText.toLowerCase() === part.toLowerCase());
+      if (!matchedEntity) return part;
+
+      const isResolved =
+        clearedEntityIds.includes(matchedEntity.id) ||
+        licensedEntityIds.includes(matchedEntity.id) ||
+        matchedEntity.status === "cleared" ||
+        matchedEntity.status === "licensed";
+
+      if (isResolved) {
+        return (
+          <mark
+            key={idx}
+            className="bg-zinc-800/80 line-through text-zinc-500 px-1.5 py-0.5 rounded border border-white/5 mx-0.5 font-mono"
+            title={`Resolved: ${matchedEntity.rawText} (${matchedEntity.category.toUpperCase()})`}
+          >
+            {part}
+          </mark>
+        );
+      }
+
+      return (
+        <mark
+          key={idx}
+          className="bg-rose-950/70 border border-rose-500/50 text-rose-200 px-1.5 py-0.5 rounded font-mono font-semibold mx-0.5 shadow-sm inline-flex items-center gap-1"
+          title={`Active Liability: ${matchedEntity.rawText} (${matchedEntity.category.toUpperCase()})`}
+        >
+          <span>{part}</span>
+          <span className="text-[9px] uppercase px-1 rounded bg-rose-900/80 text-rose-300 font-normal">
+            {matchedEntity.category}
+          </span>
+        </mark>
+      );
+    });
+  };
+
+  // Segment and highlight living production draft with green verified substitutions
+  const renderHighlightedAdjudicated = (text: string) => {
+    if (!text || entities.length === 0) return text;
+
+    const searchTokens: { token: string; entity: ExtractedEntity; isDefused: boolean }[] = [];
+
+    entities.forEach((ent) => {
+      const isResolved =
+        clearedEntityIds.includes(ent.id) ||
+        licensedEntityIds.includes(ent.id) ||
+        ent.status === "cleared" ||
+        ent.status === "licensed";
+
+      if (isResolved && ent.defusedText) {
+        searchTokens.push({ token: ent.defusedText, entity: ent, isDefused: true });
+      } else if (!isResolved && ent.rawText) {
+        searchTokens.push({ token: ent.rawText, entity: ent, isDefused: false });
+      }
+    });
+
+    if (searchTokens.length === 0) return text;
+
+    searchTokens.sort((a, b) => b.token.length - a.token.length);
+
+    const pattern = new RegExp(
+      `(${searchTokens.map((t) => t.token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
+      "gi"
+    );
+
+    const parts = text.split(pattern);
+    return parts.map((part, idx) => {
+      const matched = searchTokens.find((t) => t.token.toLowerCase() === part.toLowerCase());
+      if (!matched) return part;
+
+      if (matched.isDefused) {
+        return (
+          <mark
+            key={idx}
+            className="bg-emerald-950/80 border border-emerald-500/50 text-emerald-200 px-1.5 py-0.5 rounded font-mono font-semibold mx-0.5 inline-flex items-center gap-1 shadow-sm ring-1 ring-emerald-500/30 animate-in fade-in zoom-in-95 duration-300"
+            title={`Cleared Substitution: ${matched.token}`}
+          >
+            <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+            <span>{part}</span>
+            {matched.entity.adjudicationMethod === "producer_directive" && (
+              <span className="text-[8px] uppercase px-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                PRODUCER
+              </span>
+            )}
+          </mark>
+        );
+      }
+
+      return (
+        <mark
+          key={idx}
+          className="bg-amber-950/30 border border-dashed border-amber-500/40 text-amber-200/90 px-1 py-0.5 rounded font-mono italic mx-0.5 animate-pulse inline-flex items-center gap-1"
+          title="Awaiting Swarm Clearance / Debate"
+        >
+          <span>{part}</span>
+          <span className="text-[8px] uppercase px-1 rounded bg-amber-900/50 text-amber-300 font-normal not-italic">
+            Pending
+          </span>
+        </mark>
+      );
+    });
+  };
+
   const handleCopyCleared = () => {
     if (navigator.clipboard && baseCleared) {
       navigator.clipboard.writeText(baseCleared);
@@ -236,7 +357,7 @@ export default function ScreenplayRedlineView({
           </div>
 
           <div className="flex-1 p-4 sm:p-5 overflow-y-auto font-mono text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap selection:bg-rose-500/30 scrollbar-thin scrollbar-thumb-zinc-800">
-            {baseOriginal}
+            {renderHighlightedOriginal(baseOriginal)}
           </div>
         </div>
 
@@ -253,13 +374,50 @@ export default function ScreenplayRedlineView({
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
               <span>Adjudicated Production Script</span>
             </span>
-            <span className="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-              E&O CERTIFIED
-            </span>
+            {isFullyCleared ? (
+              <span className="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3" />
+                <span>E&O CERTIFIED (100% CLEARED)</span>
+              </span>
+            ) : isPartiallyCleared ? (
+              <span className="text-[10px] text-sky-400 font-semibold px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 flex items-center gap-1 animate-pulse">
+                <Zap className="h-3 w-3" />
+                <span>LIVE UPDATE: {resolvedEntities.length} OF {entities.length} CLEARED</span>
+              </span>
+            ) : (
+              <span className="text-[10px] text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                <span>AWAITING CLEARANCE (0 OF {entities.length})</span>
+              </span>
+            )}
           </div>
 
+          {/* Live Sequential Resolution Pop-Up Banner */}
+          {lastResolved && (
+            <div className="p-2.5 px-4 bg-emerald-950/40 border-b border-emerald-500/30 flex items-center justify-between gap-2 text-xs font-mono text-emerald-200 animate-in fade-in slide-in-from-top-2 duration-300 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-zinc-400 text-[11px] shrink-0">Live Clearance Update:</span>
+                <span className="line-through text-rose-300 font-semibold truncate max-w-[120px]">{lastResolved.rawText}</span>
+                <span className="text-emerald-400 font-bold shrink-0">→</span>
+                <span className="text-emerald-300 font-semibold truncate max-w-[140px]">{lastResolved.defusedText || "Cleared"}</span>
+                {lastResolved.adjudicationMethod === "producer_directive" && (
+                  <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold shrink-0">
+                    PRODUCER DIRECTIVE
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] text-emerald-400/90 shrink-0">
+                {resolvedEntities.length}/{entities.length} Resolved
+              </span>
+            </div>
+          )}
+
           <div className="flex-1 p-4 sm:p-5 overflow-y-auto font-mono text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap selection:bg-emerald-500/30 scrollbar-thin scrollbar-thumb-zinc-800">
-            {baseCleared}
+            {renderHighlightedAdjudicated(baseCleared)}
           </div>
         </div>
       </div>
@@ -323,9 +481,13 @@ export default function ScreenplayRedlineView({
                 }`}
                 title={`Inspect Parallel Grounding for ${entity.rawText}`}
               >
-                <Zap className="h-3 w-3 text-sky-400 group-hover:scale-110 transition-transform" />
+                {isResolved ? (
+                  <Check className="h-3 w-3 text-emerald-400 group-hover:scale-110 transition-transform" />
+                ) : (
+                  <Zap className="h-3 w-3 text-rose-400 group-hover:scale-110 transition-transform" />
+                )}
                 <span className="font-semibold">{entity.rawText}</span>
-                {entity.defusedText && (
+                {entity.defusedText && isResolved && (
                   <span className="text-zinc-400">→ <span className="text-zinc-200 font-semibold">{entity.defusedText}</span></span>
                 )}
                 {entity.adjudicationMethod === "producer_directive" && (
