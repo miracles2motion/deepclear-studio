@@ -42,13 +42,14 @@ DeepClear Studio is an automated film clearance co-pilot powered by Google Cloud
 
 ### 1. Gemini and Parallel Integration
 - Google Cloud Gemini Flash: Reads full 120-page scripts in a single pass using its 1 million token context window.
-- Parallel Search SDK: Queries live trademark databases in 40 milliseconds to confirm that suggested replacements have zero brand conflicts.
+- Parallel Search SDK: Uses the official parallel-web TypeScript SDK to query live trademark databases in 40 milliseconds.
+- Deterministic Gate Enforcement: Agents cannot clear an item on their own. Clearance requires a verified parallel check with zero conflicting active USPTO registrations.
 - Parallel Inspector Drawer: Slide-out panel for inspecting exact search IDs, query formulations, and USPTO international classes with multi-input scrolling.
 
 ### 2. 3-Column Studio Workspace
 - Left Column: Roster of the 5 agents, speech audio toggle, and Auto-Pilot controls.
 - Middle Column: Live chat discussion feed and side-by-side Redline Diff script viewer.
-- Right Column: Real-time legal exposure score, Georgia 30% tax rebate tracker, resolved assets ledger, and PDF export button.
+- Right Column: Real-time legal exposure score (tracked independently from tax savings), Georgia 30% tax rebate tracker, resolved assets ledger, and PDF export button.
 
 ### 3. Redline Script Comparison and Stutter Defense
 - Side-by-side view showing the original draft on the left and the cleared script on the right.
