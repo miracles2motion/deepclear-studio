@@ -1,60 +1,59 @@
-# DeepClear Studio
+﻿# DeepClear Studio
 
-> **Autonomous Film Clearance & Errors and Omissions (E&O) Legal Underwriting**  
-> *Built for the Google Cloud Agentic Cinema Hackathon - Parallel Track ($15,000 Category)*
+**The Agentic Clearance Engine for Film & Television**
 
-[![Live Vercel App](https://img.shields.io/badge/Live%20Demo-deepclear--studio.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://deepclear-studio.vercel.app)
-[![Google Cloud Gemini](https://img.shields.io/badge/Google%20Cloud-Gemini%20Flash%20(1M+%20Tokens)-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://aistudio.google.com)
-[![Parallel Web Systems](https://img.shields.io/badge/Parallel%20Web-TypeScript%20SDK%20v1.3-00E5FF?style=for-the-badge)](https://parallel.ai)
-[![Next.js 14](https://img.shields.io/badge/Next.js-14%20App%20Router-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+> *"AI proposes. Evidence decides. Cryptography locks it."*
 
----
+[![Next.js 14](https://img.shields.io/badge/Next.js-14.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![Google Cloud Gemini](https://img.shields.io/badge/Google%20Cloud-Gemini%20Flash-4285F4?style=flat-square&logo=google)](https://cloud.google.com/vertex-ai)
+[![Parallel Web Systems](https://img.shields.io/badge/Parallel%20Web-SDK%20v1.3-00DF8F?style=flat-square)](https://parallel.ai)
+[![TypeScript 5](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-## Quick Evaluation
-
-- **Live Web Application**: **[https://deepclear-studio.vercel.app](https://deepclear-studio.vercel.app)**
-- **Test with 1 Click**: Click any of the test presets (`Cyber Heist`, `Southern Gothic`, `Legal & WHOIS Shield`, `Cleared Masterpiece`) above the chat input to see the full workflow run in seconds.
+**Live Demo:** [https://deepclear-studio.vercel.app](https://deepclear-studio.vercel.app)  
+**Hackathon Track:** Google Cloud Agentic Cinema (Parallel Track)
 
 ---
 
 ## What DeepClear Studio Does
 
-Before a movie or TV series can premiere on **Netflix, Amazon Prime, or Apple TV+**, distributors require **Errors & Omissions (E&O) insurance**. A single unvetted trademark, unlicensed song, or character name matching a real person can trigger statutory copyright or trademark lawsuits, stopping a release.
+Before a movie or TV series can premiere on major distribution platforms, distributors require comprehensive **Errors & Omissions (E&O) insurance review**. An unvetted commercial trademark, unlicensed music cue, or character collision can jeopardize release schedules.
 
-Today, script clearance requires entertainment lawyers 3 to 6 weeks to review drafts page by page, costing $25,000 to $60,000.
+In traditional pre-production workflows, screenplay clearance involves 15 to 30 business days of manual cross-referencing.
 
-**DeepClear Studio replaces this multi-week legal review with an autonomous 60-second studio war room:**
-1. **Google Cloud Gemini Flash** scans the screenplay in seconds to flag potential liabilities across trademarks, music copyrights, filming permits, and defamation risks.
-2. A **5-Agent Swarm** debates creative alternatives: balancing the Director's artistic vision against studio legal risk.
-3. The **Parallel Web Systems SDK** verifies suggested prop replacements live against USPTO trademark registries in ~40ms to guarantee zero commercial conflicts.
-4. **Form E&O-2026 PDF Binder** generates an underwriter-ready insurance certificate with an itemized legal audit ledger.
+**DeepClear Studio transforms this process into an agentic, evidence-backed preparation engine:**
+1. **Google Cloud Gemini SDK** ingests full 120-page screenplays in context (1,000,000+ token context window) to extract potential clearance hazards.
+2. A **5-Agent Operational Swarm** deliberates across creative, legal, production, and continuity objectives.
+3. The **Parallel Web Systems SDK (`parallel-web`)** retrieves live external evidence from USPTO trademark registries and public records in real time.
+4. The **Deterministic Clearance Gate** enforces: *"NO VERIFIED EVIDENCE. NO CLEARANCE."* It evaluates evidence validity and active conflict counts before transitioning any hazard to `VERIFIED`.
+5. The client compiles a **DeepClear E&O Evidence Binder PDF** with Exhibit B verification audit trails and an embedded **Cryptographic Clearance Passport (SHA-256 state/history manifest)**.
 
 ---
 
 ## 1-Click Judge Presets
 
-We built 4 curated test presets directly into the interface so judges can evaluate the system immediately:
+Curated test presets are built directly into the interface for immediate verification:
 
 | Preset Chip | Story Scenario | What to Look For |
 | :--- | :--- | :--- |
-| **`[ Cyber Heist ]`** | Sci-Fi Action (Silicon Valley Lab) | Flags commercial brand exposure (Apple Vision Pro, Tesla Cybertruck, Radiohead track). In Auto-Pilot mode, the swarm replaces them with generic props, verified in real-time by Parallel Search. |
-| **`[ Southern Gothic ]`** | Historic District Drama | Flags historic park permits, high-end scotch, and calculates a **Georgia 30% tax credit** rebate that offsets production costs. |
-| **`[ Legal & WHOIS Shield ]`** | Defamation & Unvetted Domain | Flags a living person name match under Cal. Civ. Code Section 3344, non-safe phone numbers, and unvetted web domains. |
-| **`[ Cleared Masterpiece ]`** | Pre-Cleared Script with Passport | Demonstrates our **Clearance Passport safe-harbor engine**. Detects cryptographic frontmatter and instantly bypasses redundant analysis ($0 exposure). |
+| **`[ Cyber Heist ]`** | Sci-Fi Action (Silicon Valley Lab) | Commercial brand exposure (Apple Vision Pro, Tesla Cybertruck, commercial music track). In Auto-Pilot mode, the swarm proposes generic substitutes verified via Parallel Search. |
+| **`[ Southern Gothic ]`** | Historic District Drama | Municipal filming permits, historic park rules (FAA Part 107 drone compliance), and independent **Estimated Incentive Eligibility** modeling. |
+| **`[ Legal & WHOIS Shield ]`** | Defamation & Unvetted Domain | Living person reference under Cal. Civ. Code § 3344, non-safe phone numbers (defused to NANPA 555-0100..0199), and domain collisions under ACPA. |
+| **`[ Executive Impasse ]`** | Contested Mark (90/10 Ratio) | Live registry conflict triggering the Fail-Closed Clearance Gate, bounded deadlock at Turn 6, and interactive Producer Directive card. |
 
 ---
 
-## How the 5-Agent Studio Swarm Works
+## The 5-Agent Studio Swarm
 
-Instead of a generic single chatbot, DeepClear simulates the real incentives of a film production crew:
+DeepClear models authentic production crew roles:
 
-- **The Director**: Protects artistic intent, dramatic tone, and fair use (*Rogers v. Grimaldi*).
-- **Studio Legal Counsel**: Enforces statutory trademark dilution and copyright standards under Lanham Act Section 43(a).
-- **Location & Art Manager**: Resolves municipal street/drone permits and applies state filming tax incentives.
-- **Script Supervisor**: Formats Fountain sluglines and prevents duplicate word collisions (Screenplay Stutter Defense).
-- **Completion Bond Officer**: Actuarially calculates financial risk, underwrites policy riders, and certifies safe harbor.
+- **Script Supervisor (`script_supervisor`)**: Screenplay formatting, sluglines, dialogue cues, and regex stutter defense against duplicate words (`\b([a-zA-Z]+)\s+\1\b`).
+- **Studio Legal Counsel (`legal_counsel`)**: Evaluates Lanham Act § 43(a), Title 17 U.S.C. § 504 copyright remedies, and formulates targeted Parallel queries.
+- **Location & Art Manager (`location_manager`)**: Resolves municipal permits, drone rules (FAA Part 107), and models independent state tax incentive eligibility (e.g. Georgia 30% QPE).
+- **The Director (`director`)**: Protects dramatic stakes, era authenticity, and creative intent (*Rogers v. Grimaldi*); handles producer disputes.
+- **Completion Bond Officer (`bond_officer`)**: Evaluates aggregate clearance posture, evidence completeness, and underwriting readiness; recommends binder release.
+
+*Note:* Gemini Extraction Engine is the underlying AI context processor, not one of the five operational agents.
 
 ---
 
@@ -62,16 +61,16 @@ Instead of a generic single chatbot, DeepClear simulates the real incentives of 
 
 ```mermaid
 flowchart TD
-    A[Screenplay Input: .fountain / .md / .txt] --> B{Cryptographic Passport Present?}
-    B -- Yes --> C[Instant Safe Harbor Clearance: $0 Exposure]
-    B -- No --> D[Google Cloud Gemini Flash: 1M+ Token Single-Pass Scan]
-    D --> E[5-Agent War Room Debate: Director vs. Counsel vs. Art Dept]
-    E --> F[Parallel Search TypeScript SDK v1.3]
-    F --> G[Live USPTO Trademark & Public Registry Check: ~40ms]
-    G --> H[Redline Diff Screenplay Mutation + Parallel Inspector]
-    H --> I{Producer Approves or Disputes?}
-    I -- Approved --> J[Form E&O-2026 PDF Binder + Clearance Passport]
-    I -- Disputed --> K[1-Click Rollback to Original Prop & Re-Open Exposure]
+    A[Screenplay Input: .fountain / .md / .txt] --> B[Google Cloud Gemini SDK: Full Context Ingestion]
+    B --> C[Hazard Extraction Engine: Brand, Copyright, People, Location]
+    C --> D[5-Agent Operational Swarm Debate: Max 3 Turns per Hazard]
+    D --> E{Resolution Route: Mutate or License}
+    E --> F[Parallel Web Systems SDK: Live Registry Evidence Retrieval]
+    F --> G[Deterministic Clearance Gate: evidence.verified && activeConflicts == 0]
+    G -- Passed --> H[VERIFIED: Redline Script Mutation / License Attached]
+    G -- Ambiguous / Conflict --> I[HUMAN_REVIEW: Controlled Counsel Resolution]
+    I --> F
+    H --> J[DeepClear E&O Evidence Binder PDF + SHA-256 Clearance Passport]
 ```
 
 ---
@@ -80,17 +79,19 @@ flowchart TD
 
 1. **Official `parallel-web` TypeScript SDK Integration (`src/lib/parallel.ts`)**:
    - Uses `client.search` to verify proposed replacement props against active USPTO commercial classes before compromises are accepted.
-   - Uses `client.extract` for deep statutory code analysis (Lanham Act Section 43(c), 17 U.S.C. Section 107).
+   - Normalizes external evidence into DeepClear's internal evidence contract.
 2. **Google Cloud Gemini Flash (`@google/genai`)**:
    - Ingests full 120-page screenplays in an atomic single pass using its 1,000,000+ token context window.
-   - Built with a Self-Healing Model Cascade failover for 99.9% uptime.
+   - Self-Healing Model Cascade with 7 configured models and dynamic ModelService registry discovery.
 3. **Screenplay Redline Diff Engine (`ScreenplayRedlineView.tsx`)**:
-   - Side-by-side script comparison (original vs. cleared draft) with built-in regex filters that eliminate accidental duplicate words (e.g., *"vintage vintage"*).
+   - Sequential clearance feedback: `Awaiting Clearance` -> `Live Update` -> `E&O Evidence Ready`.
+   - Real-time resolution ticker banner popping up on verified transitions.
+   - Interactive token highlighting with red liability markers and glowing emerald substitutions.
 4. **Producer Dispute Engine**:
-   - 1-click dispute control in the HUD that immediately restores statutory liability and rolls back mutated script text.
-5. **Client-Side Privacy & Resilient Offline Mode**:
+   - 1-click dispute control in the HUD that immediately restores configured modeled risk exposure and rolls back mutated script text.
+5. **Client-Side Privacy & Offline Fixtures**:
    - Full session history persists locally in the browser via `localStorage` (`deepclear_session_history_v1`).
-   - If external API keys are omitted, the app activates offline fixtures so judges can test every feature without friction.
+   - Deterministic verification fixtures available for resilient demo and evaluation continuity.
 
 ---
 
@@ -103,24 +104,21 @@ cd deepclear-studio
 npm install
 ```
 
-### 2. Set Environment Variables
+### 2. Configure Environment Variables
 Create a `.env.local` file:
 ```env
-GEMINI_API_KEY="your_gemini_api_key_here"
-PARALLEL_API_KEY="your_parallel_api_key_here"
+GEMINI_API_KEY=your_gemini_api_key
+PARALLEL_API_KEY=your_parallel_api_key
 ```
 
-### 3. Run Locally
+### 3. Run Development Server
 ```bash
 npm run dev
 ```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+Open [http://localhost:3000](http://localhost:3000) to access the studio.
 
 ---
 
-## Hackathon Track & Judging Summary
+## License
 
-- **Track**: Google Cloud Agentic Cinema: Parallel Track ($15,000 Category).
-- **Core Technology**: Google Cloud Gemini Flash (`@google/genai`) + Parallel Web Systems SDK (`parallel-web`).
-- **Real-World Value**: Replaces a 4-week, $50,000 entertainment legal bottleneck with an automated 60-second underwritten workflow.
-- **License**: MIT License.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
