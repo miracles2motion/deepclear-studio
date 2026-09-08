@@ -1,61 +1,57 @@
-# DeepClear Studio — Master Concept & Strategy (V4.5 Architecture Blueprint)
+# DeepClear Studio Master Concept and Strategy
 
-**Project Subtitle:** Autonomous Multimodal Film Clearance, Crew-Agent Dialectic Negotiation & Form E&O-2026 Underwriting Engine  
-**Hackathon:** Google Cloud Agentic Cinema: The Blockbuster Hackathon  
-**Target Category:** Parallel Track ($15,000 Prize Pool)  
-**Live Production URL:** [https://deepclear-studio.vercel.app](https://deepclear-studio.vercel.app)
+Project Subtitle: Automated Film Clearance and Errors and Omissions (E&O) Insurance Engine
+Hackathon: Google Cloud Agentic Cinema Hackathon (Parallel Track)
+Live Demo: https://deepclear-studio.vercel.app
 
 ---
 
-## 1. Executive Summary & Market Problem
+## 1. The Problem
 
-### The Problem: The $500/Hour Legal Clearance Bottleneck
-In cinematic production, creative vision constantly collides with legal, financial, and regulatory reality. Before any motion picture can be sold, distributed on platforms like Netflix or Amazon Prime, or screened at major festivals (Sundance, Cannes, TIFF), the production company must secure an **Errors & Omissions (E&O) Insurance Policy** and establish a spotless **Chain of Title**.
+In film production, movies cannot be sold, distributed on Netflix or Amazon Prime, or screened at major festivals without an Errors and Omissions (E&O) insurance policy and a clean chain of title.
 
-Today, this clearance process is manual and costly:
-* **Cost Prohibitive:** Entertainment clearance attorneys charge $400–$750/hour to manually comb through scripts, storyboards, and set designs.
-* **Catastrophic Exposure:** A single unvetted trademarked product, unpermitted landmark, visible logo on wardrobe, or unlicensed song can freeze multimillion-dollar distribution deals or trigger statutory copyright injunctions (*17 U.S.C. § 504* / *Lanham Act § 43(a)*).
-* **Indie Disadvantage:** Independent filmmakers and mid-tier studios lack the massive legal retainers of major studios, forcing them to either risk bankruptcy or dilute their vision.
+Today, this clearance process is slow and expensive:
+- High Costs: Entertainment attorneys charge $400 to $750 per hour to manually read through scripts and call sheets.
+- High Risk: A single unvetted trademark, unpermitted location, or unlicensed song can freeze distribution deals or lead to statutory damages under copyright or trademark laws.
+- Indie Barrier: Independent filmmakers often cannot afford expensive legal retainers, putting their productions at risk.
 
 ### The Solution: DeepClear Studio
-**DeepClear Studio** is an autonomous legal risk clearance command center. Powered by **Google Cloud Gemini 2.0 Flash (`@google/genai`)** and grounded with live web intelligence via the **Parallel Search API**, DeepClear Studio:
-1. Ingests screenplay text, uploaded scripts (`.fountain`, `.md`, `.txt`), or generates original dramatic scenes on demand with Gemini.
-2. Identifies trademark, copyright, and municipal permit liabilities in real-time.
-3. Grounds every finding in live USPTO registrations, FilmLA municipal ordinances, and federal case law via Parallel Search.
-4. Orchestrates paced dialectic debates between *The Director* and *Studio Legal Counsel* to negotiate copyright-safe prop mutations.
-5. Issues industry-standard **Form E&O-2026 Insurance Binders** with SHA-256 Merkle root verification and Base Sepolia EVM testnet minting.
+DeepClear Studio is an automated film clearance co-pilot powered by Google Cloud Gemini Flash and Parallel Web Systems:
+1. Reads screenplay text (.fountain, .md, .txt) or generates sample scenes using Gemini.
+2. Identifies trademark, copyright, permit, and defamation liabilities in seconds.
+3. Checks suggested replacements against live US Patent and Trademark Office (USPTO) databases and public records in 40 milliseconds via Parallel Search.
+4. Runs a 5-agent studio debate between the Director and Legal Counsel to agree on safe script replacements.
+5. Exports official Form E&O-2026 PDF insurance binders with itemized audit records.
 
 ---
 
-## 2. The 5-Persona Autonomous Multi-Agent Swarm
+## 2. The 5 Studio Agents
 
-DeepClear Studio mirrors an authentic Hollywood production clearance war room:
-
-| Agent Persona | Cognitive Engine & Tooling | Core Responsibility & Deliverable |
-| :--- | :--- | :--- |
-| 👑 **1. Completion Bond Officer** | Gemini 2.0 Flash Underwriting Engine | Synthesizes findings into an actuarial risk profile, computes probabilistic financial exposure ($ best-case vs worst-case), and authorizes Form E&O-2026 policy binder issuance. |
-| 👁️ **2. Script Supervisor** | Gemini 2.0 Multimodal Vision & Entity Extraction | Ingests screenplay text and storyboard visual assets, detecting unvetted brand marks, music cues, and permit triggers. |
-| ⚖️ **3. Studio Legal Counsel** | Parallel Search API (USPTO / Case Law) | Queries live trademark registries and judicial case precedents via Parallel Search. Flags statutory risks and proposes legally safe creative compromises. |
-| 📍 **4. Location Manager** | Parallel Search API (Permits & Tax Rebates) | Queries municipal film commission portals, drone restrictions, and computes state film tax incentive arbitrage (e.g. Georgia 30%). |
-| 🎬 **5. The Director** | Creative Intent & Fair Use Reasoning | Defends artistic vision and dramatic authenticity. Challenges over-cautious objections and negotiates compromises with Counsel. |
+| Agent Persona | Role and Core Function |
+| :--- | :--- |
+| 1. Completion Bond Officer | Calculates total dollar exposure and signs off on insurance riders. |
+| 2. Script Supervisor | Reads screenplay text, flags liabilities, and ensures clean formatting. |
+| 3. Studio Legal Counsel | Checks trademark registries and copyright laws to propose safe alternatives. |
+| 4. Location Manager | Handles municipal filming permits and identifies state tax savings (such as the Georgia 30% credit). |
+| 5. The Director | Protects story authenticity, tone, and fair use rights. |
 
 ---
 
-## 3. Core Architectural Innovations
+## 3. Core Features
 
-### 1. Direct Live AI & Grounding Pipeline
-- **Google Cloud Gemini 2.0 Flash (`@google/genai`)**: Direct multimodal screenplay parsing and on-demand scene generation with zero heuristic fallbacks.
-- **Parallel Search 4D Grounding**: Queries live web endpoints for USPTO trademarks, municipal ordinances, and federal precedent citations (*Campbell v. Acuff-Rose*).
+### 1. Gemini and Parallel Integration
+- Google Cloud Gemini Flash: Reads full 120-page scripts in a single pass using its 1 million token context window.
+- Parallel Search SDK: Queries live trademark databases in 40 milliseconds to confirm that suggested replacements have zero brand conflicts.
 
-### 2. 3-Column Google Gemini Workspace
-- **Left Column (260px)**: 5-Agent crew swarm roster with live active indicators and sequential voice synthesis toggle.
-- **Middle Column (Workspace)**: Scrollable Google Gemini chat feed with floating prompt bar, attachment support, dynamic scene generator, and pinned quick-negotiate pills.
-- **Right Column (300px)**: E&O Underwriting status, statutory liability meter, Georgia 30% tax savings, and dynamic distribution risk status.
+### 2. 3-Column Studio Workspace
+- Left Column: Roster of the 5 agents, speech audio toggle, and Auto-Pilot controls.
+- Middle Column: Live chat discussion feed and side-by-side Redline Diff script viewer.
+- Right Column: Real-time legal exposure score, Georgia 30% tax rebate tracker, and PDF export button.
 
-### 3. Paced Dialectic Conflict & Non-Obstructing Audio
-- **Paced Reading Cadence**: 3.5-second pauses between debate turns with animated `[Agent is typing...]` indicators.
-- **Sequential Speech Synthesis**: Distinct voice pitches (Legal Counsel: `0.85`, Director: `1.25`) that speak concise 1-sentence statements in sequence without overlapping.
+### 3. Redline Script Comparison and Stutter Defense
+- Side-by-side view showing the original draft on the left and the cleared script on the right.
+- Cleans up repeated duplicate words (such as "vintage vintage") automatically.
 
-### 4. Form E&O-2026 Insurance Binder PDF & On-Chain Passport
-- **Executive PDF Export**: Multi-page Form E&O-2026 Underwriting Binder with executive 40pt margins, 2-column metrics box, and itemized clearance schedule.
-- **Base Sepolia On-Chain Passport**: SHA-256 Merkle root hashing and EVM testnet receipt generation with live block explorer verification.
+### 4. Form E&O-2026 PDF Insurance Binder
+- Exports a complete insurance binder ready for underwriters.
+- Includes Exhibit B, which lists every search query, timestamp, legal class, and source link.

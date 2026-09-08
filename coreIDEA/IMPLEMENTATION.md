@@ -1,32 +1,31 @@
-# DeepClear Studio — Technical Implementation Guide (V4.5)
+# DeepClear Studio Technical Implementation Guide
 
-This guide details the complete development setup, API contracts, agent schemas, and deployment architecture for building and deploying DeepClear Studio for Google Antigravity.
-
----
-
-## 1. Mandatory Hackathon Constraints & Architecture
-
-1. **Google Cloud / Gemini Integration:** All agent reasoning, multimodal vision entity extraction, dialectic debate logic, and underwriting must execute via the official Google GenAI SDK (`@google/genai` with `gemini-2.0-flash` / `gemini-1.5-pro`).
-2. **Parallel Track Runtime Integration:** All live web grounding queries MUST actively call the Parallel Search API at runtime using the `parallel-web` SDK (or REST endpoint).
-3. **Public GitHub Repository:** Root `LICENSE` file (MIT License) and comprehensive `README.md`.
-4. **Live Hosted Application:** Deployed to a public URL with Server-Sent Events (SSE) streaming active for real-time agent telemetry.
-5. **No Placeholders:** All UI components, tool calls, script mutations, audio synthesis, and exports execute functional code.
+This guide explains the architecture, API routes, data structures, and setup details for DeepClear Studio.
 
 ---
 
-## 2. Tech Stack Architecture
+## 1. Core Technical Requirements
 
-* **Frontend Framework:** Next.js (App Router), React, TypeScript.
-* **Styling & Motion:** Tailwind CSS, Framer Motion (live script redaction & Bezier SVG animations), Lucide React Icons.
-* **AI & Vision Core:** Google GenAI SDK (`@google/genai`) for Gemini multimodal text + vision extraction and reasoning.
-* **Live Web Grounding:** `parallel-web` SDK for trademark registry queries, municipal permit retrieval, legal case-law citations, and state tax rebate arbitrage.
-* **Audio Synthesis:** Web Speech API (zero-latency dual-voice synthesis) with Google Cloud TTS fallback.
-* **Web3 Verification:** `ethers.js` for minting cryptographic clearance proofs and SHA-256 Merkle hashes to Base Sepolia or Polygon Amoy.
-* **Document Export:** `jspdf` and `jspdf-autotable` for client-side multi-page **Form E&O-2026 Insurance Binder PDF** generation.
+1. Google Cloud Gemini Integration: All screenplay reading, multimodal analysis, and debate discussions use the official Google GenAI SDK (@google/genai with Gemini Flash).
+2. Parallel Web Systems Integration: All live trademark checks call the official Parallel Search API at runtime using the parallel-web SDK.
+3. Open-Source Setup: Standard MIT license in the root directory and a clean README.
+4. Live Deployment: Hosted on Vercel with real-time UI updates.
+5. Working Code: All buttons, script replacements, audio voices, and PDF exports run real code without placeholders.
 
 ---
 
-## 3. Project Directory Structure
+## 2. Technology Stack
+
+- Frontend: Next.js (App Router), React, TypeScript.
+- Styling and Animation: Tailwind CSS, Framer Motion, Lucide React icons.
+- AI Core: Google GenAI SDK (@google/genai) for Gemini Flash.
+- Live Web Grounding: parallel-web SDK for trademark, permit, and court record checks.
+- Audio Synthesis: Web Speech API for voice playback.
+- PDF Generation: jspdf and jspdf-autotable for client-side Form E&O-2026 insurance binders.
+
+---
+
+## 3. Key Project Folders
 
 ```
 deepclear-studio/
@@ -34,120 +33,76 @@ deepclear-studio/
 ├── README.md
 ├── package.json
 ├── tsconfig.json
-├── tailwind.config.js
-├── public/
-│   ├── sample_scripts/
-│   │   ├── sci_fi_nightmare.fountain
-│   │   ├── historical_benchmark.txt
-│   │   └── cleared_masterpiece.txt
-│   ├── sample_storyboards/
-│   │   ├── scene4_rolex_bridge.png
-│   │   └── scene4_cleared_prop.png
-│   └── assets/
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── analyze/route.ts       # SSE Stream: Script & Storyboard extraction
-│   │   │   ├── debate/route.ts        # SSE Stream: Director vs. Counsel dialectic
-│   │   │   ├── search/route.ts        # Parallel Search 4D grounding endpoint
-│   │   │   ├── defuse-prop/route.ts   # Generative safe-prop image synthesis
-│   │   │   └── mint/route.ts          # Web3 testnet clearance certificate mint
-│   │   ├── layout.tsx
-│   │   └── page.tsx
+│   │   │   ├── analyze/route.ts        # Script reading with Gemini
+│   │   │   ├── agent-chat/route.ts     # User questions and Parallel checks
+│   │   │   └── debate/route.ts         # Agent debates
+│   │   ├── layout.tsx                  # Root layout
+│   │   └── page.tsx                    # Main 3-column dashboard
 │   ├── components/
-│   │   ├── HeaderControlBar.tsx       # Branding, Presets, Export triggers
-│   │   ├── AgentNetworkGraph.tsx      # 5-Node glassmorphism swarm + Bezier SVG links
-│   │   ├── ScriptViewer.tsx           # Screenplay viewer + Framer Motion live mutation
-│   │   ├── StoryboardInspector.tsx    # Multimodal canvas with Bounding Boxes & Defusal slider
-│   │   ├── DynamicHUD.tsx             # Risk Gauge, Butterfly Headline, Tax Arbitrage Card
-│   │   ├── AudibleWarRoom.tsx         # Waveform audio visualizer & dual TTS controller
-│   │   ├── IngestionDock.tsx          # Drag & Drop file upload + prompt command bar
-│   │   └── ExportModal.tsx            # Form E&O-2026 PDF preview & Web3 minting modal
+│   │   ├── ParallelInspectorDrawer.tsx # Side drawer for Parallel search records
+│   │   ├── ScreenplayRedlineView.tsx   # Side-by-side script comparison
+│   │   ├── SessionHistoryModal.tsx     # Browser session history
+│   │   ├── PromptBar.tsx               # Chat bar and controls
+│   │   └── MarkdownRenderer.tsx        # Chat text formatting
 │   ├── lib/
-│   │   ├── gemini.ts                  # Google GenAI SDK client & prompt schemas
-│   │   ├── parallel.ts                # Parallel Search SDK client & 4D search tools
-│   │   ├── web3.ts                    # Ethers.js testnet minting & SHA-256 hashing
-│   │   └── pdfGenerator.ts            # Form E&O-2026 PDF generation engine
+│   │   ├── parallel.ts                 # Parallel SDK integration
+│   │   ├── gemini.ts                   # Gemini models and agent personas
+│   │   ├── autoSwarm.ts                # Auto-pilot queue runner
+│   │   ├── pdfGenerator.ts             # PDF insurance binder generator
+│   │   ├── sessionHistory.ts           # Browser local storage manager
+│   │   └── utils.ts                    # Text cleanup utilities
 │   └── types/
-│       └── index.ts                   # TypeScript interfaces & schemas
+│       └── index.ts                    # TypeScript types
+├── logs/
+│   ├── CHANGELOG.md                    # Release history
+│   └── ERROR_HANDLING.md               # Reliability and rate limit guide
+└── coreIDEA/
+    ├── IDEA.md                         # Product concept
+    ├── IMPLEMENTATION.md               # Technical setup
+    ├── TASK_LIST.md                    # Task tracker
+    └── UI.md                           # Interface layout specs
 ```
 
 ---
 
-## 4. Key Agent Pipelines & Data Schemas
+## 4. Key Data Interfaces
 
-### 1. Script Supervisor Multimodal Schema (`types/index.ts`)
+### 1. Script Hazard Interface (src/types/index.ts)
 ```typescript
-export interface ClearanceExtraction {
-  sceneTitle: string;
+export interface ExtractedEntity {
+  id: string;
   sceneNumber: number;
-  totalLines: number;
-  hazards: ScriptHazard[];
-  storyboardHazards?: StoryboardHazard[];
-}
-
-export interface ScriptHazard {
-  id: string;
-  line: number;
   rawText: string;
-  category: "trademark" | "copyright" | "permit" | "stunt_hazard" | "sag_trigger";
-  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
-  entityName: string;
-  initialEstimatedExposure: number; // in USD statutory damages
-  legalDescription: string;
-  cleared: boolean;
-  clearedText?: string;
-}
-
-export interface StoryboardHazard {
-  id: string;
-  label: string;
-  box2d: [number, number, number, number]; // [ymin, xmin, ymax, xmax] normalized 0-1000
-  brandDetected: string;
-  riskDescription: string;
-  safeReplacementPrompt: string;
-  clearedImageUrl?: string;
+  category: "trademark" | "copyright" | "permit" | "defamation" | "tax" | "domain";
+  description: string;
+  status: "hazard" | "cleared" | "licensed";
+  originalExposure: number;
+  clearedExposure: number;
+  defusedText?: string;
+  citations?: ParallelGroundingCitation[];
 }
 ```
 
-### 2. Parallel Search 4D Tool Call Contract (`src/lib/parallel.ts`)
+### 2. Parallel Citation Interface (src/types/index.ts)
 ```typescript
-export interface ParallelSearchRequest {
-  query: string;
-  category: "trademark" | "permit" | "caselaw" | "tax";
-  maxResults?: number;
-}
-
-export interface ParallelSearchCitation {
+export interface ParallelGroundingCitation {
+  id: string;
+  category: "trademark" | "permit" | "caselaw" | "tax" | "defamation" | "domain";
   title: string;
-  url: string;
+  sourceUrl: string;
   snippet: string;
-  sourceDomain: string;
-  confidenceScore: number;
-  retrievedAt: string;
+  verified: boolean;
+  trademarkClass?: string;
+  registrationStatus?: string;
+  searchId?: string;
+  searchLatencyMs?: number;
 }
 ```
-
-### 3. Adversarial Dialectic Loop Contract (`src/app/api/debate/route.ts`)
-* **Turn 1 (Legal Counsel):** Presents critical trademark or permit violation, cites live Parallel Search result, and calculates statutory damages ($ Best-Case vs Worst-Case). Proposes 3 copyright-safe alternatives.
-* **Turn 2 (The Director):** Challenges Counsel's flag citing fair use, narrative necessity, or background *de minimis* visibility. Demands a compromise that preserves cinematic tone.
-* **Turn 3 (Location Manager):** Interjects with geographic arbitrage (e.g., finding private property with faster permitting and higher state tax rebates).
-* **Consensus Resolution:** Generates the unified compromise (e.g., "Replace Rolex Submariner with Chronos 1974 Vintage Timepiece and reroute bridge chase to Pullman Yards, Atlanta"). Triggers live script mutation on screen.
-
-### 4. Completion Bond Actuarial Financial Model
-* **Probabilistic Exposure Formula:**  
-  $$\text{Total Exposure} = \sum (\text{Statutory Damage Base} \times \text{Injunction Probability}) + \text{Permit Delay Costs} - \text{State Tax Rebate Credit}$$
-* **Dynamic Range:** Outputs Best-Case, Expected, and Worst-Case financial liability in real-time.
 
 ---
 
-## 5. Server-Sent Events (SSE) Telemetry Stream Format
-
-All agent thoughts, Parallel search queries, and script mutations stream via standard SSE chunks:
-```json
-data: {
-  "type": "AGENT_THOUGHT" | "PARALLEL_QUERY" | "PARALLEL_RESULT" | "SCRIPT_MUTATION" | "RISK_UPDATE" | "AUDIO_TRIGGER" | "CLEARANCE_COMPLETE",
-  "agent": "script_supervisor" | "legal_counsel" | "location_manager" | "director" | "bond_officer",
-  "payload": { ... }
-}
-```
+## 5. Offline Demo Mode
+If API keys are omitted, DeepClear Studio automatically runs in offline mode using realistic sample data for trademark and legal checks. This allows judges and testers to evaluate the complete user flow without needing accounts.
