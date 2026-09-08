@@ -27,17 +27,17 @@ The changelog lives at: `<workspace_root>/logs/CHANGELOG.md`
 Always follow this structure when updating the changelog:
 
 ```markdown
-# DeepClear Studio — Changelog
+# DeepClear Studio  -  Changelog
 
-## [vX.Y.Z] — YYYY-MM-DD
+## [vX.Y.Z]  -  YYYY-MM-DD
 
-### 🚀 Changes
+###  Changes
 - Description of what was added or changed
 
-### 🐛 Bugs & Errors  
+###  Bugs & Errors  
 - Description of the error and how it was resolved
 
-### 📝 Notes
+###  Notes
 - Any observations, learnings, or context
 ```
 
@@ -45,7 +45,7 @@ Always follow this structure when updating the changelog:
 
 1. **Never overwrite** the entire file. Always append or insert at the top (newest first).
 2. **Always include a timestamp** with each entry using the current local time.
-3. **Be specific** about errors — include the error message, the file, and the fix.
+3. **Be specific** about errors  -  include the error message, the file, and the fix.
 4. **Use semantic versioning**: 
    - `0.1.0` → initial scaffold
    - `0.x.0` → new feature phase

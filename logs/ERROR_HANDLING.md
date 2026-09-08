@@ -1,4 +1,4 @@
-# DeepClear Studio — Error Handling, Rate-Limiting & System Resilience Guide
+# DeepClear Studio  -  Error Handling, Rate-Limiting & System Resilience Guide
 **Document Version:** `v1.0.0` (Aligned with Studio Engine `v0.8.5`)  
 **Status:** Certified Active • Enterprise & Judge Production Audit  
 **Author:** DeepClear Studio Core Engineering Swarm
@@ -184,4 +184,4 @@ All resilience mechanisms are continuously verified through our automated build 
 
 ---
 
-*DeepClear Studio — Certified Resilient Autonomous Clearance Architecture.*
+*DeepClear Studio  -  Certified Resilient Autonomous Clearance Architecture.*

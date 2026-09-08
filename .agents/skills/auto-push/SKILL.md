@@ -18,9 +18,9 @@ Automatically commit and push all changes to the GitHub remote (`origin/main`).
 
 ## Steps
 
-1. **Check status** — Run `git status` in the workspace root to see what changed.
-2. **Stage all changes** — Run `git add -A` to stage everything.
-3. **Generate commit message** — Create a descriptive commit message following this format:
+1. **Check status**  -  Run `git status` in the workspace root to see what changed.
+2. **Stage all changes**  -  Run `git add -A` to stage everything.
+3. **Generate commit message**  -  Create a descriptive commit message following this format:
    ```
    <emoji> <type>: <short summary>
    
@@ -28,18 +28,18 @@ Automatically commit and push all changes to the GitHub remote (`origin/main`).
    ```
    
    Types and emojis:
-   - `🎬 feat:` — New feature or component
-   - `🐛 fix:` — Bug fix
-   - `📄 docs:` — Documentation updates
-   - `🛠️ chore:` — Config, deps, scaffolding
-   - `🎨 style:` — UI/styling changes
-   - `🔧 refactor:` — Code restructuring
-   - `✅ test:` — Tests
-   - `🚀 deploy:` — Deployment changes
+   - ` feat:`  -  New feature or component
+   - ` fix:`  -  Bug fix
+   - ` docs:`  -  Documentation updates
+   - `️ chore:`  -  Config, deps, scaffolding
+   - ` style:`  -  UI/styling changes
+   - ` refactor:`  -  Code restructuring
+   - ` test:`  -  Tests
+   - ` deploy:`  -  Deployment changes
 
-4. **Commit** — Run `git commit -m "<message>"`.
-5. **Push** — Run `git push origin main`.
-6. **Log it** — After a successful push, update `logs/CHANGELOG.md` with a brief note about what was pushed (use the changelog-tracker skill).
+4. **Commit**  -  Run `git commit -m "<message>"`.
+5. **Push**  -  Run `git push origin main`.
+6. **Log it**  -  After a successful push, update `logs/CHANGELOG.md` with a brief note about what was pushed (use the changelog-tracker skill).
 
 ## Error Handling
 
