@@ -196,7 +196,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               Distribution Clearance & Export
             </h2>
             <p className="text-xs text-zinc-400 font-mono">
-              Form E&O-2026 Binder • Mutated Screenplay • Web3 Passport
+              E&O Evidence Binder • Cleared Screenplay • Cryptographic Passport
             </p>
           </div>
         </div>
@@ -222,9 +222,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
 
           <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-400">Statutory Liability:</span>
+            <span className="text-zinc-400">Modeled Risk Exposure:</span>
             <span className={`font-bold ${isFullyCleared ? "text-emerald-400" : "text-rose-400"}`}>
-              ${currentExposure.toLocaleString()} {isFullyCleared ? "(100% Cleared)" : "(Active Exposure)"}
+              ${currentExposure.toLocaleString()} {isFullyCleared ? "(Fully Resolved)" : "(Active Exposure)"}
             </span>
           </div>
 
@@ -236,7 +236,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
 
           <div className="flex justify-between items-center text-zinc-300 pt-2 border-t border-white/5">
-            <span className="text-zinc-400">SHA-256 Merkle Hash:</span>
+            <span className="text-zinc-400">SHA-256 Clearance Hash:</span>
             <span className="text-[10px] text-zinc-400 truncate max-w-[180px]">
               {merkleHash}
             </span>
@@ -257,7 +257,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <Download className="h-4 w-4" />
             )}
             <span>
-              {isExportingPDF ? "Generating Flexbox Binder..." : "Download Form E&O-2026 Binder (.PDF)"}
+              {isExportingPDF ? "Generating Evidence Binder..." : "Download E&O Evidence Binder (.PDF)"}
             </span>
           </button>
 

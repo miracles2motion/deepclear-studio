@@ -2167,10 +2167,10 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           type: "text",
           content: isLicenseRoute
-            ? `📜 **License Registered:** "${entity.rawText}" confirmed under production license. Original text preserved. Statutory liability reduced by ${formatCurrency(
+            ? `**License Registered:** "${entity.rawText}" confirmed under production license. Original text preserved. Modeled risk exposure reduced by ${formatCurrency(
                 entity.originalExposure
               )} to $0.`
-            : `✍️ **Script Mutated:** "${entity.rawText}" ➔ "${compromiseText}". Statutory liability reduced by ${formatCurrency(
+            : `**Script Mutated:** "${entity.rawText}" -> "${compromiseText}". Modeled risk exposure reduced by ${formatCurrency(
                 entity.originalExposure
               )}.`,
           replyTo: {
@@ -2230,7 +2230,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     setAgentTypingStatus(`Completion Bond Officer is underwriting license rider for "${entity.rawText}"...`);
     setAgentThinking({
       role: "bond_officer",
-      thought: `Underwriting policy rider: executing safe-harbor indemnity release on file for "${entity.rawText}". Waiving statutory liability to $0.00...`,
+      thought: `Underwriting policy rider: documenting license authorization on file for "${entity.rawText}". Resolving modeled risk exposure to $0.00...`,
     });
     await sleep(350);
 
@@ -2262,7 +2262,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         senderName: "Completion Bond Officer",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
-        content: `📜 **Production License Verified:** Written release/permit on file for "${entity.rawText}". Statutory liability reduced by ${formatCurrency(
+        content: `**Production License Verified:** Written release/permit on file for "${entity.rawText}". Modeled risk exposure reduced by ${formatCurrency(
           entity.originalExposure
         )} to $0 under production indemnity agreement. Original asset retained in screenplay.`,
       },
@@ -3680,7 +3680,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                             return (
                               <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center gap-2">
                                 <CheckCircle className="h-4 w-4 text-emerald-400" />
-                                <span>Executive Directive Executed ($0 Statutory Liability). Safe harbor certified.</span>
+                                <span>Executive Directive Executed ($0.00 Modeled Exposure). Gate-passed state confirmed.</span>
                               </div>
                             );
                           }
@@ -4352,14 +4352,14 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           {/* Scrollable HUD content container */}
           <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5 scrollbar-thin scrollbar-thumb-zinc-800">
             <div className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold border-b border-white/[0.06] pb-1.5 flex items-center justify-between">
-              <span>E&O Underwriting Status</span>
-              <span className="text-[10px] font-mono text-zinc-500 font-normal">Form E&O-2026</span>
+              <span>Clearance Evidence Status</span>
+              <span className="text-[10px] font-mono text-zinc-500 font-normal">E&O Evidence Binder</span>
             </div>
 
-            {/* Statutory Exposure Card - High-Density HUD */}
+            {/* Modeled Risk Exposure Card - High-Density HUD */}
             <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 space-y-1 shadow-sm">
               <div className="flex items-center justify-between text-[10px] font-mono uppercase text-zinc-400">
-                <span>Statutory Liability</span>
+                <span>Modeled Risk Exposure</span>
                 <span className="text-zinc-500 font-medium">Initial: {formatCurrency(initialExposure)}</span>
               </div>
               <div className="text-xl font-bold font-mono text-zinc-100 tracking-tight">
@@ -4367,10 +4367,10 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
               </div>
             </div>
 
-            {/* Tax Rebate Card - High-Density HUD */}
+            {/* Estimated Incentive Eligibility Card - High-Density HUD */}
             <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-2.5 sm:p-3 space-y-1 shadow-sm">
               <div className="flex items-center justify-between text-[10px] font-mono uppercase">
-                <span className="text-emerald-400 font-semibold text-[10px]">Tax Rebate Unlocked</span>
+                <span className="text-emerald-400 font-semibold text-[10px]">Est. Incentive Eligibility</span>
                 <span className="text-zinc-500 font-semibold text-[10px]">
                   {hasPassport ? "SAFE HARBOR" : initialExposure > 0 ? "QUALIFIED" : "IDLE"}
                 </span>
@@ -4474,13 +4474,13 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                   <p className="text-[11px] text-zinc-300 leading-snug font-sans">
                     {hasPassport ? (
                       <span className="text-emerald-300">
-                        Verified DeepClear Clearance Passport active. Pre-cleared safe harbor exemptions confirmed with $0 statutory exposure. Form E&O-2026 certified for distribution.
+                        Verified Clearance Passport active. Pre-cleared exemptions confirmed with $0.00 modeled risk exposure. Evidence binder ready for distribution review.
                       </span>
                     ) : isFullyResolved && hasScript ? (
                       <span className="text-emerald-300">
                         {entities.length > 0
-                          ? `All ${entities.length} liabilities resolved with $0 exposure. Form E&O-2026 certified for distribution.`
-                          : "Screenplay evaluated 100% clean with zero statutory liabilities. Form E&O-2026 certified for distribution."}
+                          ? `All ${entities.length} hazards resolved with $0.00 modeled exposure. DeepClear E&O Evidence Binder ready for distribution review.`
+                          : "Screenplay evaluated with zero detected hazards. DeepClear E&O Evidence Binder ready for distribution review."}
                       </span>
                     ) : pendingCount > 0 ? (
                       <span className="text-rose-300">
@@ -4570,7 +4570,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
               className="w-full py-2 px-3 rounded-xl bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.99]"
             >
               <Download className="h-3.5 w-3.5" />
-              <span>Export Form E&O-2026 PDF</span>
+              <span>Export E&O Evidence Binder PDF</span>
             </button>
           </div>
         </aside>

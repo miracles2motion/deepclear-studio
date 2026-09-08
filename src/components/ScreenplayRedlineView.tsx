@@ -377,7 +377,7 @@ export default function ScreenplayRedlineView({
             {isFullyCleared ? (
               <span className="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1">
                 <ShieldCheck className="h-3 w-3" />
-                <span>E&O CERTIFIED (100% CLEARED)</span>
+                <span>E&O EVIDENCE READY (100% RESOLVED)</span>
               </span>
             ) : isPartiallyCleared ? (
               <span className="text-[10px] text-sky-400 font-semibold px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 flex items-center gap-1 animate-pulse">
