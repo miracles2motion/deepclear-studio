@@ -4,19 +4,13 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
-## [v0.8.13] - 2026-09-08
-### Comprehensive System Knowledge Base Expansion
-- **Desktop Knowledge Base Power House (`C:\Users\dd\Desktop\knowledge deepclear\knowledge.md`)**:
-  - Fully expanded `knowledge.md` from a 50-line summary into an authoritative, 8-section technical and behavioral reference manual (over 19,000 characters).
-  - Documented mathematical statutory risk formulas (Lanham Act Section 43(a), Copyright 17 U.S.C. Section 504, California Civil Code Section 3344, FAA Part 107) and independent state film tax credit formulations (Georgia 30%, New Mexico 35%, California 25%).
-  - Detailed the operational domains, personality profiles, and acoustic voice configurations for all 5 swarm agents.
-  - Specified the 13 core state machine invariants including Default Autonomous Execution, Immediate Reactive De-queueing, 1,200ms Rate-Limit Defense Pacing, Instant Audio Mute Cancellation, Producer Dispute Screenplay Rollback, and Regex Stutter Defense.
-  - Formally documented the Parallel Web Systems TypeScript SDK integration, Deterministic Gate Enforcement (`verified: true`), 30-minute query deduplication caching, Gemini Flash cascade fallback, and multi-viewport layout specifications.
-  - Strictly validated: 0 emojis and 0 em dashes throughout all files.
+## [v0.8.12] - 2026-09-08
+### Submission Documentation Kit and Product Management Sync
+- **Desktop Knowledge Toolkit (`C:\Users\dd\Desktop\knowledge deepclear`)**:
+  - Prepared draft submission assets (`PRD.md`, `SETUP.md`, `ARCHITECTURE.md`, `PITCH_DECK.md`, `AGENTS.md`, and `LICENSE`) directly in the PM working folder for thorough vetting and review prior to repository publication.
+  - Provided comprehensive coverage of the 6 statutory liability classifications, 5-agent dialectic war room, Parallel Web Systems SDK grounding, Screenplay Redline Diff engine, producer dispute controls, and Form E&O-2026 PDF binder generation.
 
 ---
-
-## [v0.8.12] - 2026-09-08
 
 ## [v0.8.11]  -  2026-09-07
 ###  Parallel Search Grounding Sanitization & Citation Compacting
