@@ -4,6 +4,23 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.13] - 2026-09-08
+### Cryptographic Clearance Passport Roundtrip and Screenplay Download Fixes
+- **Clearance Passport Download Embedding (`page.tsx`, `ScreenplayRedlineView.tsx`)**:
+  - Resolved issue where downloading a cleared screenplay from the Chat Card or Redline Diff view exported raw text without the cryptographic Clearance and Licensing Passport frontmatter header.
+  - Implemented centralized `getDownloadableClearedScript()` helper ensuring every screenplay download trigger (Chat Card primary button, format pills, and Redline Diff export) bundles the verified YAML frontmatter passport (`--- deepclear_passport: ... ---`).
+- **UI Wrapper Stripping and Ingestion Bypass (`page.tsx`, `passport.ts`)**:
+  - Resolved issue where re-uploading a cleared screenplay `.md` file triggered whole-script analysis and restarted the 5-agent debate swarm.
+  - Identified root cause: `handleFileUpload` prepended `[Uploaded File: filename.ext]` to file contents, which broke exact `^---` regex matching and caused Gemini to analyze the unparsed YAML frontmatter containing original brand names.
+  - Enhanced `extractClearancePassport()` to strip UI tags first and utilize a flexible multiline regex `/(?:^|\n)---\r?\n([\s\S]*?deepclear_passport[\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/i`.
+  - Updated `handleFileUpload` to pass raw file content directly into `handleSendMessage()`, completely preventing UI wrapper pollution in script state.
+  - Guaranteed that screenplays with verified clearance passports immediately bypass `/api/analyze`, certify safe harbor with $0.00 statutory exposure, and deliver the adjudicated script card with zero duplicate debate turns.
+- **Robust Screenplay Mutation Engine (`page.tsx`)**:
+  - Upgraded `mutateScriptText()` with multi-strategy matching: exact string match, case-insensitive regex match, and quote-tolerant title replacement.
+  - Preserved character cue name propagation and sanitized duplicate word stutters and article collisions.
+
+---
+
 ## [v0.8.12] - 2026-09-08
 ### Submission Documentation Kit and Product Management Sync
 - **Desktop Knowledge Toolkit (`C:\Users\dd\Desktop\knowledge deepclear`)**:

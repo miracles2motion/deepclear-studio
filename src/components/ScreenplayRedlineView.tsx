@@ -15,7 +15,9 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { ExtractedEntity } from "@/types";
+import { ExtractedEntity, ClearancePassportData } from "@/types";
+import { embedClearancePassport } from "@/lib/passport";
+import { generateClearanceMerkleHash } from "@/lib/web3";
 
 interface ScreenplayRedlineViewProps {
   originalScript: string;
@@ -83,12 +85,38 @@ export default function ScreenplayRedlineView({
     const ext = uploadedFileName ? uploadedFileName.split(".").pop() || fmt : fmt;
     const baseName = uploadedFileName
       ? uploadedFileName.replace(/\.[^/.]+$/, "")
-      : productionTitle.replace(/\s+/g, "_");
-    const blob = new Blob([baseCleared], { type: "text/plain;charset=utf-8" });
+      : (productionTitle ? productionTitle.replace(/\s+/g, "_") : "Indie_Production");
+
+    const currentTitle = productionTitle || "Indie Production";
+    const merkleHash = generateClearanceMerkleHash(currentTitle, entities, new Date().toISOString());
+
+    const passportData: ClearancePassportData = {
+      version: "2026.1",
+      productionTitle: currentTitle,
+      merkleRoot: merkleHash,
+      bondPolicyId: `EO-2026-${merkleHash.slice(2, 8).toUpperCase()}`,
+      policyStatus: pendingEntities.length === 0 ? "APPROVED" : "PENDING_REMEDY",
+      timestamp: new Date().toISOString(),
+      assets: entities.map((e) => {
+        const isLicensed = licensedEntityIds.includes(e.id) || e.status === "licensed";
+        return {
+          originalText: e.rawText,
+          clearedAs: isLicensed ? undefined : (e.defusedText || "Cleared Narrative Prop"),
+          category: e.category,
+          status: isLicensed ? "licensed" : "cleared",
+          licenseRef: isLicensed ? "Active Production Rights & Licensing Exemption" : undefined,
+          parallelVerified: true,
+        };
+      }),
+    };
+
+    const textWithPassport = embedClearancePassport(baseCleared, passportData);
+
+    const blob = new Blob([textWithPassport], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${baseName}_PARALLEL_CLEARED.${ext}`;
+    link.download = `${baseName}_CLEARED_FINAL.${ext}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

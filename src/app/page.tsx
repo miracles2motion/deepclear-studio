@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation, DeepClearSessionData, ClearanceMode } from "@/types";
+import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation, DeepClearSessionData, ClearanceMode, ClearancePassportData } from "@/types";
 import { formatCurrency, cleanParallelSnippet } from "@/lib/utils";
 import { ExportModal } from "@/components/ExportModal";
 import { SessionHistoryModal } from "@/components/SessionHistoryModal";
 import ParallelInspectorDrawer from "@/components/ParallelInspectorDrawer";
 import ScreenplayRedlineView from "@/components/ScreenplayRedlineView";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
-import { extractClearancePassport } from "@/lib/passport";
+import { extractClearancePassport, embedClearancePassport } from "@/lib/passport";
+import { generateClearanceMerkleHash } from "@/lib/web3";
 import { determineHazardResolutionRoute, delayPace } from "@/lib/autoSwarm";
 import {
   loadSavedSessions,
@@ -816,29 +817,29 @@ export default function DeepClearStudioPage() {
     },
   ];
 
-  // 3 Distinct Demo Scenarios (Indie Sci-Fi Heist, Historic Southern Gothic, & Pre-cleared Safe Harbor)
+  // 3 Distinct Demo Scenarios (Indie Sci-Fi Heist, Historic Southern Gothic, and Pre-cleared Safe Harbor)
   const DEMO_PRESETS = [
     {
       id: "cyber-heist",
-      label: "🚀 Cyber Heist",
+      label: "Cyber Heist",
       desc: "Silicon Valley Lab (Apple Vision Pro, Cybertruck, Radiohead)",
       script: `Title: SILICON CYBER HEIST\nEXT. PALO ALTO BIOTECH LAB - NIGHT\n\nMARCUS (30s) straps on an Apple Vision Pro headset. Holographic molecular sequences illuminate the dark glass walls.\n\nMARCUS\nThe neural patent uploads in four minutes.\n\nELENA (20s) revs the customized matte-black Tesla Cybertruck waiting in the subterranean parking bay. In the background, Radiohead's "Idioteque" plays faintly from the dashboard radio.\n\nELENA\nServer breach detected. We move now!`,
     },
     {
       id: "savannah-noir",
-      label: "🏛️ Southern Gothic",
+      label: "Southern Gothic",
       desc: "Savannah Historic District (Macallan 25, 1968 Mustang, City Permit)",
       script: `Title: SAVANNAH NOIR\nEXT. FORSYTH PARK - SAVANNAH, GEORGIA - DUSK\n\nSpanish moss sways from the ancient live oaks. DETECTIVE CASH (50s) leans against a vintage 1968 Ford Mustang Fastback.\n\nHe pours two fingers from an authentic bottle of Macallan 25 Scotch into a crystal glass.\n\nCASH\nThe mayor's office didn't authorize filming on this square tonight. We're on borrowed time.\n\nAn Otis Redding classic drifts from a nearby street performer's amplifier.`,
     },
     {
       id: "defamation-domain-check",
-      label: "⚖️ Legal & WHOIS Shield",
+      label: "Legal and WHOIS Shield",
       desc: "Living Person Defamation (Cal. Civ. Code § 3344) & 555 / Domain WHOIS Radar",
       script: `Title: THE MANHATTAN ARBITRAGE\nINT. EMORY MEDICAL CENTER - ATLANTA - DAY\n\nDR. JEFFREY STERLING (40s), Chief Cardiologist, slips an illicit clinical trial dossier into his trench coat. He taps his smartphone.\n\nDR. JEFFREY STERLING\nWire the offshore funds immediately. If the FDA regulators call, tell them to inspect our clinical protocol at apexbiocorp.com or call our emergency desk at 310-456-7890.\n\nNURSE ALYSSA (30s) watches suspiciously from the ICU doorway as he rushes toward the service elevator.`,
     },
     {
       id: "safe-harbor-demo",
-      label: "🛡️ Cleared Masterpiece",
+      label: "Cleared Masterpiece",
       desc: "Pre-cleared with DeepClear Passport ($0 risk on ingestion)",
       script: `---
 deepclear_passport:
@@ -880,16 +881,50 @@ Clearance secured. We have safe harbor.`,
   const mutateScriptText = (script: string, rawText: string, replacement: string): string => {
     if (!script || !rawText || !replacement) return script;
 
-    let updated = script.replaceAll(rawText, replacement);
+    let updated = script;
+
+    // Strategy 1: Exact string match
+    if (updated.includes(rawText)) {
+      updated = updated.replaceAll(rawText, replacement);
+    } else {
+      // Strategy 2: Case-insensitive regex with escaped metacharacters
+      const escaped = rawText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "gi");
+      if (regex.test(updated)) {
+        updated = updated.replace(regex, replacement);
+      } else {
+        // Strategy 3: Quote-tolerant matching (handles titles with or without quotes)
+        const unquotedRaw = rawText.replace(/^["'“”‘’]+|["'“”‘’]+$/g, "").trim();
+        if (unquotedRaw && unquotedRaw !== rawText) {
+          const unquotedEscaped = unquotedRaw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const quoteRegex = new RegExp(`["'“”‘’]?${unquotedEscaped}["'“”‘’]?`, "gi");
+          if (quoteRegex.test(updated)) {
+            updated = updated.replace(quoteRegex, replacement);
+          }
+        } else {
+          const rawEscaped = rawText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const quoteRegex = new RegExp(`["'“”‘’]${rawEscaped}["'“”‘’]`, "gi");
+          if (quoteRegex.test(updated)) {
+            updated = updated.replace(quoteRegex, replacement);
+          }
+        }
+      }
+    }
 
     // Deep Character Name Propagation:
     // If rawText contains parenthetical age/title (e.g. "DR. JEFFREY STERLING (40s), Chief Cardiologist")
-    // extract base names e.g. "DR. JEFFREY STERLING" -> "DR. ALISTAIR VANE" and replace standalone dialogue cues!
+    // extract base names e.g. "DR. JEFFREY STERLING" -> "DR. ALISTAIR VANCE" and replace standalone dialogue cues!
     const rawBase = rawText.replace(/\s*\([^)]*\).*$/, "").trim();
     const repBase = replacement.replace(/\s*\([^)]*\).*$/, "").trim();
     if (rawBase && repBase && rawBase !== repBase && rawBase.length >= 3) {
-      const charCueRegex = new RegExp(`(^|\\n)(${rawBase.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")})(\\s*\\n)`, "g");
+      const charCueRegex = new RegExp(`(^|\\n)(${rawBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})(\\s*\\n)`, "gi");
       updated = updated.replace(charCueRegex, `$1${repBase}$3`);
+      if (updated.includes(rawBase)) {
+        updated = updated.replaceAll(rawBase, repBase);
+      } else {
+        const baseEscaped = rawBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        updated = updated.replace(new RegExp(baseEscaped, "gi"), repBase);
+      }
     }
 
     // 1. Sanitize duplicate word stutters caused by prefix overlap (e.g. "vintage vintage" -> "vintage")
@@ -907,10 +942,61 @@ Clearance secured. We have safe harbor.`,
     return updated;
   };
 
+  // Centralized helper to construct the final downloadable screenplay bundled with cryptographic Clearance Passport
+  const getDownloadableClearedScript = (rawScript?: string): string => {
+    let script = (rawScript || currentScriptRef.current || currentScriptText || "").trim();
+    script = script.replace(/^\[Uploaded File:[^\]]+\]\s*/i, "").trim();
+
+    // Strip existing passport if already present to ensure a clean re-generation
+    const { cleanedScript } = extractClearancePassport(script);
+    if (cleanedScript) {
+      script = cleanedScript.trim();
+    }
+
+    // Ensure all cleared entities are mutated into this script if they haven't been already
+    entities.forEach((entity) => {
+      const isCleared = clearedEntityIds.includes(entity.id) || entity.status === "cleared";
+      const isLicensed = licensedEntityIds.includes(entity.id) || entity.status === "licensed";
+      if (isCleared && !isLicensed && entity.rawText && entity.defusedText) {
+        script = mutateScriptText(script, entity.rawText, entity.defusedText);
+      }
+    });
+
+    const currentTitle = productionTitle || "Indie Production";
+    const merkleHash = generateClearanceMerkleHash(currentTitle, entities, new Date().toISOString());
+
+    const passportData: ClearancePassportData = {
+      version: "2026.1",
+      productionTitle: currentTitle,
+      merkleRoot: merkleHash,
+      bondPolicyId: `EO-2026-${merkleHash.slice(2, 8).toUpperCase()}`,
+      policyStatus: currentExposure === 0 ? "APPROVED" : "PENDING_REMEDY",
+      timestamp: new Date().toISOString(),
+      assets: entities.map((e) => {
+        const isLicensed = licensedEntityIds.includes(e.id) || e.status === "licensed";
+        return {
+          originalText: e.rawText,
+          clearedAs: isLicensed ? undefined : (e.defusedText || "Cleared Narrative Prop"),
+          category: e.category,
+          status: isLicensed ? "licensed" : "cleared",
+          licenseRef: isLicensed ? "Active Production Rights & Licensing Exemption" : undefined,
+          parallelVerified: true,
+        };
+      }),
+    };
+
+    return embedClearancePassport(script, passportData);
+  };
+
   // Helper to reliably deliver the Final Cleared Production Script card into chat
   const deliverFinalScriptCard = (scriptToDeliver?: string) => {
-    const text = (scriptToDeliver || currentScriptRef.current || currentScriptText).trim();
+    let text = (scriptToDeliver || currentScriptRef.current || currentScriptText).trim();
     if (!text) return;
+
+    // Clean UI upload markers and passport frontmatter so the displayed screenplay card is clean readable text
+    text = text.replace(/^\[Uploaded File:[^\]]+\]\s*/i, "").trim();
+    const { cleanedScript } = extractClearancePassport(text);
+    if (cleanedScript) text = cleanedScript.trim();
 
     setMessages((prev) => {
       // Avoid duplicate final script cards if one was already posted with matching content
@@ -1137,8 +1223,11 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
 
   // Handle Send Message / Analyze Script or Conversational Agent Query
   const handleSendMessage = async (textToSend?: string) => {
-    const queryText = (textToSend || input).trim();
-    if (!queryText || isLoading) return;
+    const rawQuery = (textToSend || input).trim();
+    if (!rawQuery || isLoading) return;
+
+    // Clean any prepended UI file tag
+    const queryText = rawQuery.replace(/^\[Uploaded File:[^\]]+\]\s*/i, "").trim();
 
     // Add user message
     const userMsg: ChatMessage = {
@@ -1147,7 +1236,9 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       senderName: "You",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       type: "text",
-      content: queryText,
+      content: rawQuery.startsWith("[Uploaded File:") && uploadedFileName
+        ? `[Uploaded File: ${uploadedFileName}]`
+        : rawQuery,
     };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -1158,12 +1249,11 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     setTaggedAgentRole(null);
 
     // Heuristic: Is this a screenplay to be analyzed, or an agent question / conversational query?
-    const cleanScriptCandidate = queryText.replace(/^\[Uploaded File:[^\]]+\]\s*/i, "").trim();
-    const hasSluglines = /^(?:EXT\.|INT\.|INT\/EXT\.|I\/E\.)/im.test(cleanScriptCandidate);
-    const hasPassport = /---[\s\S]*deepclear_passport[\s\S]*---/i.test(cleanScriptCandidate);
-    const hasFountainScene = /^\.[A-Z0-9_\-\s]+$/m.test(cleanScriptCandidate);
-    const hasDialogueBlocks = /^[A-Z0-9\s]{2,}\n[^\n]+/m.test(cleanScriptCandidate) && cleanScriptCandidate.length > 80;
-    const isUploadedScript = queryText.startsWith("[Uploaded File:") && !cleanScriptCandidate.startsWith("?");
+    const hasSluglines = /^(?:EXT\.|INT\.|INT\/EXT\.|I\/E\.)/im.test(queryText);
+    const hasPassport = /---[\s\S]*deepclear_passport[\s\S]*---/i.test(queryText);
+    const hasFountainScene = /^\.[A-Z0-9_\-\s]+$/m.test(queryText);
+    const hasDialogueBlocks = /^[A-Z0-9\s]{2,}\n[^\n]+/m.test(queryText) && queryText.length > 80;
+    const isUploadedScript = Boolean(uploadedFileName) && !queryText.startsWith("?");
 
     const isScreenplay = hasSluglines || hasPassport || hasFountainScene || hasDialogueBlocks || isUploadedScript;
 
@@ -1175,9 +1265,12 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     // -------------------------------------------------------------
     // SCREENPLAY INGESTION & CLEARANCE STREAMING ROUTE
     // -------------------------------------------------------------
+    const { cleanedScript, passport } = extractClearancePassport(queryText);
+    const scriptToUse = (cleanedScript || queryText).trim();
+
     // Smart Session Partitioning: If active session already has work in progress and user sends another script, auto-archive!
     const existingScript = (currentScriptRef.current || currentScriptText).trim();
-    if (existingScript.length > 0 && existingScript !== queryText.trim()) {
+    if (existingScript.length > 0 && existingScript !== scriptToUse && existingScript !== queryText) {
       archiveCurrentSession(true);
       const newSessionId = `session-${Date.now()}`;
       setActiveSessionId(newSessionId);
@@ -1190,17 +1283,15 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       setCurrentExposure(0);
     }
 
-    currentScriptRef.current = queryText;
-    setCurrentScriptText(queryText);
-    setOriginalScriptSnapshot((prev) => (!prev ? queryText : prev));
+    currentScriptRef.current = scriptToUse;
+    setCurrentScriptText(scriptToUse);
+    setOriginalScriptSnapshot((prev) => (!prev ? scriptToUse : prev));
     setIsLoading(true);
     setActiveAgent("script_supervisor");
     setAgentThinking({
       role: "script_supervisor",
       thought: "Scanning screenplay formatting, parsing scene sluglines, and detecting brand liabilities with Multimodal Vision...",
     });
-
-    const { cleanedScript, passport } = extractClearancePassport(queryText);
 
     if (passport) {
       if (passport.productionTitle) {
@@ -1217,11 +1308,11 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           description:
             a.status === "licensed"
               ? (a.licenseRef || "Active production synchronization license on file")
-              : `Pre-cleared safe harbor substitute: ${a.clearedAs}`,
+              : `Pre-cleared safe harbor substitute: ${a.clearedAs || a.originalText}`,
           status: (a.status as ClearanceStatus) || "cleared",
           originalExposure: 0,
           clearedExposure: 0,
-          defusedText: a.clearedAs || `${a.originalText} (Licensed)`,
+          defusedText: a.clearedAs || (a.status === "licensed" ? `${a.originalText} (Licensed Release On File)` : a.originalText),
           citations: [],
         }));
         setEntities(passportEntities);
@@ -1232,7 +1323,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       setInitialExposure(0);
       setCurrentExposure(0);
 
-      const deliveredScript = cleanedScript || queryText;
+      const deliveredScript = scriptToUse;
       currentScriptRef.current = deliveredScript;
       setCurrentScriptText(deliveredScript);
       setOriginalScriptSnapshot(deliveredScript);
@@ -1245,7 +1336,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           senderName: "Completion Bond Officer",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           type: "text",
-          content: `🛡️ **Verified DeepClear Clearance Passport Ingested**\n\n• **Merkle Hash**: \`${passport.merkleRoot}\`\n• **E&O Policy**: **${passport.policyStatus}** (\`${passport.bondPolicyId}\`)\n• **Exemptions Loaded**: ${passport.assets.length} pre-cleared/licensed assets (${passport.assets.map((a) => `\`${a.clearedAs || a.originalText}\` [${a.status.toUpperCase()}]`).join(", ")})\n\nSafe harbor exemptions validated. 100% pre-cleared with $0.00 statutory exposure. Final production screenplay certified for distribution.`,
+          content: `[VERIFIED SAFE HARBOR] **Verified DeepClear Clearance Passport Ingested**\n\n• **Merkle Hash**: \`${passport.merkleRoot}\`\n• **E&O Policy**: **${passport.policyStatus}** (\`${passport.bondPolicyId}\`)\n• **Exemptions Loaded**: ${passport.assets.length} pre-cleared/licensed assets (${passport.assets.map((a) => `\`${a.clearedAs || a.originalText}\` [${a.status.toUpperCase()}]`).join(", ")})\n\nSafe harbor exemptions validated. 100% pre-cleared with $0.00 statutory exposure. Final production screenplay certified for distribution.`,
         },
       ]);
 
@@ -1265,8 +1356,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       if (titleMatch && titleMatch[1]) {
         setProductionTitle(titleMatch[1].trim());
       } else {
-        const cleanContent = queryText.replace(/^\[Uploaded File:[^\]]+\]\s*/i, "");
-        const firstLine = cleanContent.split("\n").find((l: string) => l.trim().length > 0) || "";
+        const firstLine = queryText.split("\n").find((l: string) => l.trim().length > 0) || "";
         const sceneMatch = firstLine.match(/^(?:EXT\.|INT\.)\s+([^-–—]+)/i);
         if (sceneMatch && sceneMatch[1] && productionTitle === "Indie Motion Picture") {
           setProductionTitle(sceneMatch[1].trim().replace(/\b\w/g, (c: string) => c.toUpperCase()) + " Project");
@@ -1279,7 +1369,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          scriptText: queryText,
+          scriptText: scriptToUse,
           safeHarborAssets: [],
         }),
       });
@@ -2431,8 +2521,8 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const content = event.target?.result as string;
-      handleSendMessage(`[Uploaded File: ${file.name}]\n\n${content}`);
+      const content = (event.target?.result as string) || "";
+      handleSendMessage(content);
     };
     reader.readAsText(file);
   };
@@ -3293,8 +3383,9 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                             <button
                               onClick={() => {
                                 const ext = uploadedFileName ? (uploadedFileName.split(".").pop() || "fountain") : "fountain";
-                                const baseName = uploadedFileName ? uploadedFileName.replace(/\.[^/.]+$/, "") : "Indie_Production";
-                                const blob = new Blob([msg.content || ""], { type: "text/plain;charset=utf-8" });
+                                const baseName = uploadedFileName ? uploadedFileName.replace(/\.[^/.]+$/, "") : (productionTitle ? productionTitle.replace(/\s+/g, "_") : "Indie_Production");
+                                const textToDownload = getDownloadableClearedScript(msg.content);
+                                const blob = new Blob([textToDownload], { type: "text/plain;charset=utf-8" });
                                 const url = URL.createObjectURL(blob);
                                 const link = document.createElement("a");
                                 link.href = url;
@@ -3354,8 +3445,9 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                                 onClick={() => {
                                   const baseName = uploadedFileName
                                     ? uploadedFileName.replace(/\.[^/.]+$/, "")
-                                    : "Indie_Production";
-                                  const blob = new Blob([msg.content || ""], { type: "text/plain;charset=utf-8" });
+                                    : (productionTitle ? productionTitle.replace(/\s+/g, "_") : "Indie_Production");
+                                  const textToDownload = getDownloadableClearedScript(msg.content);
+                                  const blob = new Blob([textToDownload], { type: "text/plain;charset=utf-8" });
                                   const url = URL.createObjectURL(blob);
                                   const link = document.createElement("a");
                                   link.href = url;

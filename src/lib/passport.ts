@@ -11,14 +11,15 @@ export function embedClearancePassport(
   scriptText: string,
   passport: ClearancePassportData
 ): string {
-  // Strip any existing passport first to avoid duplicate headers
+  // Strip any existing passport and UI upload tags first to avoid duplicate headers
   const { cleanedScript } = extractClearancePassport(scriptText);
+  const cleanBody = cleanedScript.replace(/^\[Uploaded File:[^\]]+\]\s*/i, "").trim();
 
   const lines: string[] = [
     PASSPORT_HEADER_TAG,
     `${PASSPORT_ID}:`,
     `  version: "${passport.version}"`,
-    `  production_title: "${passport.productionTitle.replace(/"/g, '\\"')}"`,
+    `  production_title: "${(passport.productionTitle || "Indie Production").replace(/"/g, '\\"')}"`,
     `  merkle_root: "${passport.merkleRoot}"`,
     `  bond_policy_id: "${passport.bondPolicyId}"`,
     `  policy_status: "${passport.policyStatus}"`,
@@ -41,7 +42,7 @@ export function embedClearancePassport(
 
   lines.push(PASSPORT_HEADER_TAG);
   lines.push(""); // blank line before script body
-  lines.push(cleanedScript.trim());
+  lines.push(cleanBody);
 
   return lines.join("\n");
 }
@@ -58,11 +59,13 @@ export function extractClearancePassport(rawText: string): {
     return { cleanedScript: "", passport: null };
   }
 
-  const trimmed = rawText.trim();
+  // Strip any prepended UI upload tag like [Uploaded File: filename.ext]
+  let text = rawText.replace(/^\[Uploaded File:[^\]]+\]\s*/i, "").trim();
 
-  // Pattern 1: YAML Frontmatter (starts with --- and contains deepclear_passport)
-  const yamlMatch = trimmed.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
-  if (yamlMatch && yamlMatch[1].includes(PASSPORT_ID)) {
+  // Pattern 1: YAML Frontmatter (starts with --- or has --- after optional whitespace / newlines)
+  const yamlRegex = /(?:^|\n)---\r?\n([\s\S]*?deepclear_passport[\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/i;
+  const yamlMatch = text.match(yamlRegex);
+  if (yamlMatch) {
     const yamlBody = yamlMatch[1];
     const scriptBody = yamlMatch[2];
     const parsed = parsePassportYaml(yamlBody);
@@ -72,18 +75,18 @@ export function extractClearancePassport(rawText: string): {
   }
 
   // Pattern 2: Embedded HTML Comment block <!-- DEEPCLEAR_PASSPORT: {...} -->
-  const commentMatch = trimmed.match(/<!--\s*DEEPCLEAR_PASSPORT:\s*(\{[\s\S]*?\})\s*-->/i);
+  const commentMatch = text.match(/<!--\s*DEEPCLEAR_PASSPORT:\s*(\{[\s\S]*?\})\s*-->/i);
   if (commentMatch && commentMatch[1]) {
     try {
       const json = JSON.parse(commentMatch[1]);
-      const cleaned = trimmed.replace(commentMatch[0], "").trim();
+      const cleaned = text.replace(commentMatch[0], "").trim();
       return { cleanedScript: cleaned, passport: json };
     } catch {
       // Fallback
     }
   }
 
-  return { cleanedScript: trimmed, passport: null };
+  return { cleanedScript: text, passport: null };
 }
 
 /**
