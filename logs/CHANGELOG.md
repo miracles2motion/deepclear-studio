@@ -6,16 +6,9 @@ This changelog records major releases, architectural features, and critical mile
 
 ## [v0.8.12] — 2026-09-08
 ### 📚 Submission Documentation Kit & Product Management Sync
-- **Product Requirement Document (`PRD.md`)**:
-  - Authored comprehensive Product Requirements Document covering the 6 statutory liability classifications, 5-agent dialectic war room, Parallel Web Systems SDK grounding, Screenplay Redline Diff engine, producer dispute controls, and Form E&O-2026 PDF binder generation.
-- **Technical Setup Guide (`SETUP.md`)**:
-  - Detailed developer onboarding, environment variable configuration (`GEMINI_API_KEY`, `PARALLEL_API_KEY`), local running commands, and resilient offline mode documentation.
-- **Technical Architecture Diagram & Flow (`ARCHITECTURE.md`)**:
-  - Formatted complete Mermaid architecture diagrams documenting the end-to-end data pipeline from multimodal script ingestion to cryptographic passport export.
-- **Pitch Deck Outline (`PITCH_DECK.md`)**:
-  - Built executive 6-slide deck script tailored for Google Cloud Agentic Cinema judges (Friction, Multi-Agent Swarm, Technical Architecture, Core Metrics, and Business Viability).
-- **Desktop Knowledge Synchronization (`C:\Users\dd\Desktop\knowledge deepclear`)**:
-  - Added `PRD.md`, `SETUP.md`, `ARCHITECTURE.md`, `PITCH_DECK.md`, `AGENTS.md`, and `LICENSE` directly to the desktop knowledge folder to empower team PM workflows.
+- **Desktop Knowledge Toolkit (`C:\Users\dd\Desktop\knowledge deepclear`)**:
+  - Prepared draft submission assets (`PRD.md`, `SETUP.md`, `ARCHITECTURE.md`, `PITCH_DECK.md`, `AGENTS.md`, and `LICENSE`) directly in the PM working folder for thorough vetting and review prior to repository publication.
+  - Provided comprehensive coverage of the 6 statutory liability classifications, 5-agent dialectic war room, Parallel Web Systems SDK grounding, Screenplay Redline Diff engine, producer dispute controls, and Form E&O-2026 PDF binder generation.
 
 ---
 
