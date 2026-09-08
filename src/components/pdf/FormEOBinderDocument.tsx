@@ -265,9 +265,22 @@ interface FormEOBinderProps {
 }
 
 export const FormEOBinderDocument: React.FC<FormEOBinderProps> = ({ report }) => {
-  const isFullyCleared = report.finalExposureUsd === 0 && report.initialExposureUsd > 0;
   const licensedEntityIds = report.licensedEntityIds || [];
   const clearedEntityIds = report.clearedEntityIds || [];
+
+  const pendingCount = report.entities.filter(
+    (e) =>
+      !licensedEntityIds.includes(e.id) &&
+      !clearedEntityIds.includes(e.id) &&
+      e.status !== "cleared" &&
+      e.status !== "licensed"
+  ).length;
+
+  const isFullyCleared =
+    report.finalExposureUsd === 0 &&
+    (report.eandOPolicyStatus === "APPROVED" ||
+      pendingCount === 0 ||
+      report.initialExposureUsd > 0);
 
   const licensedCount = report.entities.filter(
     (e) => licensedEntityIds.includes(e.id) || e.status === "licensed"

@@ -59,7 +59,16 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   if (!isOpen) return null;
 
   const currentTitle = activeTitle.trim() || "Indie Narrative Production";
-  const isFullyCleared = currentExposure === 0 && initialExposure > 0;
+  const pendingCount = entities.filter(
+    (e) =>
+      !licensedEntityIds.includes(e.id) &&
+      !clearedEntityIds.includes(e.id) &&
+      e.status !== "cleared" &&
+      e.status !== "licensed"
+  ).length;
+  const isFullyCleared =
+    currentExposure === 0 &&
+    (initialExposure > 0 || (entities.length > 0 && pendingCount === 0));
   const merkleHash = generateClearanceMerkleHash(currentTitle, entities, new Date().toISOString());
 
   // Download Form E&O-2026 PDF using modern @react-pdf/renderer Flexbox engine
@@ -80,7 +89,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       merkleRootHash: merkleHash,
       onChainTxHash: mintResult?.txHash,
       generatedAt: new Date().toISOString(),
-      eandOPolicyStatus: currentExposure === 0 ? "APPROVED" : "PENDING_REMEDY",
+      eandOPolicyStatus: isFullyCleared ? "APPROVED" : "PENDING_REMEDY",
     };
 
     try {

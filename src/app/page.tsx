@@ -1300,28 +1300,58 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
 
       // Populate pre-cleared assets directly into the ledger so they are visible and verifiable
       if (passport.assets && passport.assets.length > 0) {
-        const passportEntities: ExtractedEntity[] = passport.assets.map((a, idx) => ({
-          id: `passport-asset-${idx + 1}`,
-          sceneNumber: 1,
-          rawText: a.originalText,
-          category: (a.category as any) || "trademark",
-          description:
-            a.status === "licensed"
-              ? (a.licenseRef || "Active production synchronization license on file")
-              : `Pre-cleared safe harbor substitute: ${a.clearedAs || a.originalText}`,
-          status: (a.status as ClearanceStatus) || "cleared",
-          originalExposure: 0,
-          clearedExposure: 0,
-          defusedText: a.clearedAs || (a.status === "licensed" ? `${a.originalText} (Licensed Release On File)` : a.originalText),
-          citations: [],
-        }));
+        const passportEntities: ExtractedEntity[] = passport.assets.map((a, idx) => {
+          let benchmarkExposure = 100000;
+          if (a.category === "copyright") benchmarkExposure = 150000;
+          else if (a.category === "defamation") benchmarkExposure = 250000;
+          else if (a.category === "permit") benchmarkExposure = 75000;
+          else if (a.category === "domain") benchmarkExposure = 50000;
+          else if (a.category === "tax") benchmarkExposure = 0;
+
+          return {
+            id: `passport-asset-${idx + 1}`,
+            sceneNumber: 1,
+            rawText: a.originalText,
+            category: (a.category as any) || "trademark",
+            description:
+              a.status === "licensed"
+                ? (a.licenseRef || "Active production synchronization license on file")
+                : `Pre-cleared safe harbor substitute: ${a.clearedAs || a.originalText}`,
+            status: (a.status as ClearanceStatus) || "cleared",
+            originalExposure: benchmarkExposure,
+            clearedExposure: 0,
+            defusedText: a.clearedAs || (a.status === "licensed" ? `${a.originalText} (Licensed Release On File)` : a.originalText),
+            citations: [],
+          };
+        });
+
+        const totalBenchmark = passportEntities.reduce((acc, e) => acc + e.originalExposure, 0);
         setEntities(passportEntities);
         setClearedEntityIds(passportEntities.filter((e) => e.status === "cleared").map((e) => e.id));
         setLicensedEntityIds(passportEntities.filter((e) => e.status === "licensed").map((e) => e.id));
-      }
+        setInitialExposure(totalBenchmark);
+        setCurrentExposure(0);
 
-      setInitialExposure(0);
-      setCurrentExposure(0);
+        // Auto-detect and restore tax credit jurisdiction and potential tax rebate
+        const taxAsset = passport.assets.find((a) => a.category === "tax");
+        const isNewMexico = taxAsset?.originalText.toUpperCase().includes("NEW MEXICO") || scriptToUse.toUpperCase().includes("NEW MEXICO");
+        const isGeorgia = taxAsset?.originalText.toUpperCase().includes("GEORGIA") || taxAsset?.originalText.toUpperCase().includes("ATLANTA") || taxAsset?.originalText.toUpperCase().includes("SAVANNAH") || scriptToUse.toUpperCase().includes("GEORGIA");
+        const isNewYork = taxAsset?.originalText.toUpperCase().includes("NEW YORK") || scriptToUse.toUpperCase().includes("NEW YORK");
+
+        if (isNewMexico) {
+          setTaxJurisdiction("New Mexico Film Credit (35% Tier)");
+          setTaxSavings(201250);
+        } else if (isGeorgia) {
+          setTaxJurisdiction("Georgia Film Tax Credit (30% QPE)");
+          setTaxSavings(255000);
+        } else if (isNewYork) {
+          setTaxJurisdiction("New York State Film Credit (30% QPE)");
+          setTaxSavings(255000);
+        }
+      } else {
+        setInitialExposure(0);
+        setCurrentExposure(0);
+      }
 
       const deliveredScript = scriptToUse;
       currentScriptRef.current = deliveredScript;
