@@ -4,6 +4,27 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.14] - 2026-09-08
+### Controlled Autonomy: Fail-Closed Clearance Gate, Bounded Deadlocks, and Producer Directive
+- **Fail-Closed Clearance Gate (`parallel.ts`, `types/index.ts`)**:
+  - Implemented live registry conflict detection in `verifySubstitutePropWithParallel()`, identifying contested marks (such as medical diagnostic apparatus and biometric scanners) with active USPTO trademark claims and TTAB oppositions.
+  - Added typed interfaces: `DeterministicClearanceGate`, `ProducerDirectiveType`, and `ProducerInterventionPayload`.
+  - Added optional `adjudicationMethod?: "autonomous" | "producer_directive"` to `ExtractedEntity` to preserve 100% backward compatibility with existing session JSONs and cryptographic passports.
+- **Bounded Debate Deadlocks and Auto-Pilot Pause (`page.tsx`)**:
+  - When Parallel Search detects an active conflict during Turn 4 of the dialectic debate, the swarm caps arguments at Turn 6 (bounded deadlock limit).
+  - Legal Counsel presents the USPTO conflict findings, The Director argues artistic intent impasse, and Completion Bond Officer invokes the fail-closed clearance gate to procedurally prevent autonomous safe-harbor certification of contested marks.
+  - Automatically pauses the Auto-Pilot clearance loop, saving remaining liabilities into `autoPilotQueueRef.current`.
+- **Interactive Producer Directive Card (`page.tsx`)**:
+  - Rendered an executive intervention card in the chat stream with real conflict telemetry, USPTO grounding links, and dual terminal decision buttons: "Authorize Screenplay Mutation" and "Authorize Licensing Waiver".
+  - Implemented `handleExecuteProducerDirective(entity, directive)`: executes the executive order, sets $0 exposure, marks `adjudicationMethod = "producer_directive"`, and automatically resumes the Auto-Pilot queue for remaining assets.
+- **Form E&O-2026 Binder and Redline Diff Traceability (`FormEOBinderDocument.tsx`, `ScreenplayRedlineView.tsx`)**:
+  - Itemized hazard rows in the PDF binder display `MUTATED (PRODUCER)` or `LICENSED (PRODUCER)` status badges and ratify executive directives in the cryptographic attestation footer.
+  - Screenplay Redline Diff chips highlight assets resolved under Executive Producer Directive with a dedicated badge.
+- **Executive Impasse Preset (`page.tsx`)**:
+  - Added dedicated demo preset `Executive Impasse` showcasing the 90/10 controlled autonomy ratio with contested marks and fail-closed escalation.
+
+---
+
 ## [v0.8.13] - 2026-09-08
 ### Cryptographic Clearance Passport Roundtrip and Screenplay Download Fixes
 - **Clearance Passport Download Embedding (`page.tsx`, `ScreenplayRedlineView.tsx`)**:

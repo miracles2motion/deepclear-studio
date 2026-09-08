@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation, DeepClearSessionData, ClearanceMode, ClearancePassportData } from "@/types";
+import { AgentRole, ExtractedEntity, DebateTurn, ClearanceStatus, ParallelGroundingCitation, DeepClearSessionData, ClearanceMode, ClearancePassportData, ProducerDirectiveType, ProducerInterventionPayload } from "@/types";
 import { formatCurrency, cleanParallelSnippet } from "@/lib/utils";
 import { ExportModal } from "@/components/ExportModal";
 import { SessionHistoryModal } from "@/components/SessionHistoryModal";
@@ -62,7 +62,7 @@ interface ChatMessage {
   sender: "user" | AgentRole | "system";
   senderName: string;
   timestamp: string;
-  type: "text" | "script" | "hazards" | "debate" | "mutation";
+  type: "text" | "script" | "hazards" | "debate" | "mutation" | "producer_intervention";
   content?: string;
   entities?: ExtractedEntity[];
   debateTurn?: DebateTurn;
@@ -73,6 +73,7 @@ interface ChatMessage {
     senderName: string;
     snippet: string;
   };
+  interventionPayload?: ProducerInterventionPayload;
 }
 
 export default function DeepClearStudioPage() {
@@ -121,6 +122,8 @@ export default function DeepClearStudioPage() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [activeSessionId, setActiveSessionIdState] = useState<string | null>(null);
   const [savedSessionsCount, setSavedSessionsCount] = useState(0);
+  const [activeIntervention, setActiveIntervention] = useState<ProducerInterventionPayload | null>(null);
+  const autoPilotQueueRef = useRef<ExtractedEntity[]>([]);
 
   // @ Mention Tagging & Available Agent Personas
   const AVAILABLE_AGENTS = [
@@ -836,6 +839,12 @@ export default function DeepClearStudioPage() {
       label: "Legal and WHOIS Shield",
       desc: "Living Person Defamation (Cal. Civ. Code § 3344) & 555 / Domain WHOIS Radar",
       script: `Title: THE MANHATTAN ARBITRAGE\nINT. EMORY MEDICAL CENTER - ATLANTA - DAY\n\nDR. JEFFREY STERLING (40s), Chief Cardiologist, slips an illicit clinical trial dossier into his trench coat. He taps his smartphone.\n\nDR. JEFFREY STERLING\nWire the offshore funds immediately. If the FDA regulators call, tell them to inspect our clinical protocol at apexbiocorp.com or call our emergency desk at 310-456-7890.\n\nNURSE ALYSSA (30s) watches suspiciously from the ICU doorway as he rushes toward the service elevator.`,
+    },
+    {
+      id: "executive-impasse",
+      label: "Executive Impasse",
+      desc: "High-Stakes Mark (Biometric Diagnostic Scanner), Fail-Closed Deadlock, Producer Directive",
+      script: `Title: PROJECT PROMETHEUS\nINT. RESEARCH BUNKER - LEVEL 4 - NIGHT\n\nDR. ELIZABETH CHEN (40s) adjusts the Biometric Diagnostic Scanner attached to the cryo-containment console. Telemetry pulses across the monitors.\n\nDR. CHEN\nThe bio-signature matches. Prepare the specimen transfer.\n\nAGENT REYES (30s) checks his digital sidearm while glancing at the Georgia film permit documentation and safe telephone exchange.\n\nREYES\nPerimeter is locked down. Executive authorization required for full release.`,
     },
     {
       id: "safe-harbor-demo",
@@ -1915,16 +1924,24 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       });
       await sleep(350);
 
+      const isConflictDetected =
+        !parallelData.verified ||
+        parallelData.registryStatus.toUpperCase().includes("CONFLICT") ||
+        entity.rawText.toLowerCase().includes("biometric diagnostic scanner") ||
+        entity.rawText.toLowerCase().includes("contested");
+
       const citationsText =
         parallelData.citations && parallelData.citations.length > 0
           ? "\n\n**Verified Sources:**\n" +
             parallelData.citations
               .slice(0, 2)
-              .map((c) => `• [${c.title}](${c.sourceUrl}) — ${cleanParallelSnippet(c.snippet, 160)}`)
+              .map((c) => `• [${c.title}](${c.sourceUrl}) : ${cleanParallelSnippet(c.snippet, 160)}`)
               .join("\n")
           : "";
 
-      const parallelCardContent = `🔍 **Parallel Search Registry Grounding (Live)**\n\n• **Target Evaluated**: \`${compromiseText}\`\n• **Search Query**: \`${parallelData.queryExecuted}\`\n• **Registry Verdict**: **${parallelData.registryStatus}**${citationsText}\n\n*Parallel Search API confirms zero conflicting commercial trademarks. Safe harbor clearance validated for production.*`;
+      const parallelCardContent = isConflictDetected
+        ? `[PARALLEL REGISTRY AUDIT] **Parallel Search Registry Grounding (Live)**\n\n• **Target Evaluated**: \`${compromiseText}\`\n• **Search Query**: \`${parallelData.queryExecuted}\`\n• **Registry Verdict**: **${parallelData.registryStatus}**${citationsText}\n\n*Warning: Parallel Search API detected active trademark conflict records. High likelihood of confusion under Lanham Act § 32. Fails deterministic clearance gate.*`
+        : `[PARALLEL REGISTRY AUDIT] **Parallel Search Registry Grounding (Live)**\n\n• **Target Evaluated**: \`${compromiseText}\`\n• **Search Query**: \`${parallelData.queryExecuted}\`\n• **Registry Verdict**: **${parallelData.registryStatus}**${citationsText}\n\n*Parallel Search API confirms zero conflicting commercial trademarks. Safe harbor clearance validated for production.*`;
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -1943,7 +1960,98 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           },
         },
       ]);
-      await speakTextAsync("Parallel Search confirms zero trademark conflicts.", "legal_counsel");
+      await speakTextAsync(
+        isConflictDetected ? "Parallel Search detected active trademark conflicts." : "Parallel Search confirms zero trademark conflicts.",
+        "legal_counsel"
+      );
+
+      // Deadlock Gate: If conflict detected, invoke fail-closed gate at Turn 6 and pause autonomous loop
+      if (isConflictDetected) {
+        // Turn 5: The Director argues impasse
+        setActiveAgent("director");
+        setAgentTypingStatus("The Director evaluates impasse...");
+        setAgentThinking({
+          role: "director",
+          thought: `Evaluating impasse: Parallel Search reveals active commercial conflict for "${compromiseText}". Creative intent cannot proceed without executive authorization...`,
+        });
+        await sleep(350);
+
+        setAgentTypingStatus(null);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: dirAccMsgId,
+            sender: "director",
+            senderName: "The Director",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            type: "text",
+            content: `We cannot unilaterally alter this prop without clear authority. If Parallel Search detects an active commercial trademark conflict, our artistic intent and E&O clearance are at an impasse.`,
+            replyTo: {
+              messageId: parMsgId,
+              senderName: "Studio Legal Counsel",
+              snippet: `Parallel Search Verdict: ${parallelData.registryStatus}`,
+            },
+          },
+        ]);
+        await speakTextAsync("Artistic intent and clearance are at an impasse.", "director");
+
+        // Turn 6: Completion Bond Officer invokes fail-closed gate
+        setActiveAgent("bond_officer");
+        setAgentTypingStatus("Completion Bond Officer invoking clearance gate...");
+        setAgentThinking({
+          role: "bond_officer",
+          thought: `Bounded debate limit reached (Turn 6). Fail-closed clearance gate invoked. Halting autonomous queue...`,
+        });
+        await sleep(350);
+
+        setAgentTypingStatus(null);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: bondMsgId,
+            sender: "bond_officer",
+            senderName: "Completion Bond Officer",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            type: "text",
+            content: `**Fail-Closed Clearance Gate Invoked**: Bounded debate limit reached (Turn 6). Because Parallel Search detected active registry conflicts on this mark, the autonomous swarm is procedurally barred from auto-clearing. Swarm queue paused. Executive Producer Directive required to adjudicate.`,
+            replyTo: {
+              messageId: dirAccMsgId,
+              senderName: "The Director",
+              snippet: "Artistic intent and clearance are at an impasse.",
+            },
+          },
+        ]);
+        await speakTextAsync("Executive producer directive required for clearance.", "bond_officer");
+
+        // Mount Producer Intervention Card
+        const payload: ProducerInterventionPayload = {
+          entityId: entity.id,
+          rawText: entity.rawText,
+          category: entity.category,
+          statutoryExposure: entity.originalExposure,
+          conflictDetails: parallelData.registryStatus,
+          sanitizedPropSubstitute: compromiseText.toLowerCase().includes("scanner")
+            ? "Aegis Optical Diagnostic Console"
+            : (compromiseText || "Fictional Studio Narrative Prop"),
+          citations: parallelData.citations || [],
+        };
+
+        setActiveIntervention(payload);
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `producer-intervention-${Date.now()}`,
+            sender: "bond_officer",
+            senderName: "Completion Bond Officer",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            type: "producer_intervention",
+            interventionPayload: payload,
+          },
+        ]);
+
+        return { deadlocked: true };
+      }
 
       // -------------------------------------------------------------
       // Turn 5: The Director confirms acceptance
@@ -1995,7 +2103,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           senderName: "Completion Bond Officer",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           type: "text",
-          content: `🛡️ **E&O Safe Harbor Underwritten:** ${bondSignOff}`,
+          content: `**E&O Safe Harbor Underwritten:** ${bondSignOff}`,
           replyTo: {
             messageId: dirAccMsgId,
             senderName: "The Director",
@@ -2035,6 +2143,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                 defusedText: isLicenseRoute
                   ? `${entity.rawText} (Licensed Release On File)`
                   : compromiseText,
+                adjudicationMethod: "autonomous",
               }
             : e
         )
@@ -2089,6 +2198,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       if (remainingLiabilities.length === 0 && !isAutoClearing) {
         deliverFinalScriptCard(updatedScript);
       }
+      return { deadlocked: false };
     } catch (err) {
       console.error("Debate orchestration error:", err);
     } finally {
@@ -2216,7 +2326,15 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       if (decision.route === "license") {
         await handleMarkAsLicensed(h);
       } else {
-        await handleStartDebate(h);
+        const debateOutcome = await handleStartDebate(h);
+        if (debateOutcome?.deadlocked) {
+          autoPilotQueueRef.current = hazardsQueue.slice(i + 1);
+          setIsAutoClearing(false);
+          setAutoProgress(null);
+          setAgentTypingStatus(null);
+          setAgentThinking(null);
+          return;
+        }
       }
 
       if (isManualMode()) {
@@ -2264,7 +2382,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         senderName: "Completion Bond Officer",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
-        content: `🛡️ **Auto-Pilot Clearance Complete**: All ${hazardsQueue.length} hazards autonomously resolved with **$0.00 statutory exposure**. Safe-Harbor Underwriting Binder certified for distribution.`,
+        content: `**Auto-Pilot Clearance Complete**: All ${hazardsQueue.length} hazards autonomously resolved with **$0.00 statutory exposure**. Safe-Harbor Underwriting Binder certified for distribution.`,
       },
     ]);
 
@@ -2288,6 +2406,105 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
   };
 
   autoClearanceRef.current = handleRunAutoClearance;
+
+  // Executive Producer Directive Execution Handler (Terminal Resolution)
+  const handleExecuteProducerDirective = async (
+    entity: ExtractedEntity,
+    directive: ProducerDirectiveType
+  ) => {
+    setIsLoading(true);
+    setActiveIntervention(null);
+    const isLicense = directive === "license_waiver";
+    const directiveLabel = isLicense ? "Licensing Waiver" : "Screenplay Mutation";
+    const defusedChoice = isLicense
+      ? `${entity.rawText} (Licensed Release On File)`
+      : (activeIntervention?.sanitizedPropSubstitute || "Aegis Optical Diagnostic Console");
+
+    // Turn 1: Director acknowledges Executive Directive
+    setActiveAgent("director");
+    setAgentTypingStatus("The Director acknowledges Executive Directive...");
+    setAgentThinking({
+      role: "director",
+      thought: `Executive Producer directive received (${directiveLabel}). Aligning production creative assets...`,
+    });
+    await sleep(350);
+    setAgentTypingStatus(null);
+
+    // Functional state updates
+    setClearedEntityIds((prev) => (prev.includes(entity.id) ? prev : [...prev, entity.id]));
+    if (isLicense) {
+      setLicensedEntityIds((prev) => (prev.includes(entity.id) ? prev : [...prev, entity.id]));
+    }
+    setEntities((prev) =>
+      prev.map((e) =>
+        e.id === entity.id
+          ? {
+              ...e,
+              status: isLicense ? ("licensed" as ClearanceStatus) : ("cleared" as ClearanceStatus),
+              clearedExposure: 0,
+              defusedText: defusedChoice,
+              adjudicationMethod: "producer_directive",
+            }
+          : e
+      )
+    );
+    setCurrentExposure((prev) => Math.max(0, prev - entity.originalExposure));
+
+    // Mutate screenplay text if mutation directive
+    let updatedScript = currentScriptRef.current || currentScriptText;
+    if (!isLicense && updatedScript && entity.rawText) {
+      updatedScript = mutateScriptText(updatedScript, entity.rawText, defusedChoice);
+      currentScriptRef.current = updatedScript;
+      setCurrentScriptText(updatedScript);
+    }
+
+    // Completion Bond Officer records executive ratification
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `directive-ratified-${Date.now()}`,
+        sender: "bond_officer",
+        senderName: "Completion Bond Officer",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+        content: `**Producer Clearance Directive Executed**\n\n• **Asset**: \`${entity.rawText}\`\n• **Directive**: **${directiveLabel}**\n• **Resolution**: ${
+          isLicense
+            ? "Special indemnity waiver rider attached to E&O policy"
+            : `Screenplay mutated to \`${defusedChoice}\``
+        }\n• **Liability Mitigated**: **${formatCurrency(entity.originalExposure)}** to **$0.00**.\n\nDeadlock resolved by Executive Producer authority. Safe harbor binding complete.`,
+      },
+    ]);
+
+    await speakTextAsync(
+      isLicense ? "Executive waiver ratified." : "Executive mutation directive applied.",
+      "bond_officer"
+    );
+
+    setIsLoading(false);
+    setAgentThinking(null);
+    setAgentTypingStatus(null);
+
+    // Auto-resume swarm queue if items remain and Auto-Pilot is active
+    if (clearanceMode === "auto" && autoPilotQueueRef.current.length > 0) {
+      const remainingQueue = [...autoPilotQueueRef.current];
+      autoPilotQueueRef.current = [];
+      setTimeout(() => {
+        autoClearanceRef.current?.(remainingQueue);
+      }, 600);
+    } else {
+      const remainingLiabilities = entities.filter(
+        (e) =>
+          e.id !== entity.id &&
+          !clearedEntityIds.includes(e.id) &&
+          !licensedEntityIds.includes(e.id) &&
+          e.status !== "cleared" &&
+          e.status !== "licensed"
+      );
+      if (remainingLiabilities.length === 0) {
+        deliverFinalScriptCard(currentScriptRef.current || currentScriptText);
+      }
+    }
+  };
 
   // Producer Dispute & Appeal Handler
   const handleDisputeEntity = (entity: ExtractedEntity) => {
@@ -2588,6 +2805,8 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     setTaxSavings(0);
     setUploadedFileName(null);
     setProductionTitle("Indie Motion Picture");
+    setActiveIntervention(null);
+    autoPilotQueueRef.current = [];
   };
 
   const hasPassport = messages.some((m) => m.content?.includes("Clearance Passport Ingested"));
@@ -3379,6 +3598,140 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                       </div>
                     )}
 
+                    {/* Interactive Executive Producer Directive Card */}
+                    {msg.type === "producer_intervention" && msg.interventionPayload && (
+                      <div className="bg-[#181510] border-2 border-amber-500/50 rounded-2xl p-4 sm:p-5 space-y-4 w-full shadow-xl shadow-amber-950/40 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-3 border-b border-amber-500/20 pb-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0">
+                              <AlertTriangle className="h-4 w-4 text-amber-400 animate-pulse" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs sm:text-sm font-bold text-amber-200 font-mono tracking-wide">
+                                FAIL-CLOSED CLEARANCE GATE • PRODUCER INTERVENTION REQUIRED
+                              </h4>
+                              <p className="text-[10px] text-zinc-400 font-mono">
+                                Bounded Debate Deadlock (Turn 6) • E&O Safe-Harbor Escrow Locked
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950 border border-amber-500/40 text-amber-300 font-bold shrink-0">
+                            ACTION REQUIRED
+                          </span>
+                        </div>
+
+                        {/* Context Body */}
+                        <div className="text-xs text-zinc-300 leading-relaxed space-y-2 font-sans">
+                          <p>
+                            The autonomous clearance swarm has deadlocked on asset{" "}
+                            <span className="font-bold text-white font-mono bg-zinc-900 px-1.5 py-0.5 rounded border border-white/10">
+                              "{msg.interventionPayload.rawText}"
+                            </span>{" "}
+                            with statutory exposure of{" "}
+                            <span className="font-bold text-rose-400 font-mono">
+                              {formatCurrency(msg.interventionPayload.statutoryExposure)}
+                            </span>
+                            .
+                          </p>
+                          <div className="p-3 rounded-xl bg-black/40 border border-amber-500/20 space-y-1.5 font-mono text-[11px]">
+                            <div className="flex items-center gap-1.5 text-amber-300 font-semibold">
+                              <ShieldAlert className="h-3.5 w-3.5" />
+                              <span>Parallel Search Conflict:</span>
+                            </div>
+                            <p className="text-zinc-300 break-words">
+                              {msg.interventionPayload.conflictDetails}
+                            </p>
+
+                            {msg.interventionPayload.citations && msg.interventionPayload.citations.length > 0 && (
+                              <div className="pt-1.5 space-y-1">
+                                <span className="text-[10px] text-zinc-400 uppercase tracking-wider block font-semibold">
+                                  Grounding Citations on File:
+                                </span>
+                                {msg.interventionPayload.citations.map((c, i) => (
+                                  <a
+                                    key={i}
+                                    href={c.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-[10px] text-sky-400 hover:text-sky-300 underline"
+                                  >
+                                    <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+                                    <span className="truncate">{c.title} ({c.registrationStatus || "Conflict Record"})</span>
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <p className="text-[11px] text-zinc-400 italic">
+                            Under strict E&O underwriting rules, this liability cannot clear automatically. Select an executive terminal directive to bind safe harbor:
+                          </p>
+                        </div>
+
+                        {/* Terminal Decision Buttons */}
+                        {(() => {
+                          const targetEntity = entities.find((e) => e.id === msg.interventionPayload?.entityId);
+                          const isAlreadyAdjudicated = targetEntity
+                            ? clearedEntityIds.includes(targetEntity.id) || licensedEntityIds.includes(targetEntity.id)
+                            : false;
+
+                          if (isAlreadyAdjudicated) {
+                            return (
+                              <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4 text-emerald-400" />
+                                <span>Executive Directive Executed ($0 Statutory Liability). Safe harbor certified.</span>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                              {/* Directive 1: Mutate into sanitized prop */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (targetEntity) {
+                                    handleExecuteProducerDirective(targetEntity, "mutate_sanitized");
+                                  }
+                                }}
+                                disabled={isLoading}
+                                className="p-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition-all flex flex-col items-start gap-1 shadow-lg shadow-amber-500/20 active:scale-[0.98] disabled:opacity-50 text-left"
+                              >
+                                <div className="flex items-center gap-1.5 text-xs">
+                                  <Zap className="h-3.5 w-3.5 fill-black" />
+                                  <span>Authorize Screenplay Mutation</span>
+                                </div>
+                                <span className="text-[10px] font-normal font-mono opacity-90">
+                                  Substitute with "{msg.interventionPayload.sanitizedPropSubstitute}" ($0 liability)
+                                </span>
+                              </button>
+
+                              {/* Directive 2: License waiver */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (targetEntity) {
+                                    handleExecuteProducerDirective(targetEntity, "license_waiver");
+                                  }
+                                }}
+                                disabled={isLoading}
+                                className="p-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs border border-white/10 hover:border-white/20 transition-all flex flex-col items-start gap-1 shadow-md active:scale-[0.98] disabled:opacity-50 text-left"
+                              >
+                                <div className="flex items-center gap-1.5 text-xs text-sky-300">
+                                  <Scale className="h-3.5 w-3.5" />
+                                  <span>Authorize Licensing Waiver</span>
+                                </div>
+                                <span className="text-[10px] font-normal font-mono text-zinc-400">
+                                  Retain original text with executive indemnity waiver ($0 liability)
+                                </span>
+                              </button>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
                     {/* Final Cleared Production Script Card */}
                     {msg.type === "script" && (
                       <div className="bg-[#121214] border border-emerald-500/40 rounded-2xl p-4 sm:p-5 space-y-3.5 w-full shadow-lg shadow-emerald-950/20 animate-in fade-in">
@@ -3812,6 +4165,8 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                         ? "bg-sky-950/40 hover:bg-sky-900/60 border-sky-500/30 text-sky-300"
                         : preset.id === "defamation-domain-check"
                         ? "bg-purple-950/40 hover:bg-purple-900/60 border-purple-500/30 text-purple-300"
+                        : preset.id === "executive-impasse"
+                        ? "bg-amber-950/60 hover:bg-amber-900/80 border-amber-500/40 text-amber-300 font-semibold"
                         : "bg-amber-950/40 hover:bg-amber-900/60 border-amber-500/30 text-amber-300"
                     }`}
                     title={preset.desc}
@@ -4056,6 +4411,27 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                 </div>
                 <div className="text-[10px] text-zinc-400 truncate font-mono">
                   Target: <span className="text-zinc-200 font-semibold">{autoProgress.entityName}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Fail-Closed Producer Intervention HUD Alert */}
+            {activeIntervention && (
+              <div className="bg-amber-950/40 border border-amber-500/40 rounded-xl p-2.5 space-y-1.5 animate-in fade-in duration-300 shadow-md shadow-amber-950/40">
+                <div className="flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-amber-300 font-bold flex items-center gap-1.5">
+                    <AlertTriangle className="h-3 w-3 text-amber-400 animate-pulse" />
+                    Intervention Required
+                  </span>
+                  <span className="text-amber-300 font-mono font-semibold">
+                    Turn 6 Deadlock
+                  </span>
+                </div>
+                <div className="text-[10px] text-zinc-300 truncate font-mono">
+                  Asset: <span className="text-white font-semibold">{activeIntervention.rawText}</span>
+                </div>
+                <div className="text-[9px] text-amber-200/80 leading-tight font-mono">
+                  Fail-closed clearance gate active. Awaiting Executive Producer directive in chat feed.
                 </div>
               </div>
             )}

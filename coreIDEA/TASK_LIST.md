@@ -37,3 +37,12 @@
   - [x] Add browser local storage session persistence with recent session restore.
   - [x] Add Screenplay Stutter Defense to clean up repeated words in dialogue.
   - [x] Verify clean TypeScript build with zero errors.
+
+- [x] Phase 8: Controlled Autonomy and Fail-Closed Clearance Gate
+  - [x] Implement live conflict detection for contested marks in Parallel Search verification.
+  - [x] Enforce bounded debate deadlocks (Turn 6) when active registry conflicts are detected.
+  - [x] Build fail-closed clearance gate that pauses Auto-Pilot queue on un-cleared marks.
+  - [x] Implement interactive Producer Intervention card with dual terminal directives (Mutate or License).
+  - [x] Implement automatic Auto-Pilot resumption upon human ratification.
+  - [x] Add Executive Impasse test preset showcasing 90/10 controlled autonomy ratio.
+  - [x] Reflect executive directives in Form E&O-2026 PDF binder and Redline Diff view.

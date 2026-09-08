@@ -63,6 +63,31 @@ export interface ExtractedEntity {
   defusedImageUrl?: string;
   originalImageUrl?: string;
   citations: ParallelGroundingCitation[];
+  adjudicationMethod?: "autonomous" | "producer_directive";
+}
+
+export interface DeterministicClearanceGate {
+  assetId: string;
+  rawText: string;
+  category: HazardCategory;
+  parallelVerified: boolean;
+  activeRegistryConflicts: number;
+  citations: ParallelGroundingCitation[];
+  verdict: "PASSED_UNCONTESTED" | "CONFLICT_DETECTED" | "INSUFFICIENT_EVIDENCE";
+  canAutoClear: boolean;
+  escalationReason?: string;
+}
+
+export type ProducerDirectiveType = "mutate_sanitized" | "license_waiver";
+
+export interface ProducerInterventionPayload {
+  entityId: string;
+  rawText: string;
+  category: HazardCategory;
+  statutoryExposure: number;
+  conflictDetails: string;
+  sanitizedPropSubstitute: string;
+  citations: ParallelGroundingCitation[];
 }
 
 export interface DebateTurn {
@@ -164,7 +189,7 @@ export interface DeepClearSessionData {
     sender: "user" | AgentRole | "system";
     senderName: string;
     timestamp: string;
-    type: "text" | "script" | "hazards" | "debate" | "mutation";
+    type: "text" | "script" | "hazards" | "debate" | "mutation" | "producer_intervention";
     content?: string;
     entities?: ExtractedEntity[];
     debateTurn?: DebateTurn;
@@ -173,6 +198,7 @@ export interface DeepClearSessionData {
       senderName: string;
       snippet: string;
     };
+    interventionPayload?: ProducerInterventionPayload;
   }>;
   passportData?: ClearancePassportData | null;
   originalScriptSnapshot?: string;

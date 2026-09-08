@@ -328,6 +328,11 @@ export default function ScreenplayRedlineView({
                 {entity.defusedText && (
                   <span className="text-zinc-400">→ <span className="text-zinc-200 font-semibold">{entity.defusedText}</span></span>
                 )}
+                {entity.adjudicationMethod === "producer_directive" && (
+                  <span className="text-[9px] uppercase px-1 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-semibold">
+                    PRODUCER
+                  </span>
+                )}
                 <span className="text-[9px] uppercase px-1 rounded bg-white/5 text-zinc-400">
                   {entity.category}
                 </span>

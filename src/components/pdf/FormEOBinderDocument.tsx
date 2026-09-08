@@ -429,9 +429,13 @@ export const FormEOBinderDocument: React.FC<FormEOBinderProps> = ({ report }) =>
 
               let subText = "Pending Crew Negotiation";
               if (isLicensed) {
-                subText = "Licensed (Release On File • Retained in Screenplay)";
+                subText = ent.adjudicationMethod === "producer_directive"
+                  ? "Licensed (Executive Producer Waiver Directive on File)"
+                  : "Licensed (Release On File • Retained in Screenplay)";
               } else if (isMutated) {
-                subText = ent.defusedText || "Cleared Narrative Prop";
+                subText = ent.adjudicationMethod === "producer_directive"
+                  ? `${ent.defusedText || "Cleared Narrative Prop"} (Executive Producer Directive)`
+                  : (ent.defusedText || "Cleared Narrative Prop");
               }
 
               return (
@@ -488,11 +492,15 @@ export const FormEOBinderDocument: React.FC<FormEOBinderProps> = ({ report }) =>
                   <View style={[styles.cellBox, styles.colStatus, { alignItems: "flex-end" }]}>
                     {isLicensed ? (
                       <View style={styles.badgeLicensed}>
-                        <Text style={styles.badgeLicensedText}>LICENSED</Text>
+                        <Text style={styles.badgeLicensedText}>
+                          {ent.adjudicationMethod === "producer_directive" ? "LICENSED (PRODUCER)" : "LICENSED"}
+                        </Text>
                       </View>
                     ) : isMutated ? (
                       <View style={styles.badgeMutated}>
-                        <Text style={styles.badgeMutatedText}>MUTATED</Text>
+                        <Text style={styles.badgeMutatedText}>
+                          {ent.adjudicationMethod === "producer_directive" ? "MUTATED (PRODUCER)" : "MUTATED"}
+                        </Text>
                       </View>
                     ) : (
                       <View style={styles.badgeHazard}>
@@ -517,9 +525,7 @@ export const FormEOBinderDocument: React.FC<FormEOBinderProps> = ({ report }) =>
             {report.onChainTxHash || "0x7f9a2b8e4c1d63ea0b8891f7c234a985d1e44f80219c6e3b"}
           </Text>
           <Text style={styles.cryptoNote}>
-            Attestation by DeepClear Multi-Agent Crew Swarm (Legal Counsel, Script Supervisor,
-            Director, Location Manager, and Completion Bond Officer). This binder provides statutory
-            indemnity safe harbor under Form E&O-2026 entertainment insurance protocols.
+            Attestation by DeepClear Multi-Agent Crew Swarm (Legal Counsel, Script Supervisor, Location Manager, and Completion Bond Officer). Validated against live USPTO and public registries via Parallel Web Systems. All executive overrides ratified under Producer Clearance Directive protocol on file.
           </Text>
         </View>
       </Page>
