@@ -5,115 +5,140 @@ Theme: Dark Mode (Dark Charcoal Canvas, Zinc Panels, Emerald Green for Cleared i
 
 ---
 
-## 1. Desktop Viewport (Screen Width 1024px and Above)
+## 1. Desktop Viewport (1024px and Above)
 
-On desktop screens, the app displays a full 3-column studio layout:
-
-```
-+-----------------------------------------------------------------------------------------------------+
-|     LEFT COLUMN (260px)  |           MIDDLE COLUMN (WORKSPACE)          |    RIGHT COLUMN (300px)   |
-|                          |                                              |                           |
-|  5-Agent Crew Swarm      |  Google Gemini Chat and Workspace            |  E&O Underwriting HUD     |
-|  - Completion Bond Off.  |  - Chat feed with agent discussions          |  - Total legal exposure   |
-|  - Script Supervisor     |  - Pinned quick-negotiate action chips       |  - Georgia 30% tax credit |
-|  - Studio Legal Counsel  |  - Side-by-side script Redline Diff view     |  - Distribution status    |
-|  - Location Manager      |  - Prompt bar for questions or script input  |  - Export Form E&O PDF    |
-|  - The Director          |                                              |                           |
-|                          |                                              |  Parallel Inspector       |
-|  Auto-Pilot / Manual     |                                              |  - Search query records   |
-|  Speech Audio Toggle     |                                              |  - Trademark classes      |
-+-----------------------------------------------------------------------------------------------------+
-```
-
----
-
-## 2. Tablet Viewport (Screen Width 768px to 1023px)
-
-On tablet screens, the left crew list collapses into an accessible top navigation drawer or header selector, giving the middle workspace and the legal HUD plenty of breathing room:
+On desktop monitors, DeepClear Studio displays the full 3-column layout:
 
 ```
-+---------------------------------------------------------------------------------------+
-|  TOP HEADER BAR                                                                       |
-|  DeepClear Studio   [Crew: 5 Agents v]   [Auto-Pilot: ON]   [Audio: ON]   [History]   |
-+---------------------------------------------------------------------------------------+
-|           WORKSPACE (FLEX)                     |      E&O UNDERWRITING (280px)        |
-|                                                |                                      |
-|  [Swarm Chat]   [Screenplay Redline]           |  Financial Exposure: $0 (CLEARED)    |
-|                                                |  Georgia 30% Tax Rebate: +$157,500   |
-|  - Agent debate turns and legal advice         |  Distribution Status: APPROVED       |
-|  - Verified Parallel Search citations          |  [Export Form E&O PDF]               |
-|  - Side-by-side screenplay diff comparison     |                                      |
-|                                                |  Resolved Assets Ledger (3 items)    |
-|  Pinned Quick Presets:                         |  - Apple Vision Pro [Dispute]        |
-|  [Cyber Heist] [Southern Gothic] [Legal 555]   |  - Tesla Cybertruck [Dispute]        |
-|                                                |                                      |
-|  Prompt Bar:                                   |  Parallel Inspector Button           |
-|  [Ask crew or paste scene...]        [Send]    |  [Inspect Search Telemetry ->]       |
-+---------------------------------------------------------------------------------------+
++---------------------------------------------------------------------------------------------------------+
+| [DeepClear Studio]  [+ New] [History: 3] [Export JSON] | [Presets: Cyber Heist | Southern Gothic | 555] |
++---------------------------------------------------------------------------------------------------------+
+| LEFT: CREW ROSTER (260px)  | MIDDLE: WORKSPACE (FLEX-1)             | RIGHT: E&O UNDERWRITING (300px)   |
+|                            |                                        |                                   |
+| Mode: [Auto-Pilot|Manual]  | View: [ Swarm Chat ] [ Redline Diff ]  | E&O Status: Form E&O-2026         |
+|                            |                                        |                                   |
+| Studio Crew Swarm:         | Chat Feed:                             | Statutory Liability:              |
+| - Completion Bond Officer  | - Welcome message & file upload prompt | $0 (CLEARED)                      |
+| - Script Supervisor        | - Identified hazards card (3 detected) |                                   |
+| - Studio Legal Counsel     | - Agent debate dialogue cards          | Tax Rebate Unlocked:              |
+| - Location & Art Manager   | - Parallel Search verification cards   | +$157,500 (Georgia 30%)           |
+| - The Director             |                                        |                                   |
+|                            | Pinned Quick Action Presets:           | Distribution Risk:                |
+| Audio Voice Synthesis:     | [Cyber Heist] [Southern Gothic] [555]  | APPROVED (Safe Harbor)            |
+| [Voice: Active] [Mute]     |                                        |                                   |
+|                            | Prompt Input Bar:                      | Resolved Assets Ledger (3 items): |
+| System Status:             | [Ask crew or paste screenplay scene]   | - Apple Vision Pro [Dispute]      |
+| Live USPTO Grounding       | [Attach File] [Generate Scene]  [Send] | - Tesla Cybertruck [Dispute]      |
+| ~40ms Registry Index       |                                        | - Radiohead Track  [Dispute]      |
+|                            |                                        |                                   |
+|                            |                                        | [ Export Form E&O-2026 PDF ]      |
++---------------------------------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 3. Mobile Viewport (Screen Width Under 768px)
+## 2. Tablet and Mobile Viewports (Under 1024px)
 
-On mobile phones, the screen stacks into a clean single-column view. Top tabs let users switch effortlessly between Chat, Script Redline, and the Insurance HUD without horizontal overflow:
+On tablet and mobile screens (under 1024px), the screen uses an app-style top header with a 3-way segmented view switcher: **Chat**, **Crew**, and **Risk**. Tapping any tab switches the view without horizontal scrolling.
+
+### View A: Chat Tab (Active by Default)
+This shows the middle workspace, the debate cards, and the prompt input box:
 
 ```
-+---------------------------------------------------+
-|  DeepClear Studio                 [History] [Mute]|
-|  Mode: [Auto-Pilot | Manual]                      |
-+---------------------------------------------------+
-|  VIEW TABS:                                       |
-|  [ Chat ]        [ Redline Diff ]        [ HUD ]  |
-+---------------------------------------------------+
-|  ACTIVE TAB VIEW (Chat Mode)                      |
-|                                                   |
-|  Agent Dialogue Feed:                             |
-|  - Script Supervisor: Flags brand liability       |
-|  - Legal Counsel: Cites Lanham Act Section 43     |
-|  - Director: Proposes narrative prop replacement  |
-|                                                   |
-|  Parallel Search Card:                            |
-|  Target: "spatial computing headset"              |
-|  Status: PASSED (0 conflicts)                     |
-|                                                   |
-|  Presets:                                         |
-|  [Cyber Heist] [Southern Gothic] [Legal 555]      |
-|                                                   |
-|  Prompt Bar:                                      |
-|  [Type a message or question...]          [Send]  |
-+---------------------------------------------------+
-|  BOTTOM BAR: Exposure: $0  |  [Export PDF]        |
-+---------------------------------------------------+
++-------------------------------------------------------------------------+
+| [Logo] DeepClear    [ Chat (active) | Crew | Risk ]    [Export] [Mute]  |
++-------------------------------------------------------------------------+
+| View Switcher: [ Swarm Chat ]  [ Screenplay Redline Diff ]              |
+|                                                                         |
+| Chat Stream:                                                            |
+| - Script Supervisor: Identified 3 risks in Scene 1                      |
+| - Studio Legal Counsel: Lanham Act trademark dilution on Vision Pro     |
+| - The Director: Proposes narrative replacement "spatial headset"        |
+|                                                                         |
+| Parallel Search Verification Card:                                      |
+| Target: "spatial computing headset"                                     |
+| Verdict: PASSED (0 conflicting USPTO registrations)                     |
+|                                                                         |
+| Pinned Test Presets:                                                    |
+| [Cyber Heist] [Southern Gothic] [Legal 555] [Cleared Masterpiece]       |
+|                                                                         |
+| Prompt Bar:                                                             |
+| +---------------------------------------------------------------------+ |
+| | @legal_counsel what are the risks of using this real hospital?     | |
+| +---------------------------------------------------------------------+ |
+| [Attach File] [Generate Scene with Gemini]                       [Send] |
++-------------------------------------------------------------------------+
 ```
 
 ---
 
-## 4. Mobile Bottom Sheet Drawers
+### View B: Crew Tab
+When the user taps **Crew** in the top bar, the 5 studio agents and operating controls fill the screen:
 
-On mobile screens, detailed inspection views open as smooth bottom-sheet drawers that slide up from the bottom of the screen:
-- Parallel Inspector Drawer: Slides up from the bottom to display search queries, timestamps, and trademark classes with touch scrolling.
-- Resolved Assets Sheet: Lets filmmakers review cleared items and tap Dispute on the go.
+```
++-------------------------------------------------------------------------+
+| [Logo] DeepClear    [ Chat | Crew (active) | Risk ]    [Export] [Mute]  |
++-------------------------------------------------------------------------+
+| Session Controls:                                                       |
+| [+ New Session]  [Import JSON]  [History: 3 saved]  [Export JSON]       |
+|                                                                         |
+| Operating Mode:                                                         |
+| [ Zap Auto-Pilot Active (Default) ]   [ User Manual Active ]            |
+|                                                                         |
+| Autonomous Crew Swarm (Tap agent to tag in chat):                       |
+| +---------------------------------------------------------------------+ |
+| | Completion Bond Officer        - Actuarial Underwriter (Idle)       | |
+| +---------------------------------------------------------------------+ |
+| | Script Supervisor              - Token & Stutter Scrubber (Idle)    | |
+| +---------------------------------------------------------------------+ |
+| | Studio Legal Counsel           - Trademark & Case Law Auditor       | |
+| +---------------------------------------------------------------------+ |
+| | Location & Art Manager         - Permits & Georgia 30% Tax Rebate   | |
+| +---------------------------------------------------------------------+ |
+| | The Director                   - Narrative Vision & Fair Use        | |
+| +---------------------------------------------------------------------+ |
+|                                                                         |
+| Speech Controls: [Voice: Active] [Mute Audio]                           |
++-------------------------------------------------------------------------+
+```
 
 ---
 
-## 5. Column and Component Breakdown
+### View C: Risk Tab (E&O Underwriting HUD)
+When the user taps **Risk** in the top bar, the full legal and insurance status dashboard fills the screen:
 
-### Left Section: Studio Crew
-- Branding: DeepClear Studio header with New Session and History controls.
-- 5-Agent Roster: Cards for Completion Bond Officer, Script Supervisor, Studio Legal Counsel, Location Manager, and The Director.
-- Mode Selector: Segmented toggle between Auto-Pilot and Manual mode.
-- Speech Toggle: One-click button to mute or unmute agent voice reading.
+```
++-------------------------------------------------------------------------+
+| [Logo] DeepClear    [ Chat | Crew | Risk (active) ]    [Export] [Mute]  |
++-------------------------------------------------------------------------+
+| E&O Underwriting Status (Form E&O-2026)                                 |
+|                                                                         |
+| Statutory Liability:                                                    |
+| $0 (CLEARED)                                      Initial: $500,000     |
+|                                                                         |
+| Tax Rebate Unlocked:                                                    |
+| +$157,500                                        Georgia 30% QPE Credit |
+|                                                                         |
+| Distribution Status:                                                    |
+| APPROVED (Safe Harbor Policy Rider Certified)                           |
+|                                                                         |
+| Parallel Search Telemetry:                                              |
+| [ Inspect Live Grounding Records -> ]                                   |
+|                                                                         |
+| Resolved Assets Ledger (3 items):                                       |
+| - Apple Vision Pro -> spatial computing headset        [ Dispute ]      |
+| - Tesla Cybertruck -> matte-black utility truck        [ Dispute ]      |
+| - Radiohead Idioteque -> aggressive electronic track   [ Dispute ]      |
+|                                                                         |
+| Actions:                                                                |
+| [ Export Form E&O-2026 PDF Underwriting Binder ]                        |
++-------------------------------------------------------------------------+
+```
 
-### Middle Section: Workspace
-- Sub-Navigation: Clean tab switcher between Swarm Chat and Screenplay Redline view.
-- Chat Stream: Shows agent discussions, detected risks, and verified Parallel Search citation cards.
-- Quick Presets: Curated 1-click test buttons (Cyber Heist, Southern Gothic, Legal and WHOIS Shield, Cleared Masterpiece) placed directly above the input bar.
-- Prompt Bar: Auto-expanding text box with an attachment button, Generate Scene button, and Send button.
+---
 
-### Right Section: E&O Underwriting Status
-- Financial Risk Card: Real-time dollar exposure meter.
-- Tax Savings Card: Shows qualified state film tax credits (such as Georgia 30%).
-- Resolved Assets Ledger: Lists all cleared and licensed items with a 1-click Dispute button for human review.
-- Export Button: Downloads the official Form E&O-2026 PDF binder.
-- Parallel Inspector Drawer: Slide-out panel for inspecting exact search IDs, query formulations, and USPTO international classes.
+## 3. Responsive Sliding Drawers
+
+Regardless of screen size, two detailed telemetry drawers slide into view when requested:
+- **Parallel Grounding Inspector Drawer**: Slides out from the right on desktop, or from the bottom on mobile, displaying full search queries, response times in milliseconds, and USPTO international classes.
+- **Session History Modal**: Centered modal on desktop and full-width on mobile with search, timestamps, and one-click session restore.
