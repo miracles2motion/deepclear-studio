@@ -1,13 +1,13 @@
 ---
 name: task-sync
 description: >-
-  Use this skill to automatically synchronize progress with coreIDEA/TASK_LIST.md.
+  Use this skill to automatically synchronize progress with tasks/TASK_LIST.md.
   Marks completed phases and checkboxes cleanly as milestones are met.
 ---
 
 # Task List Synchronizer
 
-Fast utility for keeping `coreIDEA/TASK_LIST.md` accurately updated with the project's actual build state.
+Fast utility for keeping `tasks/TASK_LIST.md` accurately updated with the project's actual build state.
 
 ## When to Use
 

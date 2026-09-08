@@ -46,5 +46,5 @@ Super-fast engine for maintaining an interactive, high-impact `README.md` for ha
 
 1. **Speed & Precision**: Perform single-pass contiguous edits or cleanly overwrite the root `README.md` when restructuring.
 2. **Visual Richness**: Use emojis, clean markdown tables, callout blocks (`> [!TIP]`, `> [!IMPORTANT]`), and syntax-highlighted blocks.
-3. **Keep Ground Truth Synced**: Pull actual package names and component details from `package.json` and `coreIDEA/` files so there is no drift.
+3. **Keep Ground Truth Synced**: Pull actual package names and component details from `package.json` and `tasks/` files so there is no drift.
 4. **Auto-Push Trigger**: Once the README is updated, prompt or trigger `auto-push` to keep GitHub live.

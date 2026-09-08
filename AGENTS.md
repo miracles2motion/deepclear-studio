@@ -14,7 +14,7 @@ You are the lead engineering agent for DeepClear Studio. Adhere to these guideli
 
 ## 3. Automatic State & Progress Synchronization
 - **Changelog**: When resolving an error or bug, automatically note it in logs/CHANGELOG.md.
-- **Task List**: After completing a task in coreIDEA/TASK_LIST.md, check off the corresponding item.
+- **Task List**: After completing a task in tasks/TASK_LIST.md, check off the corresponding item.
 - **Git Sync**: Use auto-push to keep GitHub synchronized after milestone completions.
 - **Desktop Knowledge Sync**: Always update the knowledge deepclear folder on the desktop (C:\Users\dd\Desktop\knowledge deepclear) whenever features, architecture, or documentation are added or modified, keeping PRODUCT_BRIEF.md and about.md strictly synchronized with the codebase.
 
