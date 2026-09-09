@@ -63,61 +63,68 @@ export async function POST(req: NextRequest) {
 
           const entities: ExtractedEntity[] = geminiResult.entities || [];
 
-          // 3. Process each detected entity with live Parallel Search
-          for (const entity of entities) {
-            sendEvent({
-              type: "AGENT_THOUGHT",
-              agent: "script_supervisor",
-              payload: {
-                message: `Identified liability: "${entity.rawText}" (${entity.category.toUpperCase()}) - ${entity.description}`,
-                entityId: entity.id,
-              },
-            });
+          // 3. Process detected entities with live Parallel Search using bounded concurrency (batch size = 2)
+          // Cuts search latency by 50% while guaranteeing burst connection count never exceeds 2
+          const BATCH_SIZE = 2;
+          for (let i = 0; i < entities.length; i += BATCH_SIZE) {
+            const batch = entities.slice(i, i + BATCH_SIZE);
+            await Promise.all(
+              batch.map(async (entity) => {
+                sendEvent({
+                  type: "AGENT_THOUGHT",
+                  agent: "script_supervisor",
+                  payload: {
+                    message: `Identified liability: "${entity.rawText}" (${entity.category.toUpperCase()}) - ${entity.description}`,
+                    entityId: entity.id,
+                  },
+                });
 
-            sendEvent({
-              type: "PARALLEL_QUERY",
-              agent: "legal_counsel",
-              payload: {
-                query: entity.rawText,
-                category: entity.category,
-                message: `Executing live Parallel Search query for "${entity.rawText}" in ${entity.category.toUpperCase()} registry...`,
-              },
-            });
+                sendEvent({
+                  type: "PARALLEL_QUERY",
+                  agent: "legal_counsel",
+                  payload: {
+                    query: entity.rawText,
+                    category: entity.category,
+                    message: `Executing live Parallel Search query for "${entity.rawText}" in ${entity.category.toUpperCase()} registry...`,
+                  },
+                });
 
-            try {
-              const citations = await searchParallelGrounding({
-                query: entity.rawText,
-                category:
-                  entity.category === "trademark" ||
-                  entity.category === "permit" ||
-                  entity.category === "caselaw" ||
-                  entity.category === "tax" ||
-                  entity.category === "defamation" ||
-                  entity.category === "domain"
-                    ? entity.category
-                    : "trademark",
-              });
+                try {
+                  const citations = await searchParallelGrounding({
+                    query: entity.rawText,
+                    category:
+                      entity.category === "trademark" ||
+                      entity.category === "permit" ||
+                      entity.category === "caselaw" ||
+                      entity.category === "tax" ||
+                      entity.category === "defamation" ||
+                      entity.category === "domain"
+                        ? entity.category
+                        : "trademark",
+                  });
 
-              entity.citations = citations;
+                  entity.citations = citations;
 
-              sendEvent({
-                type: "PARALLEL_RESULT",
-                agent: "legal_counsel",
-                payload: {
-                  entityId: entity.id,
-                  citations,
-                  message: `Retrieved ${citations.length} verified live citations from Parallel Search.`,
-                },
-              });
-            } catch (parallelErr) {
-              sendEvent({
-                type: "AGENT_THOUGHT",
-                agent: "legal_counsel",
-                payload: {
-                  message: `Parallel Search note: ${(parallelErr as Error).message}`,
-                },
-              });
-            }
+                  sendEvent({
+                    type: "PARALLEL_RESULT",
+                    agent: "legal_counsel",
+                    payload: {
+                      entityId: entity.id,
+                      citations,
+                      message: `Retrieved ${citations.length} verified live citations from Parallel Search.`,
+                    },
+                  });
+                } catch (parallelErr) {
+                  sendEvent({
+                    type: "AGENT_THOUGHT",
+                    agent: "legal_counsel",
+                    payload: {
+                      message: `Parallel Search note: ${(parallelErr as Error).message}`,
+                    },
+                  });
+                }
+              })
+            );
           }
 
           // 4. Bond Officer Risk Calculation & Underwriting Thought
