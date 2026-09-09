@@ -11,6 +11,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 **Live Demo:** [https://deepclear-studio.vercel.app](https://deepclear-studio.vercel.app)  
+**Youtube Demo:** [https://youtu.be/_SuDTFCkzV8](https://youtu.be/_SuDTFCkzV8)
 **Hackathon Track:** Google Cloud Agentic Cinema (Parallel Track)
 
 ---
