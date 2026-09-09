@@ -77,6 +77,25 @@ export default function ScreenplayRedlineView({
   const isPartiallyCleared = resolvedEntities.length > 0 && pendingEntities.length > 0;
   const lastResolved = resolvedEntities.length > 0 ? resolvedEntities[resolvedEntities.length - 1] : null;
 
+  // Split both scripts into synchronized line-by-line rows for eye-level comparison
+  const origLines = baseOriginal.trimEnd().split("\n");
+  const clearedLines = baseCleared.trimEnd().split("\n");
+  const maxLines = Math.max(origLines.length, clearedLines.length);
+
+  const diffRows = Array.from({ length: maxLines }, (_, idx) => {
+    const orig = origLines[idx] ?? "";
+    const cleared = clearedLines[idx] ?? "";
+    const isModified = orig !== cleared;
+    const isBlank = orig.trim() === "" && cleared.trim() === "";
+    return {
+      lineNum: idx + 1,
+      orig,
+      cleared,
+      isModified,
+      isBlank,
+    };
+  });
+
   // Segment and highlight original text with red pending liabilities / muted cleared tokens
   const renderHighlightedOriginal = (text: string) => {
     if (!text || entities.length === 0) return text;
@@ -338,88 +357,150 @@ export default function ScreenplayRedlineView({
         </div>
       </div>
 
-      {/* Screenplay Content Body */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* ============================================================== */}
-        {/* LEFT COLUMN: Original Script with Liabilities Highlighted */}
-        {/* ============================================================== */}
+      {/* ============================================================== */}
+      {/* COLUMN HEADERS (Fixed at top of split view)                   */}
+      {/* ============================================================== */}
+      <div className="flex border-b border-white/[0.08] bg-[#141418] shrink-0">
+        {/* Left Column Header */}
         <div
-          className={`flex-1 flex-col border-r border-white/[0.08] bg-[#0d0d10] overflow-hidden ${
+          className={`flex-1 p-2.5 px-4 bg-rose-950/20 border-r border-white/[0.08] items-center justify-between text-[11px] font-mono text-rose-300 ${
             mobileMode === "original" || mobileMode === "split" ? "flex" : "hidden lg:flex"
           }`}
         >
-          <div className="p-2.5 px-4 bg-rose-950/20 border-b border-rose-500/20 flex items-center justify-between text-[11px] font-mono text-rose-300 shrink-0">
-            <span className="flex items-center gap-1.5 font-semibold">
-              <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
-              <span>Original Screenplay Draft</span>
-            </span>
-            <span className="text-[10px] text-zinc-500">Uncleared Raw Text</span>
-          </div>
-
-          <div className="flex-1 p-4 sm:p-5 overflow-y-auto font-mono text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap selection:bg-rose-500/30 scrollbar-thin scrollbar-thumb-zinc-800">
-            {renderHighlightedOriginal(baseOriginal)}
-          </div>
+          <span className="flex items-center gap-1.5 font-semibold">
+            <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
+            <span>Original Screenplay Draft</span>
+          </span>
+          <span className="text-[10px] text-zinc-500">Uncleared Raw Text</span>
         </div>
 
-        {/* ============================================================== */}
-        {/* RIGHT COLUMN: Cleared Production Script with Parallel Chips */}
-        {/* ============================================================== */}
+        {/* Right Column Header */}
         <div
-          className={`flex-1 flex-col bg-[#0f0f13] overflow-hidden ${
+          className={`flex-1 p-2.5 px-4 bg-emerald-950/20 items-center justify-between text-[11px] font-mono text-emerald-300 ${
             mobileMode === "cleared" || mobileMode === "split" ? "flex" : "hidden lg:flex"
           }`}
         >
-          <div className="p-2.5 px-4 bg-emerald-950/20 border-b border-emerald-500/20 flex items-center justify-between text-[11px] font-mono text-emerald-300 shrink-0">
-            <span className="flex items-center gap-1.5 font-semibold">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Adjudicated Production Script</span>
+          <span className="flex items-center gap-1.5 font-semibold">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Adjudicated Production Script</span>
+          </span>
+          {isFullyCleared ? (
+            <span className="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1">
+              <ShieldCheck className="h-3 w-3" />
+              <span>E&O EVIDENCE READY (100% RESOLVED)</span>
             </span>
-            {isFullyCleared ? (
-              <span className="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1">
-                <ShieldCheck className="h-3 w-3" />
-                <span>E&O EVIDENCE READY (100% RESOLVED)</span>
-              </span>
-            ) : isPartiallyCleared ? (
-              <span className="text-[10px] text-sky-400 font-semibold px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 flex items-center gap-1 animate-pulse">
-                <Zap className="h-3 w-3" />
-                <span>LIVE UPDATE: {resolvedEntities.length} OF {entities.length} CLEARED</span>
-              </span>
-            ) : (
-              <span className="text-[10px] text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                <span>AWAITING CLEARANCE (0 OF {entities.length})</span>
+          ) : isPartiallyCleared ? (
+            <span className="text-[10px] text-sky-400 font-semibold px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 flex items-center gap-1 animate-pulse">
+              <Zap className="h-3 w-3" />
+              <span>LIVE UPDATE: {resolvedEntities.length} OF {entities.length} CLEARED</span>
+            </span>
+          ) : (
+            <span className="text-[10px] text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              <span>AWAITING CLEARANCE (0 OF {entities.length})</span>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* ============================================================== */}
+      {/* FULL-WIDTH LIVE CLEARANCE UPDATE TICKER BANNER                 */}
+      {/* ============================================================== */}
+      {lastResolved && (
+        <div className="p-2.5 px-4 bg-emerald-950/40 border-b border-emerald-500/30 flex items-center justify-between gap-2 text-xs font-mono text-emerald-200 animate-in fade-in slide-in-from-top-2 duration-300 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-zinc-400 text-[11px] shrink-0">Live Clearance Update:</span>
+            <span className="line-through text-rose-300 font-semibold truncate max-w-[140px] sm:max-w-[200px]">{lastResolved.rawText}</span>
+            <span className="text-emerald-400 font-bold shrink-0">→</span>
+            <span className="text-emerald-300 font-semibold truncate max-w-[160px] sm:max-w-[240px]">{lastResolved.defusedText || "Cleared"}</span>
+            {lastResolved.adjudicationMethod === "producer_directive" && (
+              <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold shrink-0">
+                PRODUCER DIRECTIVE
               </span>
             )}
           </div>
+          <span className="text-[10px] text-emerald-400/90 shrink-0">
+            {resolvedEntities.length}/{entities.length} Resolved
+          </span>
+        </div>
+      )}
 
-          {/* Live Sequential Resolution Pop-Up Banner */}
-          {lastResolved && (
-            <div className="p-2.5 px-4 bg-emerald-950/40 border-b border-emerald-500/30 flex items-center justify-between gap-2 text-xs font-mono text-emerald-200 animate-in fade-in slide-in-from-top-2 duration-300 shrink-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="text-zinc-400 text-[11px] shrink-0">Live Clearance Update:</span>
-                <span className="line-through text-rose-300 font-semibold truncate max-w-[120px]">{lastResolved.rawText}</span>
-                <span className="text-emerald-400 font-bold shrink-0">→</span>
-                <span className="text-emerald-300 font-semibold truncate max-w-[140px]">{lastResolved.defusedText || "Cleared"}</span>
-                {lastResolved.adjudicationMethod === "producer_directive" && (
-                  <span className="text-[9px] uppercase px-1 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold shrink-0">
-                    PRODUCER DIRECTIVE
-                  </span>
+      {/* ============================================================== */}
+      {/* UNIFIED SYNCHRONIZED LINE-BY-LINE DIFF BODY                    */}
+      {/* ============================================================== */}
+      <div className="flex-1 overflow-y-auto font-mono text-xs scrollbar-thin scrollbar-thumb-zinc-800 divide-y divide-white/[0.04]">
+        {diffRows.map((row) => (
+          <div
+            key={row.lineNum}
+            className={`flex transition-colors ${
+              row.isModified
+                ? "bg-white/[0.015]"
+                : "hover:bg-white/[0.01]"
+            }`}
+          >
+            {/* Left Cell (Original Draft) */}
+            <div
+              className={`flex-1 border-r border-white/[0.08] flex min-w-0 ${
+                row.isModified ? "bg-rose-950/[0.08]" : "bg-[#0d0d10]"
+              } ${
+                mobileMode === "original" || mobileMode === "split" ? "flex" : "hidden lg:flex"
+              }`}
+            >
+              {/* Line Gutter */}
+              <div
+                className={`w-9 py-1 pr-2 select-none text-right font-mono text-[10px] shrink-0 border-r border-white/[0.05] ${
+                  row.isModified
+                    ? "text-rose-400/80 bg-rose-950/20 font-semibold"
+                    : "text-zinc-600 bg-black/20"
+                }`}
+              >
+                {row.isBlank ? "" : row.lineNum}
+              </div>
+
+              {/* Line Content */}
+              <div className="flex-1 p-1 px-3 sm:px-4 text-zinc-300 leading-relaxed whitespace-pre-wrap break-words min-w-0">
+                {row.isBlank ? (
+                  <div className="min-h-[1.25rem] select-none">&nbsp;</div>
+                ) : (
+                  renderHighlightedOriginal(row.orig)
                 )}
               </div>
-              <span className="text-[10px] text-emerald-400/90 shrink-0">
-                {resolvedEntities.length}/{entities.length} Resolved
-              </span>
             </div>
-          )}
 
-          <div className="flex-1 p-4 sm:p-5 overflow-y-auto font-mono text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap selection:bg-emerald-500/30 scrollbar-thin scrollbar-thumb-zinc-800">
-            {renderHighlightedAdjudicated(baseCleared)}
+            {/* Right Cell (Adjudicated Production Script) */}
+            <div
+              className={`flex-1 flex min-w-0 ${
+                row.isModified ? "bg-emerald-950/[0.12]" : "bg-[#0f0f13]"
+              } ${
+                mobileMode === "cleared" || mobileMode === "split" ? "flex" : "hidden lg:flex"
+              }`}
+            >
+              {/* Line Gutter */}
+              <div
+                className={`w-9 py-1 pr-2 select-none text-right font-mono text-[10px] shrink-0 border-r border-white/[0.05] ${
+                  row.isModified
+                    ? "text-emerald-400/80 bg-emerald-950/20 font-semibold"
+                    : "text-zinc-600 bg-black/20"
+                }`}
+              >
+                {row.isBlank ? "" : row.lineNum}
+              </div>
+
+              {/* Line Content */}
+              <div className="flex-1 p-1 px-3 sm:px-4 text-zinc-200 leading-relaxed whitespace-pre-wrap break-words min-w-0">
+                {row.isBlank ? (
+                  <div className="min-h-[1.25rem] select-none">&nbsp;</div>
+                ) : (
+                  renderHighlightedAdjudicated(row.cleared)
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
 
       {/* Bottom Entity Chips Quick-Inspector Bar */}

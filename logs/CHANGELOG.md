@@ -13,7 +13,10 @@ This changelog records major releases, architectural features, and critical mile
 - **Screenplay Stutter Defense & Session Ingestion Hardening (`page.tsx`)**:
   - Expanded hyphenated compound word matching in `sanitizeScriptStutter` (`\b([a-zA-Z]+(?:-[a-zA-Z]+)*)\s+\1\b`) to eliminate duplicate compound stutters (such as `dual-screen dual-screen`).
   - Added Strategy 4 ellipsis dialogue segmentation in `mutateScriptText` to accurately substitute dialogue quotes bridging action descriptions.
-  - Automatically pass imported session scripts through `sanitizeScriptStutter` and guarantee immediate reset of lingering intervention cards (`setActiveIntervention(null)`) and queues upon restoring historical sessions.
+- **Synchronized Line-by-Line Screenplay Redline Diff (`ScreenplayRedlineView.tsx`)**:
+  - Replaced independent dual-column text containers with a unified line-by-line diff table, pinning every paragraph, scene heading, and dialogue cue to the exact same vertical eye level across both columns.
+  - Moved the Live Clearance Update ticker to a full-width banner above both columns, eliminating vertical offset drift between original and adjudicated drafts.
+  - Implemented line gutters with subtle modified-line markers (`bg-rose-950/20` and `bg-emerald-950/20`) and hardware-synchronized scrolling across both script panes.
 
 ---
 
