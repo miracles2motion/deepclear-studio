@@ -126,11 +126,11 @@ export const InspectorSidebar: React.FC<InspectorSidebarProps> = ({
             </span>
           ) : isCleared ? (
             <span className="text-emerald-300">
-              All statutory liabilities cleared. Form E&O-2026 Underwriting Binder ready for distribution.
+              All clearance hazards resolved. E&O Evidence Binder ready for distribution.
             </span>
           ) : (
             <span className="text-rose-300">
-              Active statutory liabilities detected. Distribution deal holds pending crew negotiation.
+              Active clearance hazards detected. Distribution hold pending crew negotiation.
             </span>
           )}
         </p>

@@ -85,7 +85,7 @@ export default function DeepClearStudioPage() {
       timestamp: "Just now",
       type: "text",
       content:
-        "Welcome to DeepClear Studio. I am your autonomous film clearance and E&O underwriting co-pilot.\n\nPaste a screenplay scene below, upload a `.fountain` or `.md` script, or click 'Generate Scene with Gemini' to begin clearance analysis.",
+        "Welcome to DeepClear Studio. I am your autonomous film clearance and E&O evidence co-pilot.\n\nPaste a screenplay scene below, upload a `.fountain` or `.md` script, or click 'Generate Scene with Gemini' to begin clearance analysis.",
     },
   ]);
 
@@ -1375,7 +1375,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           senderName: "Completion Bond Officer",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           type: "text",
-          content: `[VERIFIED SAFE HARBOR] **Verified DeepClear Clearance Passport Ingested**\n\n• **Merkle Hash**: \`${passport.merkleRoot}\`\n• **E&O Policy**: **${passport.policyStatus}** (\`${passport.bondPolicyId}\`)\n• **Exemptions Loaded**: ${passport.assets.length} pre-cleared/licensed assets (${passport.assets.map((a) => `\`${a.clearedAs || a.originalText}\` [${a.status.toUpperCase()}]`).join(", ")})\n\nSafe harbor exemptions validated. 100% pre-cleared with $0.00 statutory exposure. Final production screenplay certified for distribution.`,
+          content: `[VERIFIED SAFE HARBOR] **Verified DeepClear Clearance Passport Ingested**\n\n• **Merkle Hash**: \`${passport.merkleRoot}\`\n• **E&O Policy**: **${passport.policyStatus}** (\`${passport.bondPolicyId}\`)\n• **Exemptions Loaded**: ${passport.assets.length} pre-cleared/licensed assets (${passport.assets.map((a) => `\`${a.clearedAs || a.originalText}\` [${a.status.toUpperCase()}]`).join(", ")})\n\nSafe harbor exemptions validated. $0.00 modeled risk exposure confirmed. E&O Evidence Binder certified for distribution.`,
         },
       ]);
 
@@ -2382,7 +2382,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         senderName: "Completion Bond Officer",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         type: "text",
-        content: `**Auto-Pilot Clearance Complete**: All ${hazardsQueue.length} hazards autonomously resolved with **$0.00 statutory exposure**. Safe-Harbor Underwriting Binder certified for distribution.`,
+        content: `**Auto-Pilot Clearance Complete**: All ${hazardsQueue.length} hazards autonomously resolved with **$0.00 modeled risk exposure**. E&O Evidence Binder certified for distribution.`,
       },
     ]);
 
@@ -3628,7 +3628,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                             <span className="font-bold text-white font-mono bg-zinc-900 px-1.5 py-0.5 rounded border border-white/10">
                               "{msg.interventionPayload.rawText}"
                             </span>{" "}
-                            with statutory exposure of{" "}
+                            with modeled risk exposure of{" "}
                             <span className="font-bold text-rose-400 font-mono">
                               {formatCurrency(msg.interventionPayload.statutoryExposure)}
                             </span>
@@ -3665,7 +3665,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                           </div>
 
                           <p className="text-[11px] text-zinc-400 italic">
-                            Under strict E&O underwriting rules, this liability cannot clear automatically. Select an executive terminal directive to bind safe harbor:
+                            Under strict E&O clearance rules, this hazard cannot resolve automatically. Select an executive terminal directive to bind safe harbor:
                           </p>
                         </div>
 
@@ -4490,7 +4490,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                       </span>
                     ) : (
                       <span className="text-zinc-500">
-                        Awaiting screenplay ingestion to evaluate statutory exposure.
+                        Awaiting screenplay ingestion to evaluate modeled risk exposure.
                       </span>
                     )}
                   </p>

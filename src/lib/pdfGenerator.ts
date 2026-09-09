@@ -204,7 +204,7 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
               "1",
               "Sc. 1",
               "GENERAL",
-              "No statutory liabilities identified",
+              "No clearance hazards identified",
               "Standard Production Script",
               "$0 -> $0",
               "CLEARED",
@@ -275,7 +275,7 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   doc.setFontSize(6.5);
   doc.setTextColor(71, 85, 105);
   doc.text(
-    `SHA-256 Merkle Root: ${report.merkleRootHash}`,
+    `SHA-256 Clearance Hash: ${report.merkleRootHash}`,
     margin + 12,
     footerY + 30,
     { maxWidth: contentWidth - 24 }
@@ -290,7 +290,7 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.text(
-    "Certification: DeepClear Studio hereby attests that all screenplay dialogue, brand references, and visual props have undergone multimodal clearance verification and live statutory grounding via the Parallel Search API.",
+    "Certification: DeepClear Studio hereby attests that all screenplay dialogue, brand references, and visual props have undergone multimodal clearance verification and live grounding via the Parallel Search API.",
     margin + 12,
     footerY + 56,
     { maxWidth: contentWidth - 24 }

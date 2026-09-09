@@ -414,7 +414,7 @@ export const FormEOBinderDocument: React.FC<FormEOBinderProps> = ({ report }) =>
             <View style={styles.tableRow}>
               <View style={[styles.cellBox, { width: "100%", alignItems: "center" }]}>
                 <Text style={styles.cellTextMuted}>
-                  No statutory liabilities detected. Screenplay is fully compliant.
+                  No clearance hazards detected. Screenplay is fully compliant.
                 </Text>
               </View>
             </View>
