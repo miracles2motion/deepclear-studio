@@ -1,4 +1,4 @@
-﻿# DeepClear Studio
+# DeepClear Studio
 
 **The Agentic Clearance Engine for Film & Television**
 
@@ -39,7 +39,7 @@ Curated test presets are built directly into the interface for immediate verific
 | **`[ Cyber Heist ]`** | Sci-Fi Action (Silicon Valley Lab) | Commercial brand exposure (Apple Vision Pro, Tesla Cybertruck, commercial music track). In Auto-Pilot mode, the swarm proposes generic substitutes verified via Parallel Search. |
 | **`[ Southern Gothic ]`** | Historic District Drama | Municipal filming permits, historic park rules (FAA Part 107 drone compliance), and independent **Estimated Incentive Eligibility** modeling. |
 | **`[ Legal & WHOIS Shield ]`** | Defamation & Unvetted Domain | Living person reference under Cal. Civ. Code § 3344, non-safe phone numbers (defused to NANPA 555-0100..0199), and domain collisions under ACPA. |
-| **`[ Executive Impasse ]`** | Contested Mark (90/10 Ratio) | Live registry conflict triggering the Fail-Closed Clearance Gate, bounded deadlock at Turn 6, and interactive Producer Directive card. |
+| **`[ Executive Impasse ]`** | Contested Mark (90/10 Ratio) | A live trademark registry conflict where the Parallel search returns an active competing registration. The 5-agent swarm debates the hazard but cannot reach an acceptable resolution within the 3-turn bounded debate — hitting a deadlock at Turn 6. Because the agents cannot self-approve a contested mark, the Fail-Closed Clearance Gate blocks verification and escalates to human review. An interactive **Producer Directive** card appears, requiring the producer to make the final call before the workflow can continue. This demonstrates the 90/10 controlled autonomy model: AI handles 90% of the clearance process, but human input is required when evidence is genuinely contested and no safe resolution can be confirmed. |
 
 ---
 

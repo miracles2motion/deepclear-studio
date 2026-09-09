@@ -70,3 +70,5 @@ scripts/
 *.mp4
 *.wav
 
+# --- Knowledge Docs (PM-managed, not pushed to GitHub) ---
+knowledge deepclear/
