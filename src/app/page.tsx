@@ -886,6 +886,26 @@ Clearance secured. We have safe harbor.`,
     },
   ];
 
+  // Screenplay Mutation Stutter Defense: sanitizes adjacent duplicate words, hyphenated compounds, and article collisions
+  const sanitizeScriptStutter = (text: string): string => {
+    if (!text) return text;
+    let sanitized = text;
+
+    // 1. Sanitize duplicate word stutters including hyphenated compounds (e.g. "vintage vintage" -> "vintage", "dual-screen dual-screen" -> "dual-screen")
+    sanitized = sanitized.replace(/\b([a-zA-Z]+(?:-[a-zA-Z]+)*)\s+\1\b/gi, (match) => {
+      return match.split(/\s+/)[0];
+    });
+
+    // 2. Sanitize duplicate or clashing indefinite articles (e.g. "An an" -> "An", "a a" -> "a", "a an" -> "an")
+    sanitized = sanitized.replace(/\b(a|an)\s+(a|an)\b/gi, (match, first, second) => {
+      const isCapitalized = first[0] === first[0].toUpperCase() && first[0] !== first[0].toLowerCase();
+      const chosen = second.toLowerCase();
+      return isCapitalized ? chosen.charAt(0).toUpperCase() + chosen.slice(1) : chosen;
+    });
+
+    return sanitized;
+  };
+
   // Safely mutates screenplay text, preventing stuttering duplicate words and article collisions (e.g. "vintage vintage", "An an")
   const mutateScriptText = (script: string, rawText: string, replacement: string): string => {
     if (!script || !rawText || !replacement) return script;
@@ -917,6 +937,18 @@ Clearance secured. We have safe harbor.`,
             updated = updated.replace(quoteRegex, replacement);
           }
         }
+
+        // Strategy 4: Ellipsis / multi-segment dialogue matching (handles quotes with "...")
+        if (rawText.includes("...") || rawText.includes("…")) {
+          const rawParts = rawText.split(/\s*(?:\.{3,}|…)\s*/).map((p) => p.trim()).filter(Boolean);
+          const repParts = replacement.split(/\s*(?:\.{3,}|…)\s*/).map((p) => p.trim()).filter(Boolean);
+          rawParts.forEach((part, idx) => {
+            const rep = repParts[idx] || (idx === 0 ? replacement : "");
+            if (part && rep && updated.includes(part)) {
+              updated = updated.replaceAll(part, rep);
+            }
+          });
+        }
       }
     }
 
@@ -936,19 +968,7 @@ Clearance secured. We have safe harbor.`,
       }
     }
 
-    // 1. Sanitize duplicate word stutters caused by prefix overlap (e.g. "vintage vintage" -> "vintage")
-    updated = updated.replace(/\b([a-zA-Z]+)\s+\1\b/gi, (match) => {
-      return match.split(/\s+/)[0];
-    });
-
-    // 2. Sanitize duplicate or clashing indefinite articles (e.g. "An an" -> "An", "a a" -> "a", "a an" -> "an")
-    updated = updated.replace(/\b(a|an)\s+(a|an)\b/gi, (match, first, second) => {
-      const isCapitalized = first[0] === first[0].toUpperCase() && first[0] !== first[0].toLowerCase();
-      const chosen = second.toLowerCase();
-      return isCapitalized ? chosen.charAt(0).toUpperCase() + chosen.slice(1) : chosen;
-    });
-
-    return updated;
+    return sanitizeScriptStutter(updated);
   };
 
   // Centralized helper to construct the final downloadable screenplay bundled with cryptographic Clearance Passport
@@ -2656,13 +2676,14 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         setProductionTitle(data.productionTitle);
       }
       if (typeof data.currentScriptText === "string") {
-        setCurrentScriptText(data.currentScriptText);
-        currentScriptRef.current = data.currentScriptText;
+        const sanitizedScript = sanitizeScriptStutter(data.currentScriptText);
+        setCurrentScriptText(sanitizedScript);
+        currentScriptRef.current = sanitizedScript;
       }
       if (typeof data.originalScriptSnapshot === "string") {
         setOriginalScriptSnapshot(data.originalScriptSnapshot);
       } else if (typeof data.currentScriptText === "string") {
-        setOriginalScriptSnapshot(data.currentScriptText);
+        setOriginalScriptSnapshot(sanitizeScriptStutter(data.currentScriptText));
       }
       if (typeof data.uploadedFileName === "string") {
         setUploadedFileName(data.uploadedFileName);
@@ -2695,6 +2716,8 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         setClearanceMode(data.clearanceMode);
         clearanceModeRef.current = data.clearanceMode;
       }
+      setActiveIntervention(null);
+      autoPilotQueueRef.current = [];
 
       if (!silent) {
         const restoreNoticeId = `restored-${Date.now()}`;

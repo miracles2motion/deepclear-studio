@@ -10,7 +10,10 @@ This changelog records major releases, architectural features, and critical mile
   - Resolved a critical regression where `isConflictDetected` performed a broad substring check (`parallelData.registryStatus.toUpperCase().includes("CONFLICT")`).
   - Because passing registry statuses from Parallel Search explicitly declared clearance with phrases like `"PASSED: ZERO CONFLICTING TRADEMARK REGISTRATIONS"`, `"PASSED: ZERO CONFLICTING USPTO REGISTRATIONS"`, or `"VERIFIED: ZERO COMMERCIAL CONFLICTS"`, every passing clearance was inadvertently matching the substring `"CONFLICT"`.
   - Refactored conflict evaluation to explicitly recognize all passing registry verdicts (`PASSED`, `VERIFIED`, `CLEAR`, `STATUTORY`) and require `parallelData.verified === false` or an active un-cleared conflict status before invoking the fail-closed clearance gate.
-  - Restores the intended 90/10 autonomy ratio: 90% of routine brand, location, and copyright liabilities clear autonomously through Auto-Pilot with $0 exposure in 0 extra clicks, while genuinely contested marks (such as the `Executive Impasse` showcase) fail-closed at Turn 6 and escalate to human review via the Producer Directive card.
+- **Screenplay Stutter Defense & Session Ingestion Hardening (`page.tsx`)**:
+  - Expanded hyphenated compound word matching in `sanitizeScriptStutter` (`\b([a-zA-Z]+(?:-[a-zA-Z]+)*)\s+\1\b`) to eliminate duplicate compound stutters (such as `dual-screen dual-screen`).
+  - Added Strategy 4 ellipsis dialogue segmentation in `mutateScriptText` to accurately substitute dialogue quotes bridging action descriptions.
+  - Automatically pass imported session scripts through `sanitizeScriptStutter` and guarantee immediate reset of lingering intervention cards (`setActiveIntervention(null)`) and queues upon restoring historical sessions.
 
 ---
 
