@@ -27,20 +27,20 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   // Title
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("FORM E&O-2026: MOTION PICTURE UNDERWRITING BINDER", margin, 30);
+  doc.setFontSize(13);
+  doc.text("FORM E&O-2026: MOTION PICTURE UNDERWRITING EVIDENCE BINDER", margin, 30);
 
   // Subtitle
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(148, 163, 184); // Slate 400
-  doc.text("DEEPCLEAR STUDIO • AUTONOMOUS ENTERTAINMENT CHAIN OF TITLE CLEARANCE", margin, 46);
+  doc.text("DEEPCLEAR STUDIO • AUTONOMOUS CLEARANCE & E&O EVIDENCE BINDER", margin, 46);
 
   // Timestamp & ID
   doc.setFontSize(7.5);
   doc.setTextColor(203, 213, 225);
   doc.text(
-    `Binder ID: ${report.id}  |  Issued: ${new Date(report.generatedAt).toLocaleString()}`,
+    `Evidence Binder ID: ${report.id}  |  Issued: ${new Date(report.generatedAt).toLocaleString()}`,
     margin,
     60
   );
@@ -58,11 +58,11 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   doc.text("EXECUTIVE RISK & UNDERWRITING SUMMARY", margin + 12, summaryY + 18);
 
   const col1X = margin + 12;
-  const col2X = margin + 280;
+  const col2X = margin + 270;
 
   // Row 1
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(71, 85, 105);
   doc.text("Production Title:", col1X, summaryY + 36);
   doc.setFont("helvetica", "bold");
@@ -71,20 +71,20 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
 
   doc.setFont("helvetica", "normal");
   doc.setTextColor(71, 85, 105);
-  doc.text("Policy Decision:", col2X, summaryY + 36);
+  doc.text("Underwriting Readiness:", col2X, summaryY + 36);
   doc.setFont("helvetica", "bold");
   if (isFullyCleared) {
     doc.setTextColor(16, 185, 129); // Emerald
-    doc.text("APPROVED (Clean Policy)", col2X + 90, summaryY + 36);
+    doc.text("RECOMMENDED FOR RELEASE (100% Cleared)", col2X + 115, summaryY + 36, { maxWidth: 160 });
   } else {
     doc.setTextColor(225, 29, 72); // Rose
-    doc.text("ACTION REQUIRED (Uncleared)", col2X + 90, summaryY + 36);
+    doc.text("ACTION REQUIRED (Unresolved)", col2X + 115, summaryY + 36, { maxWidth: 160 });
   }
 
   // Row 2
   doc.setFont("helvetica", "normal");
   doc.setTextColor(71, 85, 105);
-  doc.text("Initial Statutory Exposure:", col1X, summaryY + 54);
+  doc.text("Initial Modeled Exposure:", col1X, summaryY + 54);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(225, 29, 72);
   doc.text(`$${report.initialExposureUsd.toLocaleString()}`, col1X + 115, summaryY + 54);
@@ -103,46 +103,46 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
 
   doc.setFont("helvetica", "normal");
   doc.setTextColor(71, 85, 105);
-  doc.text("Hazards Cleared:", col2X, summaryY + 54);
+  doc.text("Clearance Progress:", col2X, summaryY + 54);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(isFullyCleared ? 16 : 71, isFullyCleared ? 185 : 85, isFullyCleared ? 129 : 105);
   const clearedSummaryText =
     licensedCount > 0
-      ? `${clearedCount} of ${report.entities.length} Cleared (${licensedCount} Licensed, ${mutatedCount} Mutated)`
+      ? `${clearedCount} of ${report.entities.length} Cleared (${licensedCount} Lic, ${mutatedCount} Mut)`
       : `${clearedCount} of ${report.entities.length} Items Cleared`;
-  doc.text(clearedSummaryText, col2X + 90, summaryY + 54, { maxWidth: 175 });
+  doc.text(clearedSummaryText, col2X + 115, summaryY + 54, { maxWidth: 160 });
 
   // Row 3
   doc.setFont("helvetica", "normal");
   doc.setTextColor(71, 85, 105);
-  doc.text("Post-Clearance Liability:", col1X, summaryY + 72);
+  doc.text("Net Remaining Exposure:", col1X, summaryY + 72);
   doc.setFont("helvetica", "bold");
   if (isFullyCleared) {
     doc.setTextColor(16, 185, 129);
-    doc.text("$0 (100% Mitigated)", col1X + 115, summaryY + 72);
+    doc.text("$0 (100% Cleared)", col1X + 115, summaryY + 72);
   } else {
     doc.setTextColor(225, 29, 72);
-    doc.text(`$${report.finalExposureUsd.toLocaleString()} (Active)`, col1X + 115, summaryY + 72);
+    doc.text(`$${report.finalExposureUsd.toLocaleString()} (Active Exposure)`, col1X + 115, summaryY + 72);
   }
 
   doc.setFont("helvetica", "normal");
   doc.setTextColor(71, 85, 105);
-  doc.text("Tax Incentive Rebate:", col2X, summaryY + 72);
+  doc.text("Estimated Incentive Eligibility:", col2X, summaryY + 72);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(16, 185, 129);
   doc.text(
     `+$${report.potentialTaxRebateUsd.toLocaleString()}`,
-    col2X + 90,
+    col2X + 115,
     summaryY + 72
   );
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(100, 116, 139);
   doc.text(
-    `(${report.taxJurisdiction || "State Film Tax Credit"})`,
-    col2X + 90 + doc.getTextWidth(`+$${report.potentialTaxRebateUsd.toLocaleString()} `),
+    `(${report.taxJurisdiction || "State Credit"} • Independent QPE)`,
+    col2X + 115 + doc.getTextWidth(`+$${report.potentialTaxRebateUsd.toLocaleString()} `),
     summaryY + 72,
-    { maxWidth: 130 }
+    { maxWidth: 120 }
   );
 
   // 3. Itemized Hazard Clearance Table
@@ -190,10 +190,10 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
         "No.",
         "Scene",
         "Category",
-        "Identified Asset / Hazard",
-        "Adjudicated Legal Substitution",
-        "Exposure",
-        "Status",
+        "Identified Clearance Hazard",
+        "Adjudicated Resolution / Substitution",
+        "Modeled Exposure",
+        "Clearance Status",
       ],
     ],
     body:
@@ -288,9 +288,9 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   );
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.text(
-    "Certification: DeepClear Studio hereby attests that all screenplay dialogue, brand references, and visual props have undergone multimodal clearance verification and live grounding via the Parallel Search API.",
+    "Attestation & Disclaimer: DeepClear Studio attests that all screenplay dialogue, brand references, and visual props have undergone multi-agent clearance analysis and registry grounding via Parallel Web Systems. Form E&O-2026 is an evidence-preparation artifact and does not constitute an insurance policy, safe harbor warranty, or legal guarantee of zero liability.",
     margin + 12,
     footerY + 56,
     { maxWidth: contentWidth - 24 }
@@ -312,7 +312,7 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   doc.setFontSize(7.5);
   doc.setTextColor(148, 163, 184);
   doc.text(
-    "OFFICIAL E&O INSURANCE DUE DILIGENCE • POWERED BY PARALLEL SEARCH & EXTRACT API",
+    "E&O UNDERWRITING EVIDENCE ANNEX • POWERED BY PARALLEL SEARCH & EXTRACT API",
     margin,
     40
   );
@@ -446,13 +446,13 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(15, 23, 42);
-  doc.text("PARALLEL WEB SYSTEMS E&O UNDERWRITING WARRANTY", margin + 10, exhibitBFooterY + 14);
+  doc.text("PARALLEL WEB SYSTEMS GROUNDING & VERIFICATION ATTESTATION", margin + 10, exhibitBFooterY + 14);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(71, 85, 105);
   doc.text(
-    `This underwriting annex certifies that DeepClear Studio utilized Parallel's search and extraction infrastructure (Search ID: ${report.merkleRootHash.slice(0, 16)}) to confirm the absence of actionable commercial trademark infringements, copyright encumbrances, or unsanctioned public property likenesses prior to policy issuance.`,
+    `This underwriting evidence annex certifies that DeepClear Studio utilized Parallel's search and extraction infrastructure (Search ID: ${report.merkleRootHash.slice(0, 16)}) to cross-reference public trademark records, statutory legal authorities, and municipal codes against all identified motion picture assets for underwriting review.`,
     margin + 10,
     exhibitBFooterY + 26,
     { maxWidth: contentWidth - 20 }
@@ -462,7 +462,7 @@ export function generateEOBinderPDF(report: ClearanceReport): jsPDF {
   doc.setFontSize(7);
   doc.setTextColor(16, 149, 102);
   doc.text(
-    "PARALLEL SEARCH ENGINE ATTESTATION: VERIFIED CHAIN OF TITLE GROUNDING VALIDATED",
+    "PARALLEL SEARCH ENGINE GROUNDING ATTESTATION: VERIFIED EVIDENCE AUDIT TRAIL RECORDED",
     margin + 10,
     exhibitBFooterY + 54
   );

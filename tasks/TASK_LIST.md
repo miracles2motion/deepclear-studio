@@ -48,9 +48,9 @@
   - [x] Reflect executive directives in Form E&O-2026 PDF binder and Redline Diff view.
   - [x] Fix false-positive Clearance Gate deadlock to preserve true 90/10 autonomy ratio on uploaded scripts.
 
-- [x] Phase 9: Live Sequential Screenplay Redline Diff
-  - [x] Dynamic 3-state clearance status header (Awaiting Clearance -> Live Update -> E&O Certified).
-  - [x] Real-time hazard clearance pop-up ticker banner in production script column.
-  - [x] Live reactive token segmentation: red pending liabilities and glowing emerald verified substitutions.
-  - [x] Interactive bottom clearance chips with sequential checkmarks.
+- [x] Phase 10: Form E&O-2026 PDF Evidence Binder Harmonization
+  - [x] Align PDF terminology with PM specifications (Initial Modeled Exposure, Net Remaining Exposure, Underwriting Readiness, Estimated Incentive Eligibility).
+  - [x] Implement multi-page vector PDF engine with Page 2 Exhibit B Grounding & Audit Ledger.
+  - [x] Embed formal legal disclaimers and external registry attestations across all PDF compilation paths.
+  - [x] Verify retroactive runtime compilation on imported historical sessions.
 

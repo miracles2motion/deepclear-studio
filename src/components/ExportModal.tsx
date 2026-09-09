@@ -222,14 +222,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
 
           <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-400">Modeled Risk Exposure:</span>
+            <span className="text-zinc-400">Net Remaining Exposure:</span>
             <span className={`font-bold ${isFullyCleared ? "text-emerald-400" : "text-rose-400"}`}>
-              ${currentExposure.toLocaleString()} {isFullyCleared ? "(Fully Resolved)" : "(Active Exposure)"}
+              ${currentExposure.toLocaleString()} {isFullyCleared ? "(100% Cleared)" : "(Active Exposure)"}
             </span>
           </div>
 
           <div className="flex justify-between items-center text-zinc-300">
-            <span className="text-zinc-400">Tax Incentive:</span>
+            <span className="text-zinc-400">Estimated Incentive Eligibility:</span>
             <span className="font-semibold text-emerald-400 truncate max-w-[200px]">
               +${taxSavings.toLocaleString()} ({taxJurisdiction || "Qualified Film Credit"})
             </span>

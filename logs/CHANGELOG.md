@@ -4,6 +4,23 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.17] - 2026-09-09
+### Harmonized Form E&O-2026 PDF Templates with PM Specifications and Underwriting Standards
+- **Standardized PM Underwriting Terminology (`FormEOBinderDocument.tsx` & `pdfGenerator.ts`)**:
+  - Replaced informal and legally imprecise wording (`Initial Statutory Exposure`, `Post-Clearance Liability`, `Tax Incentive Rebate`, `Underwriting Decision: APPROVED (Clean Policy)`) with strictly defined PM terms:
+    - **`Initial Modeled Exposure`**: Accurately reflects benchmark risk reserves rather than asserting statutory damages.
+    - **`Net Remaining Exposure`**: Represents post-clearance residual risk (`$0 (100% Cleared)`).
+    - **`Underwriting Readiness`**: Designates readiness for underwriter review (`RECOMMENDED FOR RELEASE (100% Cleared)`) without misrepresenting DeepClear Studio as an insurer.
+    - **`Estimated Incentive Eligibility`**: Formulates tax incentives as independent qualified production expenditure (QPE) estimates in accordance with the Strict Financial Independence Principle.
+- **Added Exhibit B Grounding & Audit Ledger to Vector PDF Engine (`FormEOBinderDocument.tsx`)**:
+  - Implemented multi-page support with Page 2 hosting **Exhibit B: Parallel Web Systems Grounding & Audit Ledger**.
+  - Renders itemized external registry lookups, search queries, statutory/trademark class classifications, registry verdicts (`PASSED: ZERO CONFLICTS` vs `UNDERWRITING SCRUTINY`), and citation source domains.
+  - Added formal legal and underwriting disclaimers detailing that Form E&O-2026 is an evidence-preparation artifact compiled for underwriter review and does not constitute a legal safe harbor guarantee or direct insurance policy.
+- **Export Modal Metric Label Synchronization (`ExportModal.tsx`)**:
+  - Aligned dashboard export metrics with `Net Remaining Exposure` and `Estimated Incentive Eligibility`.
+
+---
+
 ## [v0.8.16] - 2026-09-09
 ### Restored 90/10 Controlled Autonomy Baseline: Resolved False-Positive Human Review Deadlocks
 - **Deterministic Clearance Gate False-Positive Defense (`page.tsx`)**:
