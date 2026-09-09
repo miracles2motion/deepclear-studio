@@ -4,6 +4,16 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.16] - 2026-09-09
+### Restored 90/10 Controlled Autonomy Baseline: Resolved False-Positive Human Review Deadlocks
+- **Deterministic Clearance Gate False-Positive Defense (`page.tsx`)**:
+  - Resolved a critical regression where `isConflictDetected` performed a broad substring check (`parallelData.registryStatus.toUpperCase().includes("CONFLICT")`).
+  - Because passing registry statuses from Parallel Search explicitly declared clearance with phrases like `"PASSED: ZERO CONFLICTING TRADEMARK REGISTRATIONS"`, `"PASSED: ZERO CONFLICTING USPTO REGISTRATIONS"`, or `"VERIFIED: ZERO COMMERCIAL CONFLICTS"`, every passing clearance was inadvertently matching the substring `"CONFLICT"`.
+  - Refactored conflict evaluation to explicitly recognize all passing registry verdicts (`PASSED`, `VERIFIED`, `CLEAR`, `STATUTORY`) and require `parallelData.verified === false` or an active un-cleared conflict status before invoking the fail-closed clearance gate.
+  - Restores the intended 90/10 autonomy ratio: 90% of routine brand, location, and copyright liabilities clear autonomously through Auto-Pilot with $0 exposure in 0 extra clicks, while genuinely contested marks (such as the `Executive Impasse` showcase) fail-closed at Turn 6 and escalate to human review via the Producer Directive card.
+
+---
+
 ## [v0.8.15] - 2026-09-09
 ### Live Sequential Screenplay Redline Diff and Real-Time Hazard Clearance Feedback
 - **Sequential Real-Time Clearance Feedback (`ScreenplayRedlineView.tsx`)**:

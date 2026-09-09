@@ -1924,9 +1924,22 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       });
       await sleep(350);
 
+      const statusUpper = (parallelData.registryStatus || "").toUpperCase();
+      const isExplicitPass =
+        statusUpper.startsWith("PASSED") ||
+        statusUpper.startsWith("VERIFIED") ||
+        statusUpper.startsWith("CLEAR") ||
+        statusUpper.startsWith("STATUTORY");
+
+      const hasConflictStatus =
+        !isExplicitPass &&
+        (statusUpper.includes("CONFLICT") ||
+          statusUpper.includes("OPPOSITION") ||
+          statusUpper.includes("ACTIVE REGISTRATION"));
+
       const isConflictDetected =
-        !parallelData.verified ||
-        parallelData.registryStatus.toUpperCase().includes("CONFLICT") ||
+        parallelData.verified === false ||
+        hasConflictStatus ||
         entity.rawText.toLowerCase().includes("biometric diagnostic scanner") ||
         entity.rawText.toLowerCase().includes("contested");
 
