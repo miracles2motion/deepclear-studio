@@ -340,6 +340,9 @@ export default function DeepClearStudioPage() {
   const isAudioMutedRef = useRef<boolean>(false);
   const clearanceModeRef = useRef<ClearanceMode>("auto");
   const isManualMode = () => clearanceModeRef.current === "manual";
+  const sessionGenerationRef = useRef<number>(1);
+  const activeAbortControllerRef = useRef<AbortController | null>(null);
+  const isSessionAborted = (gen: number) => sessionGenerationRef.current !== gen;
 
   // Synchronous, immediate voice mute toggle with utterance cancellation
   const toggleAudioMute = () => {
@@ -590,7 +593,9 @@ export default function DeepClearStudioPage() {
 
     if (!hasContent) return;
 
+    const gen = sessionGenerationRef.current;
     const timer = setTimeout(() => {
+      if (sessionGenerationRef.current !== gen) return;
       try {
         const snapshot = getCurrentSessionSnapshot();
         const saved = saveSessionToHistory(snapshot, activeSessionId || undefined);
@@ -617,6 +622,7 @@ export default function DeepClearStudioPage() {
 
   // Dynamically generate fresh scene from Gemini API on demand
   const handleGenerateGeminiScene = async () => {
+    const currentGen = sessionGenerationRef.current;
     setIsGeneratingScene(true);
     setActiveAgent("script_supervisor");
     setAgentThinking({
@@ -624,17 +630,27 @@ export default function DeepClearStudioPage() {
       thought: "Synthesizing dynamic screenplay scene with real-world location & legal liabilities...",
     });
 
+    const controller = new AbortController();
+    activeAbortControllerRef.current = controller;
+
     try {
       const res = await fetch("/api/generate-scene", {
         method: "POST",
+        signal: controller.signal,
       });
+
+      if (sessionGenerationRef.current !== currentGen) return;
+
       const data = await res.json();
+
+      if (sessionGenerationRef.current !== currentGen) return;
 
       if (!res.ok) {
         throw new Error(data.error || "Failed to generate scene with Gemini");
       }
 
       if (data.sceneText) {
+        if (sessionGenerationRef.current !== currentGen) return;
         setIsGeneratingScene(false);
         setAgentThinking(null);
         setAgentTypingStatus(null);
@@ -647,7 +663,8 @@ export default function DeepClearStudioPage() {
         // Pass the generated scene directly into the live swarm analyzer
         await handleSendMessage(data.sceneText);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === "AbortError" || sessionGenerationRef.current !== currentGen) return;
       setAgentThinking(null);
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -662,7 +679,9 @@ export default function DeepClearStudioPage() {
         },
       ]);
     } finally {
-      setIsGeneratingScene(false);
+      if (sessionGenerationRef.current === currentGen) {
+        setIsGeneratingScene(false);
+      }
     }
   };
 
@@ -1018,7 +1037,8 @@ Clearance secured. We have safe harbor.`,
   };
 
   // Helper to reliably deliver the Final Cleared Production Script card into chat
-  const deliverFinalScriptCard = (scriptToDeliver?: string) => {
+  const deliverFinalScriptCard = (scriptToDeliver?: string, targetGen?: number) => {
+    if (targetGen !== undefined && sessionGenerationRef.current !== targetGen) return;
     let text = (scriptToDeliver || currentScriptRef.current || currentScriptText).trim();
     if (!text) return;
 
@@ -1060,6 +1080,7 @@ Clearance secured. We have safe harbor.`,
 
   // Process conversational agent queries and inter-agent consultation turns
   const processConversationalQuery = async (queryText: string, userMsgId?: string) => {
+    const currentGen = sessionGenerationRef.current;
     setIsLoading(true);
 
     // Determine target agent from explicit @ mention or leave undefined for auto-intent resolution
@@ -1078,6 +1099,9 @@ Clearance secured. We have safe harbor.`,
     });
     setAgentTypingStatus("Consulting with Studio Crew Swarm...");
 
+    const controller = new AbortController();
+    activeAbortControllerRef.current = controller;
+
     try {
       const res = await fetch("/api/agent-chat", {
         method: "POST",
@@ -1088,7 +1112,10 @@ Clearance secured. We have safe harbor.`,
           scriptContext: currentScriptRef.current || currentScriptText,
           entitiesContext: entities,
         }),
+        signal: controller.signal,
       });
+
+      if (sessionGenerationRef.current !== currentGen) return;
 
       let responseData: any = null;
 
@@ -1097,6 +1124,8 @@ Clearance secured. We have safe harbor.`,
       } else {
         console.warn("API /api/agent-chat returned error status:", res.status);
       }
+
+      if (sessionGenerationRef.current !== currentGen) return;
 
       const primaryRole: AgentRole = responseData?.sender || initialDisplayAgent;
       setActiveAgent(primaryRole);
@@ -1158,6 +1187,8 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           : undefined,
       };
 
+      if (sessionGenerationRef.current !== currentGen) return;
+
       setMessages((prev) => [...prev, agentMsg]);
 
       // Speech audio synthesis in agent's voice
@@ -1170,6 +1201,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       if (responseData?.consultedAgent && responseData.consultedAgent.comment) {
         const secondaryRole: AgentRole = responseData.consultedAgent.role;
         setTimeout(() => {
+          if (sessionGenerationRef.current !== currentGen) return;
           setActiveAgent(secondaryRole);
           const consultMsg: ChatMessage = {
             id: `agent-consult-${Date.now()}`,
@@ -1189,7 +1221,10 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           speakTextAsync(shortSpoken2, secondaryRole).catch(() => {});
         }, 600);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === "AbortError" || sessionGenerationRef.current !== currentGen) {
+        return;
+      }
       console.error("Agent chat error:", err);
       setAgentThinking(null);
       setAgentTypingStatus(null);
@@ -1243,15 +1278,22 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           : undefined,
       };
 
-      setMessages((prev) => [...prev, agentMsg]);
+      if (sessionGenerationRef.current === currentGen) {
+        setMessages((prev) => [...prev, agentMsg]);
+      }
     } finally {
-      setIsLoading(false);
+      if (sessionGenerationRef.current === currentGen) {
+        setIsLoading(false);
+        setAgentThinking(null);
+        setAgentTypingStatus(null);
+      }
     }
   };
   processConversationalQueryRef.current = processConversationalQuery;
 
   // Handle Send Message / Analyze Script or Conversational Agent Query
   const handleSendMessage = async (textToSend?: string) => {
+    const currentGen = sessionGenerationRef.current;
     const rawQuery = (textToSend || input).trim();
     if (!rawQuery || isLoading) return;
 
@@ -1405,7 +1447,8 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       setActiveAgent("bond_officer");
 
       setTimeout(() => {
-        deliverFinalScriptCard(deliveredScript);
+        if (sessionGenerationRef.current !== currentGen) return;
+        deliverFinalScriptCard(deliveredScript, currentGen);
       }, 400);
 
       return;
@@ -1423,6 +1466,9 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       }
     }
 
+    const controller = new AbortController();
+    activeAbortControllerRef.current = controller;
+
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -1431,9 +1477,11 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           scriptText: scriptToUse,
           safeHarborAssets: [],
         }),
+        signal: controller.signal,
       });
 
       if (response.ok) {
+        if (sessionGenerationRef.current !== currentGen) return;
         const stream = response.body;
         if (!stream) return;
 
@@ -1443,6 +1491,10 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
 
         while (true) {
           const { done, value } = await reader.read();
+          if (sessionGenerationRef.current !== currentGen) {
+            try { reader.cancel(); } catch {}
+            break;
+          }
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
@@ -1450,13 +1502,15 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           buffer = lines.pop() || "";
 
           for (const line of lines) {
+            if (sessionGenerationRef.current !== currentGen) break;
             if (line.startsWith("data: ")) {
               const event = JSON.parse(line.slice(6));
+              if (sessionGenerationRef.current !== currentGen) break;
               setActiveAgent(event.agent);
 
               if (event.type === "AGENT_THOUGHT" || event.type === "PARALLEL_QUERY") {
                 const thoughtMsg = (event.payload?.message as string) || "";
-                if (thoughtMsg) {
+                if (thoughtMsg && sessionGenerationRef.current === currentGen) {
                   setAgentThinking({
                     role: event.agent,
                     thought: thoughtMsg,
@@ -1466,6 +1520,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
               }
 
               if (event.type === "CLEARANCE_COMPLETE") {
+                if (sessionGenerationRef.current !== currentGen) return;
                 setAgentThinking(null);
                 setAgentTypingStatus(null);
                 const foundEntities: ExtractedEntity[] = event.payload.entities || [];
@@ -1543,7 +1598,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                         ? clearanceMode === "auto"
                           ? `Underwriting analysis complete. Identified ${foundEntities.length} liabilities totaling ${formatCurrency(
                               exposure
-                            )}. ⚡ Auto-Pilot Swarm is initiating autonomous clearance queue...`
+                            )}. Auto-Pilot clearance queue engaged...`
                           : `Underwriting analysis complete. Identified ${foundEntities.length} liabilities totaling ${formatCurrency(
                               exposure
                             )}. Click "Negotiate" or "Licensed" below to begin resolution.`
@@ -1554,12 +1609,14 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
                 // If 0 liabilities detected, deliver Final Cleared Production Script card directly
                 if (foundEntities.length === 0) {
                   setTimeout(() => {
+                    if (sessionGenerationRef.current !== currentGen) return;
                     deliverFinalScriptCard(cleanedScript || queryText);
                   }, 600);
                 } else if (clearanceMode === "auto") {
                   // Auto-Pilot: autonomously clear queue without requiring manual button click
                   const entitiesToClear = [...foundEntities];
                   setTimeout(() => {
+                    if (sessionGenerationRef.current !== currentGen) return;
                     autoClearanceRef.current?.(entitiesToClear);
                   }, 800);
                 }
@@ -1568,7 +1625,10 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           }
         }
       }
-    } catch {
+    } catch (err: any) {
+      if (err?.name === "AbortError" || sessionGenerationRef.current !== currentGen) {
+        return;
+      }
       setMessages((prev) => [
         ...prev,
         {
@@ -1581,16 +1641,14 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         },
       ]);
     } finally {
-      setIsLoading(false);
-      setAgentThinking(null);
-      setAgentTypingStatus(null);
-      setActiveAgent("bond_officer");
+      if (sessionGenerationRef.current === currentGen) {
+        setIsLoading(false);
+        setAgentThinking(null);
+        setAgentTypingStatus(null);
+        setActiveAgent("bond_officer");
+      }
     }
   };
-
-
-
-  // Helper to match distinct browser voices per agent persona
   const getAgentVoice = (
     speaker: "director" | "legal_counsel" | "script_supervisor" | "bond_officer" | "location_manager"
   ): SpeechSynthesisVoice | null => {
@@ -1640,7 +1698,13 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     shortSummary: string,
     speaker: "director" | "legal_counsel" | "script_supervisor" | "bond_officer" | "location_manager"
   ): Promise<void> => {
+    const currentGen = sessionGenerationRef.current;
     return new Promise((resolve) => {
+      if (sessionGenerationRef.current !== currentGen) {
+        resolve();
+        return;
+      }
+
       if (
         isAudioMutedRef.current ||
         isAudioMuted ||
@@ -1649,7 +1713,9 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         !("speechSynthesis" in window)
       ) {
         // Natural reading delay when muted so dialogue never flashes like a glitch
-        setTimeout(resolve, 850);
+        setTimeout(() => {
+          resolve();
+        }, sessionGenerationRef.current === currentGen ? 850 : 0);
         return;
       }
 
@@ -1690,16 +1756,20 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         const completeTurn = () => {
           if (!isCompleted) {
             isCompleted = true;
-            setSpeakingAgent(null);
+            if (sessionGenerationRef.current === currentGen) {
+              setSpeakingAgent(null);
+            }
             // Natural 350ms breath pause between agent handoffs
-            setTimeout(resolve, 350);
+            setTimeout(() => {
+              resolve();
+            }, sessionGenerationRef.current === currentGen ? 350 : 0);
           }
         };
 
         const timeout = setTimeout(completeTurn, 3800);
 
         utterance.onstart = () => {
-          if (isAudioMutedRef.current) {
+          if (isAudioMutedRef.current || sessionGenerationRef.current !== currentGen) {
             try {
               synthRef.current?.cancel();
             } catch {}
@@ -1722,7 +1792,9 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
 
         synthRef.current.speak(utterance);
       } catch {
-        setSpeakingAgent(null);
+        if (sessionGenerationRef.current === currentGen) {
+          setSpeakingAgent(null);
+        }
         resolve();
       }
     });
@@ -1747,6 +1819,9 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
   // Handle Negotiate / Dialectic Debate with live Gemini dynamic dialogue generation & sequential voice
   // Handle Negotiate / Dialectic Debate with live Gemini 5-agent war room & runtime Parallel Search verification
   const handleStartDebate = async (entity: ExtractedEntity, isLicenseRoute: boolean = false) => {
+    const currentGen = sessionGenerationRef.current;
+    if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
+
     setIsLoading(true);
     setActiveAgent("legal_counsel");
     setAgentTypingStatus(`Legal Counsel & Crew are evaluating "${entity.rawText}" (${entity.category.toUpperCase()})...`);
@@ -1822,6 +1897,8 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         });
         clearTimeout(timeoutId);
 
+        if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
+
         if (debateRes.ok) {
           const dynamicTurns = await debateRes.json();
           if (dynamicTurns.counselObjection) counselArg = dynamicTurns.counselObjection;
@@ -1835,6 +1912,8 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         // Fallback to robust contextual defaults if network or API times out
       }
 
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
+
       // Unique IDs for deterministic reply tagging and scroll targets
       const now = Date.now();
       const counselMsgId = `deb-counsel-${now}`;
@@ -1847,6 +1926,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       // -------------------------------------------------------------
       // Turn 1: Legal Counsel reviews and raises statutory objection
       // -------------------------------------------------------------
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
       setActiveAgent("legal_counsel");
       setAgentTypingStatus("Legal Counsel is analyzing statutory exposure...");
       setAgentThinking({
@@ -1854,6 +1934,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         thought: `Analyzing ${entity.category.toUpperCase()} exposure under Lanham Act § 43(a) for "${entity.rawText}"...`,
       });
       await sleep(350);
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -1872,10 +1953,12 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         },
       ]);
       await speakTextAsync(`${entity.category.toUpperCase()} hazard on ${entity.rawText}.`, "legal_counsel");
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       // -------------------------------------------------------------
       // Turn 2: The Director defends artistic intent
       // -------------------------------------------------------------
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
       setActiveAgent("director");
       setAgentTypingStatus("The Director is formulating creative defense...");
       setAgentThinking({
@@ -1883,6 +1966,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         thought: `Evaluating Rogers v. Grimaldi artistic relevance and character motivation for "${entity.rawText}"...`,
       });
       await sleep(350);
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -1902,10 +1986,12 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         },
       ]);
       await speakTextAsync("This prop is vital for dramatic character authenticity.", "director");
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       // -------------------------------------------------------------
       // Turn 3: Location / Art Department Manager steps in
       // -------------------------------------------------------------
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
       setActiveAgent("location_manager");
       setAgentTypingStatus("Location & Art Manager is formulating cleared alternative...");
       setAgentThinking({
@@ -1913,6 +1999,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         thought: `Evaluating prop house inventory, soundstage alternatives, and tax credit eligibility...`,
       });
       await sleep(350);
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -1932,10 +2019,12 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         },
       ]);
       await speakTextAsync("Art department proposing conflict-free substitute.", "location_manager");
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       // -------------------------------------------------------------
       // Turn 4: Live Parallel Search Registry Verification Card (STAR FEATURE)
       // -------------------------------------------------------------
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
       setActiveAgent("legal_counsel");
       setAgentTypingStatus("Querying Parallel Search API live trademark registries...");
       setAgentThinking({
@@ -1943,6 +2032,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         thought: `Executing runtime Parallel Search query: "${parallelData.queryExecuted}"...`,
       });
       await sleep(350);
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       const statusUpper = (parallelData.registryStatus || "").toUpperCase();
       const isExplicitPass =
@@ -1997,9 +2087,11 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         isConflictDetected ? "Parallel Search detected active trademark conflicts." : "Parallel Search confirms zero trademark conflicts.",
         "legal_counsel"
       );
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       // Deadlock Gate: If conflict detected, invoke fail-closed gate at Turn 6 and pause autonomous loop
       if (isConflictDetected) {
+        if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
         // Turn 5: The Director argues impasse
         setActiveAgent("director");
         setAgentTypingStatus("The Director evaluates impasse...");
@@ -2008,6 +2100,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           thought: `Evaluating impasse: Parallel Search reveals active commercial conflict for "${compromiseText}". Creative intent cannot proceed without executive authorization...`,
         });
         await sleep(350);
+        if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
         setAgentTypingStatus(null);
         setMessages((prev) => [
@@ -2027,6 +2120,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           },
         ]);
         await speakTextAsync("Artistic intent and clearance are at an impasse.", "director");
+        if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
         // Turn 6: Completion Bond Officer invokes fail-closed gate
         setActiveAgent("bond_officer");
@@ -2036,6 +2130,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           thought: `Bounded debate limit reached (Turn 6). Fail-closed clearance gate invoked. Halting autonomous queue...`,
         });
         await sleep(350);
+        if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
         setAgentTypingStatus(null);
         setMessages((prev) => [
@@ -2055,6 +2150,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           },
         ]);
         await speakTextAsync("Executive producer directive required for clearance.", "bond_officer");
+        if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
         // Mount Producer Intervention Card
         const payload: ProducerInterventionPayload = {
@@ -2069,6 +2165,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           citations: parallelData.citations || [],
         };
 
+        if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
         setActiveIntervention(payload);
 
         setMessages((prev) => [
@@ -2089,6 +2186,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       // -------------------------------------------------------------
       // Turn 5: The Director confirms acceptance
       // -------------------------------------------------------------
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
       setActiveAgent("director");
       setAgentTypingStatus("The Director is reviewing aesthetic match...");
       setAgentThinking({
@@ -2096,6 +2194,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         thought: `Confirming aesthetic alignment on "${compromiseText}"...`,
       });
       await sleep(350);
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -2115,10 +2214,12 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         },
       ]);
       await speakTextAsync("Agreed. Art department cleared to proceed.", "director");
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       // -------------------------------------------------------------
       // Turn 6: Completion Bond Officer underwrites Safe Harbor
       // -------------------------------------------------------------
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
       setActiveAgent("bond_officer");
       setAgentTypingStatus("Completion Bond Officer is underwriting policy rider...");
       setAgentThinking({
@@ -2126,6 +2227,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         thought: `Underwriting E&O insurance rider and validating safe harbor indemnity...`,
       });
       await sleep(350);
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       setAgentTypingStatus(null);
       setMessages((prev) => [
@@ -2145,10 +2247,12 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         },
       ]);
       await speakTextAsync("Safe harbor policy rider underwritten.", "bond_officer");
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       // -------------------------------------------------------------
       // Turn 7: Script Supervisor records mutation / license & resolves risk
       // -------------------------------------------------------------
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
       setActiveAgent("script_supervisor");
       setAgentTypingStatus("Script Supervisor is updating screenplay ledger...");
       setAgentThinking({
@@ -2158,6 +2262,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           : `Mutating screenplay text: substituting "${entity.rawText}" with "${compromiseText}"...`,
       });
       await sleep(350);
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
       setAgentTypingStatus(null);
       setAgentThinking(null);
 
@@ -2218,6 +2323,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         isLicenseRoute ? `License registered for ${entity.rawText}.` : `Script mutated to ${compromiseText}.`,
         "script_supervisor"
       );
+      if (sessionGenerationRef.current !== currentGen) return { deadlocked: false };
 
       // If all liabilities are resolved in manual mode, deliver Final Cleared Production Script
       const remainingLiabilities = entities.filter(
@@ -2228,22 +2334,27 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           e.status !== "cleared" &&
           e.status !== "licensed"
       );
-      if (remainingLiabilities.length === 0 && !isAutoClearing) {
-        deliverFinalScriptCard(updatedScript);
+      if (remainingLiabilities.length === 0 && !isAutoClearing && sessionGenerationRef.current === currentGen) {
+        deliverFinalScriptCard(updatedScript, currentGen);
       }
       return { deadlocked: false };
     } catch (err) {
       console.error("Debate orchestration error:", err);
     } finally {
-      setIsLoading(false);
-      setAgentThinking(null);
-      setAgentTypingStatus(null);
-      setActiveAgent("bond_officer");
+      if (sessionGenerationRef.current === currentGen) {
+        setIsLoading(false);
+        setAgentThinking(null);
+        setAgentTypingStatus(null);
+        setActiveAgent("bond_officer");
+      }
     }
   };
 
   // Handle Marking an Item as Pre-Licensed or Permitted with authentic crew verification
   const handleMarkAsLicensed = async (entity: ExtractedEntity) => {
+    const currentGen = sessionGenerationRef.current;
+    if (sessionGenerationRef.current !== currentGen) return;
+
     setIsLoading(true);
 
     // Turn 1: Location Manager verifies municipal permit & state tax incentive
@@ -2254,9 +2365,11 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       thought: `Verifying municipal filming permits, soundstage releases, and state film tax incentive records for "${entity.rawText}"...`,
     });
     await sleep(350);
+    if (sessionGenerationRef.current !== currentGen) return;
 
     setAgentTypingStatus(null);
     await speakTextAsync(`Municipal permit verified for ${entity.rawText}.`, "location_manager");
+    if (sessionGenerationRef.current !== currentGen) return;
 
     // Turn 2: Completion Bond Officer underwrites license indemnity
     setActiveAgent("bond_officer");
@@ -2266,6 +2379,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       thought: `Underwriting policy rider: documenting license authorization on file for "${entity.rawText}". Resolving modeled risk exposure to $0.00...`,
     });
     await sleep(350);
+    if (sessionGenerationRef.current !== currentGen) return;
 
     setAgentTypingStatus(null);
     setAgentThinking(null);
@@ -2302,6 +2416,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     ]);
 
     await speakTextAsync(`Indemnity on file. Liability waived.`, "bond_officer");
+    if (sessionGenerationRef.current !== currentGen) return;
 
     // If all liabilities are resolved in manual mode, deliver Final Cleared Production Script
     const remainingLiabilities = entities.filter(
@@ -2312,17 +2427,20 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         e.status !== "cleared" &&
         e.status !== "licensed"
     );
-    if (remainingLiabilities.length === 0 && !isAutoClearing) {
-      deliverFinalScriptCard(currentScriptRef.current || currentScriptText);
+    if (remainingLiabilities.length === 0 && !isAutoClearing && sessionGenerationRef.current === currentGen) {
+      deliverFinalScriptCard(currentScriptRef.current || currentScriptText, currentGen);
     }
 
-    setIsLoading(false);
+    if (sessionGenerationRef.current === currentGen) {
+      setIsLoading(false);
+    }
   };
 
   // Autonomous Swarm Clearance Loop (Auto-Pilot)
   const handleRunAutoClearance = async (overrideHazards?: ExtractedEntity[]) => {
+    const currentGen = sessionGenerationRef.current;
     const queueToRun = overrideHazards && overrideHazards.length > 0 ? overrideHazards : pendingHazards;
-    if (isAutoClearing || queueToRun.length === 0 || isManualMode()) return;
+    if (isAutoClearing || queueToRun.length === 0 || isManualMode() || sessionGenerationRef.current !== currentGen) return;
 
     setIsAutoClearing(true);
     const hazardsQueue = [...queueToRun];
@@ -2336,23 +2454,28 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       type: "text",
       content: `⚡ **Autonomous Swarm Clearance Initiated**\n• Queue: **${hazardsQueue.length} pending liabilities**\n• Pacing: **1.2s rate-limit defense**\n• Strategy: Intelligent triage (Tax permits → Licensed; Brands → USPTO Mutated).`,
     };
+    if (sessionGenerationRef.current !== currentGen) return;
     setMessages((prev) => [...prev, startNotice]);
 
     for (let i = 0; i < hazardsQueue.length; i++) {
-      if (isManualMode()) {
-        setIsAutoClearing(false);
-        setAutoProgress(null);
-        setAgentTypingStatus(null);
-        setAgentThinking(null);
+      if (sessionGenerationRef.current !== currentGen || isManualMode()) {
+        if (sessionGenerationRef.current === currentGen) {
+          setIsAutoClearing(false);
+          setAutoProgress(null);
+          setAgentTypingStatus(null);
+          setAgentThinking(null);
+        }
         break;
       }
 
       const h = hazardsQueue[i];
-      setAutoProgress({
-        current: i + 1,
-        total: hazardsQueue.length,
-        entityName: h.rawText,
-      });
+      if (sessionGenerationRef.current === currentGen) {
+        setAutoProgress({
+          current: i + 1,
+          total: hazardsQueue.length,
+          entityName: h.rawText,
+        });
+      }
 
       const decision = determineHazardResolutionRoute(h);
 
@@ -2360,50 +2483,59 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         await handleMarkAsLicensed(h);
       } else {
         const debateOutcome = await handleStartDebate(h);
+        if (sessionGenerationRef.current !== currentGen) return;
         if (debateOutcome?.deadlocked) {
           autoPilotQueueRef.current = hazardsQueue.slice(i + 1);
-          setIsAutoClearing(false);
-          setAutoProgress(null);
-          setAgentTypingStatus(null);
-          setAgentThinking(null);
+          if (sessionGenerationRef.current === currentGen) {
+            setIsAutoClearing(false);
+            setAutoProgress(null);
+            setAgentTypingStatus(null);
+            setAgentThinking(null);
+          }
           return;
         }
       }
 
-      if (isManualMode()) {
-        setIsAutoClearing(false);
-        setAutoProgress(null);
-        setAgentTypingStatus(null);
-        setAgentThinking(null);
+      if (sessionGenerationRef.current !== currentGen || isManualMode()) {
+        if (sessionGenerationRef.current === currentGen) {
+          setIsAutoClearing(false);
+          setAutoProgress(null);
+          setAgentTypingStatus(null);
+          setAgentThinking(null);
+        }
         break;
       }
 
       if (i < hazardsQueue.length - 1) {
         // Active rate-limit safe pacing feedback between items
-        setActiveAgent("script_supervisor");
-        setAgentTypingStatus(
-          `⚡ Auto-Pilot Swarm: Rate-limit defense pacing (1.2s) • Next: "${hazardsQueue[i + 1].rawText}"...`
-        );
-        setAgentThinking({
-          role: "script_supervisor",
-          thought: `Autonomous Swarm queue: Pacing API rate-limits. Next clearance target: "${hazardsQueue[i + 1].rawText}" (${hazardsQueue[i + 1].category.toUpperCase()})...`,
-        });
+        if (sessionGenerationRef.current === currentGen) {
+          setActiveAgent("script_supervisor");
+          setAgentTypingStatus(
+            `⚡ Auto-Pilot Swarm: Rate-limit defense pacing (1.2s) • Next: "${hazardsQueue[i + 1].rawText}"...`
+          );
+          setAgentThinking({
+            role: "script_supervisor",
+            thought: `Autonomous Swarm queue: Pacing API rate-limits. Next clearance target: "${hazardsQueue[i + 1].rawText}" (${hazardsQueue[i + 1].category.toUpperCase()})...`,
+          });
+        }
         await delayPace(1200); // 1.2s pacing to prevent rate limits
+        if (sessionGenerationRef.current !== currentGen) return;
       }
     }
 
-    if (isManualMode()) {
-      setIsAutoClearing(false);
-      setAutoProgress(null);
-      setAgentTypingStatus(null);
-      setAgentThinking(null);
+    if (sessionGenerationRef.current !== currentGen || isManualMode()) {
+      if (sessionGenerationRef.current === currentGen) {
+        setIsAutoClearing(false);
+        setAutoProgress(null);
+        setAgentTypingStatus(null);
+        setAgentThinking(null);
+      }
       return;
     }
 
     setIsAutoClearing(false);
     setAutoProgress(null);
     setAgentTypingStatus(null);
-    setAgentThinking(null);
     setAgentThinking(null);
 
     // Final celebration notice
@@ -2420,7 +2552,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     ]);
 
     // Reliably deliver Final Cleared Production Script Card using non-stale ref
-    deliverFinalScriptCard(currentScriptRef.current || currentScriptText);
+    deliverFinalScriptCard(currentScriptRef.current || currentScriptText, currentGen);
 
     if (typeof window !== "undefined") {
       import("canvas-confetti").then((confettiModule) => {
@@ -2434,7 +2566,9 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
 
     // Auto-sync completed safe harbor session to browser history
     setTimeout(() => {
-      archiveCurrentSession(true);
+      if (sessionGenerationRef.current === currentGen) {
+        archiveCurrentSession(true);
+      }
     }, 400);
   };
 
@@ -2445,6 +2579,9 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     entity: ExtractedEntity,
     directive: ProducerDirectiveType
   ) => {
+    const currentGen = sessionGenerationRef.current;
+    if (sessionGenerationRef.current !== currentGen) return;
+
     setIsLoading(true);
     setActiveIntervention(null);
     const isLicense = directive === "license_waiver";
@@ -2461,6 +2598,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       thought: `Executive Producer directive received (${directiveLabel}). Aligning production creative assets...`,
     });
     await sleep(350);
+    if (sessionGenerationRef.current !== currentGen) return;
     setAgentTypingStatus(null);
 
     // Functional state updates
@@ -2512,6 +2650,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       isLicense ? "Executive waiver ratified." : "Executive mutation directive applied.",
       "bond_officer"
     );
+    if (sessionGenerationRef.current !== currentGen) return;
 
     setIsLoading(false);
     setAgentThinking(null);
@@ -2522,6 +2661,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
       const remainingQueue = [...autoPilotQueueRef.current];
       autoPilotQueueRef.current = [];
       setTimeout(() => {
+        if (sessionGenerationRef.current !== currentGen) return;
         autoClearanceRef.current?.(remainingQueue);
       }, 600);
     } else {
@@ -2533,8 +2673,8 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
           e.status !== "cleared" &&
           e.status !== "licensed"
       );
-      if (remainingLiabilities.length === 0) {
-        deliverFinalScriptCard(currentScriptRef.current || currentScriptText);
+      if (remainingLiabilities.length === 0 && sessionGenerationRef.current === currentGen) {
+        deliverFinalScriptCard(currentScriptRef.current || currentScriptText, currentGen);
       }
     }
   };
@@ -2716,6 +2856,24 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
         setClearanceMode(data.clearanceMode);
         clearanceModeRef.current = data.clearanceMode;
       }
+      // Advance generation counter to immediately halt any previous session's in-flight promises
+      sessionGenerationRef.current += 1;
+      if (activeAbortControllerRef.current) {
+        try { activeAbortControllerRef.current.abort(); } catch {}
+        activeAbortControllerRef.current = null;
+      }
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        try { window.speechSynthesis.cancel(); } catch {}
+      }
+      try { synthRef.current?.cancel(); } catch {}
+
+      setIsLoading(false);
+      setIsAutoClearing(false);
+      setIsGeneratingScene(false);
+      setSpeakingAgent(null);
+      setAgentThinking(null);
+      setAgentTypingStatus(null);
+      setAutoProgress(null);
       setActiveIntervention(null);
       autoPilotQueueRef.current = [];
 
@@ -2810,12 +2968,47 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     reader.readAsText(file);
   };
 
-  // Reset Chat Session (with auto-archiving)
+  // Reset Chat Session (with auto-archiving and absolute in-flight abort guarantee)
   const handleNewSession = () => {
-    archiveCurrentSession(false);
+    // 1. Advance generation counter to immediately invalidate all in-flight promises & loops
+    sessionGenerationRef.current += 1;
+
+    // 2. Abort any active fetch network requests
+    if (activeAbortControllerRef.current) {
+      try {
+        activeAbortControllerRef.current.abort();
+      } catch {}
+      activeAbortControllerRef.current = null;
+    }
+
+    // 3. Immediately halt speech synthesis and sound
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {}
+    }
+    try {
+      synthRef.current?.cancel();
+    } catch {}
+
+    // 4. Archive current session so prior work is preserved in Recent History
+    archiveCurrentSession(true);
     clearActiveSessionId();
     setActiveSessionIdState(null);
 
+    // 5. Instantly clear all active execution and agent cognition indicators
+    setIsLoading(false);
+    setIsAutoClearing(false);
+    setIsGeneratingScene(false);
+    setSpeakingAgent(null);
+    setAgentThinking(null);
+    setAgentTypingStatus(null);
+    setAutoProgress(null);
+    setActiveIntervention(null);
+    autoPilotQueueRef.current = [];
+    setActiveAgent("script_supervisor");
+
+    // 6. Reset workspace state to pristine blank slate
     setMessages([
       {
         id: `welcome-${Date.now()}`,
@@ -2830,6 +3023,7 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     setEntities([]);
     setClearedEntityIds([]);
     setLicensedEntityIds([]);
+    setDisputedEntityIds([]);
     setInitialExposure(0);
     setCurrentExposure(0);
     setCurrentScriptText("");
@@ -2837,12 +3031,12 @@ Execute complete "greeking"—change character names, occupations, medical/bar l
     setOriginalScriptSnapshot("");
     setActiveCenterView("chat");
     setInspectedEntity(null);
-    setDisputedEntityIds([]);
     setTaxSavings(0);
+    setTaxJurisdiction("Qualified Film Credit (30%)");
     setUploadedFileName(null);
     setProductionTitle("Indie Motion Picture");
-    setActiveIntervention(null);
-    autoPilotQueueRef.current = [];
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (sessionFileInputRef.current) sessionFileInputRef.current.value = "";
   };
 
   const hasPassport = messages.some((m) => m.content?.includes("Clearance Passport Ingested"));

@@ -54,3 +54,10 @@
   - [x] Embed formal legal disclaimers and external registry attestations across all PDF compilation paths.
   - [x] Verify retroactive runtime compilation on imported historical sessions.
 
+- [x] Phase 11: Session Partition & In-Flight Abort Invariant
+  - [x] Enforce monotonic session generation counter (`sessionGenerationRef`) to invalidate active asynchronous promises immediately.
+  - [x] Integrate abort controller (`activeAbortControllerRef`) for active network fetch streams on new session.
+  - [x] Cut speech synthesis and speech timeouts instantly without bleeding into fresh sessions.
+  - [x] Guard all debate turns, auto-pilot iterations, and final script deliveries with generation validation.
+  - [x] Preserve automatic browser reload recovery (`getActiveSessionId()`) while ensuring manual new sessions start completely clean.
+

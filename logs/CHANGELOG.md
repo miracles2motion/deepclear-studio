@@ -4,6 +4,25 @@ This changelog records major releases, architectural features, and critical mile
 
 ---
 
+## [v0.8.18] - 2026-09-09
+### Session Partition & In-Flight Abort Invariant: Zero Cross-Session Bleed
+- **Monotonic Session Generation Counter (`page.tsx`)**:
+  - Introduced `sessionGenerationRef` to deterministically track the active workspace session lifecycle.
+  - Incrementing `sessionGenerationRef.current += 1` immediately invalidates all active asynchronous operations (analysis streams, debate war room turns, web searches, and scene generations), preventing any latent promise resolution from bleeding into subsequent sessions.
+- **Immediate In-Flight Abort on New Session (`page.tsx`)**:
+  - Added `activeAbortControllerRef` to cut in-flight network fetch streams (`/api/analyze`, `/api/agent-chat`, `/api/generate-scene`) via `controller.abort()` the moment the user clicks "Start New Session" or "Clear Session".
+  - Implemented immediate reader cancellation (`reader.cancel()`) in the analysis event stream if the generation counter advances during ingestion.
+  - Speech synthesis and voice timeouts are synchronously cancelled and resolved immediately without dragging or unmuting into the new session.
+- **Session-Guarded Multi-Agent War Room & Auto-Pilot Clearance (`page.tsx`)**:
+  - Bound `handleStartDebate` across Turns 1 through 7, fail-closed deadlock gates, and final script mutations to check `sessionGenerationRef.current === currentGen` at each conversational turn and sleep delay.
+  - Bound `handleMarkAsLicensed` and `handleRunAutoClearance` loop iterations to the active generation, preventing deferred license updates or confetti celebrations from contaminating a fresh session.
+  - Guarded `deliverFinalScriptCard` with target generation validation to guarantee final script cards only mount in their originating session.
+- **Clean Archive & Reload Invariant Preserved (`page.tsx`)**:
+  - When the user explicitly starts a new session, the outgoing work snapshot is silently preserved to Recent History (`archiveCurrentSession(true)`), and the active session pointer is cleared (`clearActiveSessionId()`).
+  - Reloading or refreshing the page retains its existing auto-recovery capability (`getActiveSessionId()`), resuming in-flight thinking or clearance queues seamlessly without cross-polluting intentional new sessions.
+
+---
+
 ## [v0.8.17] - 2026-09-09
 ### Harmonized Form E&O-2026 PDF Templates with PM Specifications and Underwriting Standards
 - **Standardized PM Underwriting Terminology (`FormEOBinderDocument.tsx` & `pdfGenerator.ts`)**:
