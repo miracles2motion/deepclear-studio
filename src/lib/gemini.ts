@@ -2,13 +2,16 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ExtractedEntity, AgentRole } from "@/types";
 
 // Priority list of verified active Gemini models with automatic cascade fallback
+// Prioritizing high-speed, non-quota-exhausted flash-lite and flash models for sub-3-second responses
 const MODEL_CANDIDATES = [
-  "gemini-flash-latest",
-  "gemini-3.5-flash",
-  "gemini-3.7-flash",
-  "gemini-3.6-flash",
   "gemini-3.5-flash-lite",
-  "gemini-3.1-pro-preview",
+  "gemini-3.1-flash-lite-preview",
+  "gemini-3.1-flash-lite",
+  "gemini-3.6-flash",
+  "gemini-flash-lite-latest",
+  "gemini-3.7-flash",
+  "gemini-3.5-flash",
+  "gemini-flash-latest",
   "gemini-pro-latest",
 ];
 
@@ -48,11 +51,12 @@ async function discoverLiveGoogleModels(apiKey: string): Promise<string[]> {
  * Self-healing model invoker: Tries the cached working model first,
  * cascades through all priority models, and dynamically discovers live models
  * directly from Google if endpoints change in the future.
+ * Uses thinkingBudget: 128 and a 12-second per-model timeout to guarantee ultra-fast ingestion.
  */
 async function generateContentWithCascade(
   genAI: GoogleGenerativeAI,
   contents: Parameters<ReturnType<GoogleGenerativeAI["getGenerativeModel"]>["generateContent"]>[0],
-  config?: { responseMimeType?: string; temperature?: number }
+  config?: { responseMimeType?: string; temperature?: number; thinkingConfig?: { thinkingBudget?: number } }
 ) {
   const modelsToTry = cachedWorkingModel
     ? [cachedWorkingModel, ...MODEL_CANDIDATES.filter((m) => m !== cachedWorkingModel)]
@@ -60,19 +64,52 @@ async function generateContentWithCascade(
 
   let lastError: Error | null = null;
 
+  // Add thinkingBudget: 128 by default for structured extraction tasks to avoid 15-30s of internal reasoning tokens
+  const effectiveConfig = {
+    ...config,
+    thinkingConfig: config?.thinkingConfig ?? { thinkingBudget: 128 },
+  };
+
   for (const modelName of modelsToTry) {
     try {
       const model = genAI.getGenerativeModel({
         model: modelName,
-        generationConfig: config,
+        generationConfig: effectiveConfig,
       });
 
-      const result = await model.generateContent(contents);
+      // 12-second per-model timeout: prevents any single stalled or rate-limited candidate from hanging the pipeline
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Model ${modelName} request timed out after 12s`)), 12000)
+      );
+
+      const result = await Promise.race([model.generateContent(contents), timeoutPromise]);
       cachedWorkingModel = modelName; // Cache working model for future fast calls
       return result;
     } catch (err) {
       lastError = err as Error;
-      // If 404 / model deprecated or unavailable, smoothly continue to next candidate
+      // If cached model failed or hit 429/404, invalidate cache immediately so next call doesn't retry a broken model
+      if (cachedWorkingModel === modelName) {
+        cachedWorkingModel = null;
+      }
+      // If model failed specifically due to thinkingConfig unsupported (e.g. legacy model), retry once without thinkingConfig
+      try {
+        const errMsg = (err as Error)?.message || "";
+        if (errMsg.includes("invalid argument") || errMsg.includes("thinkingConfig")) {
+          const fallbackModel = genAI.getGenerativeModel({
+            model: modelName,
+            generationConfig: config,
+          });
+          const fallbackTimeout = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`Model ${modelName} fallback timed out after 12s`)), 12000)
+          );
+          const result = await Promise.race([fallbackModel.generateContent(contents), fallbackTimeout]);
+          cachedWorkingModel = modelName;
+          return result;
+        }
+      } catch {
+        // Fallback also failed; proceed smoothly to next cascade model
+      }
+      // Continue cascade to next candidate
       continue;
     }
   }
@@ -88,7 +125,10 @@ async function generateContentWithCascade(
           model: dynamicModel,
           generationConfig: config,
         });
-        const result = await model.generateContent(contents);
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Dynamic model ${dynamicModel} timed out after 12s`)), 12000)
+        );
+        const result = await Promise.race([model.generateContent(contents), timeoutPromise]);
         cachedWorkingModel = dynamicModel;
         return result;
       } catch (err) {
