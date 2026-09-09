@@ -123,7 +123,3 @@ Open [http://localhost:3000](http://localhost:3000) to access the studio.
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
----
-
-**Live Demo:** [https://deepclear-studio.vercel.app](https://deepclear-studio.vercel.app)
-
